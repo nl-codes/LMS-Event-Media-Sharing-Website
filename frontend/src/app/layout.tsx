@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { jetBrainsMono } from "./styles/fonts";
+import { jetBrainsMono } from "@/styles/fonts";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
