@@ -1,5 +1,5 @@
-import LandingButton from "@/components/buttons/LandingButton";
 import Image from "next/image";
+import HomeButtonsGroup from "./HomeButtonsGroup";
 
 export default function Home() {
     return (
@@ -12,11 +12,7 @@ export default function Home() {
                 <p className="text-2xl text-left">
                     Now share your media to all instantly
                 </p>
-
-                <div className="button-area flex gap-8 justify-center items-center">
-                    <LandingButton>Login</LandingButton>
-                    <LandingButton>Signup</LandingButton>
-                </div>
+                <HomeButtonsGroup />
             </div>
 
             <Image
