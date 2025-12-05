@@ -1,14 +1,8 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 
-export const addUsers = async ({
-    firstName,
-    lastName,
-    userName,
-    email,
-    password,
-}) => {
-    if (!firstName || !lastName || !userName || !email || !password) {
+export const addUsers = async ({ userName, email, password }) => {
+    if (!userName || !email || !password) {
         throw new Error("Missing required fields");
     }
     const existingUser = await User.findOne({
@@ -22,8 +16,6 @@ export const addUsers = async ({
     const hashedPassword = await bcrypt.hash(password, randomSalt);
 
     const newUser = new User({
-        firstName: firstName,
-        lastName: lastName,
         userName: userName,
         password: hashedPassword,
         email: email,

@@ -4,7 +4,7 @@ import { generateToken } from "../utils/generateToken.js";
 export const registerUser = async (req, res) => {
     try {
         const registeredUser = await addUsers(req.body);
-        console.log(registeredUser);
+        // console.log(registeredUser);
         const token = generateToken({
             email: registeredUser.email,
             userName: registeredUser.userName,
