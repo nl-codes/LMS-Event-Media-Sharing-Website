@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { jetBrainsMono } from "@/styles/fonts";
 import "@/styles/globals.css";
 import UnsignedHeader from "@/components/headers/UnsignedHeader";
+import CustomToast from "@/components/toast/CustomToast";
 
 export const metadata: Metadata = {
     title: "LMS 24: Live Media Sharing 24 hours",
@@ -18,6 +19,7 @@ export default function RootLayout({
         <html lang="en">
             <body className={`${jetBrainsMono.className} antialiased`}>
                 <UnsignedHeader />
+                <CustomToast />
                 {children}
             </body>
         </html>
