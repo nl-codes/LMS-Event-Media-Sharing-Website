@@ -55,7 +55,9 @@ export default function SignupForm() {
 
             // Successful Signup
             toast.success("Signup successful!");
-            router.push("/login");
+            setTimeout(() => {
+                router.push("/login");
+            }, 800);
         } catch (err) {
             console.error(err);
             toast.error("Something went wrong");
