@@ -1,5 +1,6 @@
 "use client";
 import LandingButton from "@/components/buttons/LandingButton";
+import { backend_url } from "@/config/backend";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -33,7 +34,7 @@ export default function SignupForm() {
         }
 
         try {
-            const res = await fetch("http://localhost:3000/users/signup", {
+            const res = await fetch(`${backend_url}/users/signup`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -55,7 +56,9 @@ export default function SignupForm() {
 
             // Successful Signup
             toast.success("Signup successful!");
-            router.push("/login");
+            setTimeout(() => {
+                router.push("/login");
+            }, 800);
         } catch (err) {
             console.error(err);
             toast.error("Something went wrong");
