@@ -8,7 +8,7 @@ export default function LoginExistingButton() {
         <p>
             Already have an account?{" "}
             <button
-                className="text-cusblue hover:underline hover:cursor-pointer"
+                className="text-blue-600 hover:underline hover:cursor-pointer"
                 onClick={handleLogin}>
                 Log in
             </button>
