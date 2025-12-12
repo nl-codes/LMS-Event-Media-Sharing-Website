@@ -10,7 +10,7 @@ interface ActivationResponse {
     error?: string;
 }
 
-export default function ActivatePage() {
+export default function Home() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -84,7 +84,7 @@ export default function ActivatePage() {
                     <p className="mt-2">{message}</p>
 
                     <button
-                        onClick={() => router.push("/resend-activation")}
+                        onClick={() => router.push("/signup/reactivate")}
                         className="mt-5 bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700">
                         Resend Activation Link
                     </button>
