@@ -50,6 +50,12 @@ export const loginUser = async (req, res) => {
         res.status(200).json({ messge: "Login Successful", token: token });
     } catch (err) {
         let status = 400;
+        if (
+            err.message === "Account activation pending" ||
+            err.message === "Account suspended"
+        ) {
+            status = 403;
+        }
         console.error("❌ Error on login: ", err);
         res.status(status).json({ error: err.message });
     }
