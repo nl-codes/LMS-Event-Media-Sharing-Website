@@ -60,3 +60,17 @@ export const loginUser = async (req, res) => {
         res.status(status).json({ error: err.message });
     }
 };
+
+export const activateUser = async (req, res) => {
+    const { token } = req.query;
+    try {
+        if (!token || token == "") {
+            throw new Error("Token required");
+        }
+        await verifyUserActivationToken(token);
+        res.json({ message: "Account activated. You can now log in." });
+    } catch (err) {
+        console.error("❌ Error on activation: ", err);
+        res.status(400).json({ error: err.message });
+    }
+};
