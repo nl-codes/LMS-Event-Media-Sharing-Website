@@ -18,7 +18,7 @@ export const registerUser = async (req, res) => {
 
         await registeredUser.save();
 
-        const activationUrl = `${process.env.BACKEND_URL}/users/activate?token=${token}`;
+        const activationUrl = `${process.env.FRONTEND_URL}/signup/activate?token=${token}`;
 
         await sendEmail(
             registeredUser.email,
@@ -51,12 +51,12 @@ export const loginUser = async (req, res) => {
     } catch (err) {
         let status = 400;
         if (
-            err.message === "Account activation pending" ||
+            err.message === "Account activation pending. Check your email" ||
             err.message === "Account suspended"
         ) {
             status = 403;
         }
-        console.error("❌ Error on login: ", err);
+        console.error("❌ Error on login: ", err.message);
         res.status(status).json({ error: err.message });
     }
 };

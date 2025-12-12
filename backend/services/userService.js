@@ -45,7 +45,7 @@ export const verifyUser = async ({ email, password }) => {
     }
 
     if (existingUser.status === "pending") {
-        throw new Error("Account activation pending");
+        throw new Error("Account activation pending. Check your email");
     }
     if (existingUser.status === "suspended") {
         throw new Error("Account suspended");
