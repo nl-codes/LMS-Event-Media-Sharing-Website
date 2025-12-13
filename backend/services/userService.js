@@ -135,7 +135,7 @@ export const requestPasswordReset = async (email) => {
         user.resetPasswordRequestCount = 1;
     }
 
-    const { token, tokenHash, expires } = generateResetToken();
+    const { token, tokenHash, expires } = generateGeneralToken();
 
     user.resetPasswordToken = tokenHash;
     user.resetPasswordExpires = expires;
