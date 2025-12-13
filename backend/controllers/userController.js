@@ -4,7 +4,7 @@ import {
     verifyUser,
     verifyUserActivationToken,
 } from "../services/userService.js";
-import { generateActivationToken } from "../utils/activation/generateActivationToken.js";
+import { generateGeneralToken } from "../utils/generateToken.js";
 import { generateToken } from "../utils/auth/generateToken.js";
 import {
     getActivationEmailHTML,
@@ -16,7 +16,7 @@ export const registerUser = async (req, res) => {
     try {
         const registeredUser = await addUsers(req.body);
         // console.log(registeredUser);
-        const { token, tokenHash, expires } = generateActivationToken();
+        const { token, tokenHash, expires } = generateGeneralToken();
         registeredUser.activationToken = tokenHash;
         registeredUser.activationExpires = expires;
         registeredUser.status = "pending";

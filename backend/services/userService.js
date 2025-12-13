@@ -1,7 +1,7 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { generateActivationToken } from "../utils/activation/generateActivationToken.js";
+import { generateGeneralToken } from "../utils/generateToken.js";
 
 export const addUsers = async ({ userName, email, password }) => {
     if (!userName || !email || !password) {
@@ -97,7 +97,7 @@ export const resendActivationToken = async (email) => {
         }
     }
 
-    const { token, tokenHash, expires } = generateActivationToken();
+    const { token, tokenHash, expires } = generateGeneralToken();
 
     user.activationToken = tokenHash;
     user.activationExpires = expires;
