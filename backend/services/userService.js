@@ -114,3 +114,33 @@ export const resendActivationToken = async (email) => {
 
     return { user, token };
 };
+
+export const requestPasswordReset = async (email) => {
+    const user = await User.findOne({ email });
+    if (!user) throw new Error("User not found");
+
+    if (user.status !== "active") {
+        throw new Error("Account not active");
+    }
+
+    const now = new Date();
+    const last = user.resetPasswordLastRequestedAt;
+
+    if (last && last.toDateString() === now.toDateString()) {
+        if (user.resetPasswordRequestCount >= 3) {
+            throw new Error("Password reset limit reached for today");
+        }
+        user.resetPasswordRequestCount += 1;
+    } else {
+        user.resetPasswordRequestCount = 1;
+    }
+
+    const { token, tokenHash, expires } = generateResetToken();
+
+    user.resetPasswordToken = tokenHash;
+    user.resetPasswordExpires = expires;
+    user.resetPasswordLastRequestedAt = now;
+
+    await user.save();
+    return { user, token };
+};
