@@ -144,3 +144,26 @@ export const requestPasswordReset = async (email) => {
     await user.save();
     return { user, token };
 };
+
+export const resetPassword = async (token, newPassword) => {
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+        resetPasswordToken: tokenHash,
+        resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) throw new Error("Invalid or expired token");
+    if (user.password === newPassword)
+        throw new Error("Can't use old password");
+
+    const salt = await bcrypt.genSalt();
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    user.resetPasswordRequestCount = undefined;
+    user.resetPasswordLastRequestedAt = undefined;
+
+    await user.save();
+};
