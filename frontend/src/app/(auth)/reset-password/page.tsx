@@ -110,7 +110,7 @@ export default function Home() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="bg-custeal text-white py-3 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50">
+                    className="bg-cusblue text-white py-3 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50">
                     {loading ? "Resetting..." : "Reset Password"}
                 </button>
             </form>
