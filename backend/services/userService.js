@@ -1,5 +1,7 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import { generateActivationToken } from "../utils/activation/generateActivationToken.js";
 
 export const addUsers = async ({ userName, email, password }) => {
     if (!userName || !email || !password) {
@@ -42,5 +44,73 @@ export const verifyUser = async ({ email, password }) => {
     if (!isPasswordCorrect) {
         throw new Error("Invalid email or password");
     }
+
+    if (existingUser.status === "pending") {
+        throw new Error("Account activation pending. Check your email");
+    }
+    if (existingUser.status === "suspended") {
+        throw new Error("Account suspended");
+    }
+
     return existingUser;
+};
+
+export const verifyUserActivationToken = async (token) => {
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+        activationToken: tokenHash,
+        activationExpires: { $gt: Date.now() },
+    });
+    console.log(user);
+    if (!user) throw new Error("Invalid or expired token");
+
+    user.status = "active";
+    user.activationToken = undefined;
+    user.activationExpires = undefined;
+    user.activationResendCount = undefined;
+    user.activationResendLastSentAt = undefined;
+    await user.save();
+};
+
+export const resendActivationToken = async (email) => {
+    const user = await User.findOne({ email });
+    if (!user) throw new Error("User not found.");
+
+    if (user.status === "active") {
+        throw new Error("User is already activated.");
+    }
+
+    const now = new Date();
+    const last = user.activationResendLastSentAt;
+
+    if (last) {
+        const isSameDay =
+            last.getFullYear() === now.getFullYear() &&
+            last.getMonth() === now.getMonth() &&
+            last.getDate() === now.getDate();
+
+        if (isSameDay && user.activationResendCount >= 3) {
+            throw new Error(
+                "You have reached the daily limit (3 activation emails). Try again tomorrow."
+            );
+        }
+    }
+
+    const { token, tokenHash, expires } = generateActivationToken();
+
+    user.activationToken = tokenHash;
+    user.activationExpires = expires;
+
+    if (!last || last.toDateString() !== now.toDateString()) {
+        user.activationResendCount = 1;
+    } else {
+        user.activationResendCount += 1;
+    }
+
+    user.activationResendLastSentAt = now;
+
+    await user.save();
+
+    return { user, token };
 };

@@ -1,17 +1,35 @@
-import { addUsers, verifyUser } from "../services/userService.js";
-import { generateToken } from "../utils/generateToken.js";
+import {
+    addUsers,
+    resendActivationToken,
+    verifyUser,
+    verifyUserActivationToken,
+} from "../services/userService.js";
+import { generateActivationToken } from "../utils/activation/generateActivationToken.js";
+import { generateToken } from "../utils/auth/generateToken.js";
+import sendEmail from "../utils/sendEmail.js";
 
 export const registerUser = async (req, res) => {
     try {
         const registeredUser = await addUsers(req.body);
         // console.log(registeredUser);
-        const token = generateToken({
-            email: registeredUser.email,
-            userName: registeredUser.userName,
-        });
-        res.status(200).json({
-            message: "Registration Successfull",
-            token: token,
+        const { token, tokenHash, expires } = generateActivationToken();
+        registeredUser.activationToken = tokenHash;
+        registeredUser.activationExpires = expires;
+        registeredUser.status = "pending";
+
+        await registeredUser.save();
+
+        const activationUrl = `${process.env.FRONTEND_URL}/signup/activate?token=${token}`;
+
+        await sendEmail(
+            registeredUser.email,
+            "Activate your account",
+            `Your activation link: ${activationUrl}`,
+            `<div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;"><div style="max-width: 500px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px;"><h2 style="text-align: center; color: #333;">Welcome to Our Live Media Sharing 🎉</h2><p style="font-size: 16px; color: #444;">You're almost there! Click the button below to activate your account.</p><div style="text-align: center; margin: 30px 0;"><a href="${activationUrl}"style="background: #4CAF50; color: white; padding: 12px 20px;text-decoration: none; border-radius: 5px; font-weight: bold;">Activate Account</a></div><p style="font-size: 14px; color: #666;">Or copy and paste this link into your browser:</p><p style="word-break: break-all; color: #007BFF;">${activationUrl}</p><hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" /><p style="font-size: 12px; color: #888; text-align: center;"> This link is valid for 10 minutes.</br>You can only request for activation three times a day.</br>If you did not create this account, you can safely ignore this email.</p></div></div>`
+        );
+
+        res.status(201).json({
+            message: "Signup successful. Check email to activate account.",
         });
     } catch (err) {
         let status = 400;
@@ -33,7 +51,51 @@ export const loginUser = async (req, res) => {
         res.status(200).json({ messge: "Login Successful", token: token });
     } catch (err) {
         let status = 400;
-        console.error("❌ Error on login: ", err);
+        if (
+            err.message === "Account activation pending. Check your email" ||
+            err.message === "Account suspended"
+        ) {
+            status = 403;
+        }
+        console.error("❌ Error on login: ", err.message);
         res.status(status).json({ error: err.message });
+    }
+};
+
+export const activateUser = async (req, res) => {
+    const { token } = req.query;
+    try {
+        if (!token || token == "") {
+            throw new Error("Token required");
+        }
+        await verifyUserActivationToken(token);
+        res.json({ message: "Account activated. You can now log in." });
+    } catch (err) {
+        console.error("❌ Error on activation: ", err);
+        res.status(400).json({ error: err.message });
+    }
+};
+
+export const reactivateUser = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) throw new Error("Email is required.");
+
+        const { user, token } = await resendActivationToken(email);
+
+        const activationUrl = `${process.env.FRONTEND_URL}/signup/activate?token=${token}`;
+
+        await sendEmail(
+            user.email,
+            "Activate Your Account — Link Resent",
+            `Your activation link: ${activationUrl}`,
+            `<div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;"><div style="max-width: 500px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px;"><h2 style="text-align: center; color: #333;">Activate Your Account 🔄</h2><p style="font-size: 16px; color: #444;">Here's your new activation link. Click the button below to complete your registration.</p><div style="text-align: center; margin: 30px 0;"><a href="${activationUrl}"style="background: #4CAF50; color: white; padding: 12px 20px;text-decoration: none; border-radius: 5px; font-weight: bold;">Activate Account</a></div><p style="font-size: 14px; color: #666;">Or copy and paste this link into your browser:</p><p style="word-break: break-all; color: #007BFF;">${activationUrl}</p><hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" /><p style="font-size: 12px; color: #888; text-align: center;">This link is valid for 10 minutes.</br>You can only request for activation three times a day.</br></br>If you did not request this, you can safely ignore this email.</p></div></div>`
+        );
+
+        res.json({ message: "Activation link resent." });
+    } catch (err) {
+        console.error("❌ Error resending activation link: ", err);
+        res.status(400).json({ error: err.message });
     }
 };
