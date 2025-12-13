@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function UnsignedHeader() {
     return (
-        <div className="flex justify-end gap-16 py-12 pr-16 border-b-2 border-cusblue">
+        <div className="flex justify-end gap-16 pt-4 pb-12 pr-16 border-b-2 border-cusblue">
             <LandingButton handleClick={() => {}}>
                 Watch how it works{" "}
             </LandingButton>
