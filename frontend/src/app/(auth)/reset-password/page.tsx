@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import LandingButton from "@/components/buttons/LandingButton";
 
 export default function Home() {
     const searchParams = useSearchParams();
@@ -107,12 +108,12 @@ export default function Home() {
                     </div>
                 </div>
 
-                <button
+                <LandingButton
                     type="submit"
-                    disabled={loading}
-                    className="bg-cusblue text-white py-3 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50">
-                    {loading ? "Resetting..." : "Reset Password"}
-                </button>
+                    loading={loading}
+                    className="py-3 rounded-xl">
+                    Reset Password
+                </LandingButton>
             </form>
         </div>
     );

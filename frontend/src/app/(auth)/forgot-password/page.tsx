@@ -1,5 +1,6 @@
 "use client";
 
+import LandingButton from "@/components/buttons/LandingButton";
 import { FormEvent, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -58,12 +59,12 @@ export default function Home() {
                     />
                 </div>
 
-                <button
+                <LandingButton
                     type="submit"
-                    disabled={loading}
-                    className="bg-cusblue text-white py-3 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50">
-                    {loading ? "Sending..." : "Send Reset Link"}
-                </button>
+                    loading={loading}
+                    className="py-3 rounded-xl">
+                    Send Reset Link
+                </LandingButton>
             </form>
         </div>
     );
