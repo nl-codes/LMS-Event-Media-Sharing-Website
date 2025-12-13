@@ -5,7 +5,7 @@ import {
     verifyUserActivationToken,
 } from "../services/userService.js";
 import { generateGeneralToken } from "../utils/generateToken.js";
-import { generateToken } from "../utils/auth/generateToken.js";
+import { generateJWTtoken } from "../utils/auth/generateJWTtoken.js";
 import {
     getActivationEmailHTML,
     getReactivationEmailHTML,
@@ -48,7 +48,7 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const loginUser = await verifyUser(req.body);
-        const token = generateToken({
+        const token = generateJWTtoken({
             email: loginUser.email,
             userName: loginUser.userName,
         });
