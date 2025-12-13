@@ -22,7 +22,17 @@ const userSchema = new Schema(
         activationResendLastSentAt: {
             type: Date,
         },
+
+        resetPasswordToken: String,
+        resetPasswordExpires: Date,
+
+        resetPasswordRequestCount: {
+            type: Number,
+            default: 0,
+        },
+        resetPasswordLastRequestedAt: Date,
     },
+
     { timestamps: true }
 );
 

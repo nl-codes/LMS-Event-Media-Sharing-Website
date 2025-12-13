@@ -1,7 +1,7 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { generateActivationToken } from "../utils/activation/generateActivationToken.js";
+import { generateGeneralToken } from "../utils/generateToken.js";
 
 export const addUsers = async ({ userName, email, password }) => {
     if (!userName || !email || !password) {
@@ -97,7 +97,7 @@ export const resendActivationToken = async (email) => {
         }
     }
 
-    const { token, tokenHash, expires } = generateActivationToken();
+    const { token, tokenHash, expires } = generateGeneralToken();
 
     user.activationToken = tokenHash;
     user.activationExpires = expires;
@@ -113,4 +113,57 @@ export const resendActivationToken = async (email) => {
     await user.save();
 
     return { user, token };
+};
+
+export const requestPasswordReset = async (email) => {
+    const user = await User.findOne({ email });
+    if (!user) throw new Error("User not found");
+
+    if (user.status !== "active") {
+        throw new Error("Account not active");
+    }
+
+    const now = new Date();
+    const last = user.resetPasswordLastRequestedAt;
+
+    if (last && last.toDateString() === now.toDateString()) {
+        if (user.resetPasswordRequestCount >= 3) {
+            throw new Error("Password reset limit reached for today");
+        }
+        user.resetPasswordRequestCount += 1;
+    } else {
+        user.resetPasswordRequestCount = 1;
+    }
+
+    const { token, tokenHash, expires } = generateGeneralToken();
+
+    user.resetPasswordToken = tokenHash;
+    user.resetPasswordExpires = expires;
+    user.resetPasswordLastRequestedAt = now;
+
+    await user.save();
+    return { user, token };
+};
+
+export const resetPassword = async (token, newPassword) => {
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+        resetPasswordToken: tokenHash,
+        resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) throw new Error("Invalid or expired token");
+    if (user.password === newPassword)
+        throw new Error("Can't use old password");
+
+    const salt = await bcrypt.genSalt();
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    user.resetPasswordRequestCount = undefined;
+    user.resetPasswordLastRequestedAt = undefined;
+
+    await user.save();
 };

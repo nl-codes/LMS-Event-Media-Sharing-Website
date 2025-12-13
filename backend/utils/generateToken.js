@@ -1,8 +1,8 @@
 import crypto from "crypto";
 
-export function generateActivationToken() {
+export const generateGeneralToken = () => {
     const token = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes expiry time
+    const expires = Date.now() + 10 * 60 * 1000; // 10 min
     return { token, tokenHash, expires };
-}
+};
