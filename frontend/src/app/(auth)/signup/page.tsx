@@ -1,5 +1,11 @@
+import { Metadata } from "next";
 import LoginExistingButton from "./LoginExistingButton";
 import SignupForm from "./signup-form";
+
+export const metadata: Metadata = {
+    title: "Create Account | LMS 24",
+    description: "Sign up to share, upload, and relive your moments anytime.",
+};
 
 export default function Home() {
     return (
