@@ -1,5 +1,12 @@
+import { Metadata } from "next";
 import LoginForm from "./login-form";
 import SignupNewButton from "./SignupNewButton";
+
+export const metadata: Metadata = {
+    title: "Sign in | LMS 24",
+    description:
+        "Access your account securely and continue where you left off.",
+};
 
 export default function Home() {
     return (
