@@ -6,20 +6,30 @@ import { FaRegUser } from "react-icons/fa";
 
 export default function SignedHeader() {
     const router = useRouter();
-    const handleLogoClick = () => router.replace("/");
+    const handleLogoClick = () => router.replace("/home");
+    const handleProfileClick = () => router.push("/profile");
+
     return (
-        <div className="flex justify-end gap-16 pt-4 pb-12 pr-16 border-b-2 border-cusblue">
-            <Image
-                onClick={handleLogoClick}
-                src="https://res.cloudinary.com/dimgh55x6/image/upload/v1763878601/lms_logo_fw6m2q.png"
-                width={200}
-                height={200}
-                className="absolute left-16"
-                alt="Logo of LMS"
-            />
-            <Button>
-                Profile <FaRegUser />
-            </Button>
-        </div>
+        <header className="w-full pt-4">
+            <div className="flex items-center justify-between px-16 pb-4 border-b-2 border-cusblue">
+                {/* Logo Container */}
+                <div className="cursor-pointer" onClick={handleLogoClick}>
+                    <Image
+                        src="https://res.cloudinary.com/dimgh55x6/image/upload/v1763878601/lms_logo_fw6m2q.png"
+                        alt="Logo"
+                        width={80}
+                        height={80}
+                        className="object-contain"
+                    />
+                </div>
+
+                {/* Button - Automatically centered vertically relative to the logo */}
+                <Button
+                    className="flex items-center gap-2"
+                    handleClick={handleProfileClick}>
+                    Profile <FaRegUser />
+                </Button>
+            </div>
+        </header>
     );
 }
