@@ -1,5 +1,5 @@
 import Image from "next/image";
-import HomeButtonsGroup from "./HomeButtonsGroup";
+import HomeButtonsGroup from "../components/LandingPageButtonGroup";
 import UnsignedHeader from "@/components/headers/UnsignedHeader";
 
 export default function Home() {
