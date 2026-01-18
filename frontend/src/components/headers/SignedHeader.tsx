@@ -3,11 +3,15 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Button from "../buttons/Button";
 import { FaRegUser } from "react-icons/fa";
+import { FiLogOut } from "react-icons/fi"; // A clean logout icon
 
 export default function SignedHeader() {
     const router = useRouter();
+
     const handleLogoClick = () => router.replace("/home");
-    const handleProfileClick = () => router.push("/profile");
+    const handleProfileClick = () => router.push("/home/profile");
+
+    const logout = () => router.push("/login");
 
     return (
         <header className="w-full pt-4">
@@ -23,12 +27,21 @@ export default function SignedHeader() {
                     />
                 </div>
 
-                {/* Button - Automatically centered vertically relative to the logo */}
-                <Button
-                    className="flex items-center gap-2"
-                    handleClick={handleProfileClick}>
-                    Profile <FaRegUser />
-                </Button>
+                {/* Navigation Actions */}
+                <div className="flex items-center gap-4">
+                    {/* Profile Button */}
+                    <Button
+                        className="flex items-center gap-2"
+                        handleClick={handleProfileClick}>
+                        Profile <FaRegUser />
+                    </Button>
+
+                    <Button
+                        className="flex items-center gap-2"
+                        handleClick={logout}>
+                        Logout <FiLogOut />
+                    </Button>
+                </div>
             </div>
         </header>
     );
