@@ -11,7 +11,10 @@ export default function SignedHeader() {
     const handleLogoClick = () => router.replace("/home");
     const handleProfileClick = () => router.push("/home/profile");
 
-    const logout = () => router.push("/login");
+    const logout = () => {
+        localStorage.removeItem("token");
+        router.push("/login");
+    };
 
     return (
         <header className="w-full pt-4">
