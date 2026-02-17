@@ -33,11 +33,9 @@ export default function LoginForm() {
                 toast.error(data.error || "Login failed");
                 return;
             }
-
+            localStorage.setItem("token", data.token);
+            router.push("/home");
             toast.success("Login successful!");
-            setTimeout(() => {
-                router.push("/home");
-            }, 800);
         } catch (err) {
             console.error(err);
             toast.error("Something went wrong");
