@@ -3,10 +3,22 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Button from "../buttons/Button";
 import { FaRegUser } from "react-icons/fa";
-import { FiLogOut } from "react-icons/fi"; // A clean logout icon
+import { FiLogOut } from "react-icons/fi";
+import toast from "react-hot-toast";
+import { useEffect } from "react";
 
 export default function SignedHeader() {
     const router = useRouter();
+    useEffect(() => {
+        const token =
+            typeof window !== "undefined"
+                ? localStorage.getItem("token")
+                : null;
+        if (!token) {
+            toast.error("Please login first");
+            router.replace("/login");
+        }
+    }, [router]);
 
     const handleLogoClick = () => router.replace("/home");
     const handleProfileClick = () => router.push("/home/profile");
