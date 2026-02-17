@@ -32,7 +32,7 @@ export const registerUser = async (req, res) => {
             registeredUser.email,
             "Activate your account",
             `Your activation link: ${activationUrl}`,
-            getActivationEmailHTML(activationUrl)
+            getActivationEmailHTML(activationUrl),
         );
 
         res.status(201).json({
@@ -54,6 +54,7 @@ export const loginUser = async (req, res) => {
         const token = generateJWTtoken({
             email: loginUser.email,
             userName: loginUser.userName,
+            role: "user",
         });
         res.status(200).json({ messge: "Login Successful", token: token });
     } catch (err) {
@@ -97,7 +98,7 @@ export const reactivateUser = async (req, res) => {
             user.email,
             "Activate Your Account — Link Resent",
             `Your activation link: ${activationUrl}`,
-            getReactivationEmailHTML(activationUrl)
+            getReactivationEmailHTML(activationUrl),
         );
 
         res.json({ message: "Activation link resent." });
@@ -119,7 +120,7 @@ export const forgotPassword = async (req, res) => {
             user.email,
             "Reset your password",
             `Reset link: ${resetUrl}`,
-            getPasswordResetEmailHTML(resetUrl)
+            getPasswordResetEmailHTML(resetUrl),
         );
 
         res.json({ message: "Password reset link sent" });
