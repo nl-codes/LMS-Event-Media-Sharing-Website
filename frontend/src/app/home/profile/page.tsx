@@ -5,4 +5,6 @@ export const metadata: Metadata = {
     description: "See your profile details",
 };
 
-export default function Home() {}
+export default function ProfilePage() {
+    return <div>{/* Profile content goes here */}</div>;
+}
