@@ -161,3 +161,12 @@ export const logoutUser = (req, res) => {
     });
     res.json({ message: "Logged out successfully" });
 };
+
+export const getMe = (req, res) => {
+    // req.user is set by requireAuth middleware
+    res.json({
+        email: req.user.email,
+        userName: req.user.userName,
+        role: req.user.role,
+    });
+};
