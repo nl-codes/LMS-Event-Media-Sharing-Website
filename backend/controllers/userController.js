@@ -56,7 +56,14 @@ export const loginUser = async (req, res) => {
             userName: loginUser.userName,
             role: "user",
         });
-        res.status(200).json({ messge: "Login Successful", token: token });
+        res.cookie("token", token, {
+            httpOnly: true, // Prevents JS access (XSS protection)
+            secure: process.env.NODE_ENV === "production", // Only send over HTTPS in production
+            sameSite: "lax", // Or "strict" for more security
+            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day (adjust as needed)
+            path: "/",
+        });
+        res.status(200).json({ message: "Login Successful" });
     } catch (err) {
         let status = 400;
         if (
