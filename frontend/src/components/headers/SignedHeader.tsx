@@ -4,27 +4,26 @@ import { useRouter } from "next/navigation";
 import Button from "../buttons/Button";
 import { FaRegUser } from "react-icons/fa";
 import { FiLogOut } from "react-icons/fi";
-import toast from "react-hot-toast";
-import { useEffect } from "react";
+import { backend_url } from "@/config/backend";
+import { useUser } from "@/context/UserContext";
 
-export default function SignedHeader() {
+export default function SignedHeader({ userName }: { userName: string }) {
     const router = useRouter();
-    useEffect(() => {
-        const token =
-            typeof window !== "undefined"
-                ? localStorage.getItem("token")
-                : null;
-        if (!token) {
-            toast.error("Please login first");
-            router.replace("/login");
-        }
-    }, [router]);
+    const { setUser } = useUser();
 
     const handleLogoClick = () => router.replace("/home");
     const handleProfileClick = () => router.push("/home/profile");
 
-    const logout = () => {
-        localStorage.removeItem("token");
+    const logout = async () => {
+        try {
+            await fetch(`${backend_url}/users/logout`, {
+                method: "POST",
+                credentials: "include",
+            });
+        } catch {
+            // Even if the request fails, clear local state
+        }
+        setUser(null);
         router.push("/login");
     };
 
@@ -44,6 +43,9 @@ export default function SignedHeader() {
 
                 {/* Navigation Actions */}
                 <div className="flex items-center gap-4">
+                    <div className="text-lg font-semibold">
+                        {userName && `Welcome, ${userName}`}
+                    </div>
                     {/* Profile Button */}
                     <Button
                         className="flex items-center gap-2"
