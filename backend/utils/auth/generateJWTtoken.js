@@ -6,5 +6,5 @@ export const generateJWTtoken = (payload) => {
         throw new Error("JWT secret key is missing in environment variables");
     }
 
-    return jwt.sign(payload, secret, { expiresIn: "1h" });
+    return jwt.sign(payload, secret, { expiresIn: "1d" });
 };

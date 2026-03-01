@@ -32,7 +32,7 @@ export const registerUser = async (req, res) => {
             registeredUser.email,
             "Activate your account",
             `Your activation link: ${activationUrl}`,
-            getActivationEmailHTML(activationUrl)
+            getActivationEmailHTML(activationUrl),
         );
 
         res.status(201).json({
@@ -54,8 +54,16 @@ export const loginUser = async (req, res) => {
         const token = generateJWTtoken({
             email: loginUser.email,
             userName: loginUser.userName,
+            role: "user",
         });
-        res.status(200).json({ messge: "Login Successful", token: token });
+        res.cookie("token", token, {
+            httpOnly: true, // Prevents JS access (XSS protection)
+            secure: process.env.NODE_ENV === "production", // Only send over HTTPS in production
+            sameSite: "lax", // Or "strict" for more security
+            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day (adjust as needed)
+            path: "/",
+        });
+        res.status(200).json({ message: "Login Successful" });
     } catch (err) {
         let status = 400;
         if (
@@ -97,7 +105,7 @@ export const reactivateUser = async (req, res) => {
             user.email,
             "Activate Your Account — Link Resent",
             `Your activation link: ${activationUrl}`,
-            getReactivationEmailHTML(activationUrl)
+            getReactivationEmailHTML(activationUrl),
         );
 
         res.json({ message: "Activation link resent." });
@@ -119,7 +127,7 @@ export const forgotPassword = async (req, res) => {
             user.email,
             "Reset your password",
             `Reset link: ${resetUrl}`,
-            getPasswordResetEmailHTML(resetUrl)
+            getPasswordResetEmailHTML(resetUrl),
         );
 
         res.json({ message: "Password reset link sent" });
@@ -142,4 +150,23 @@ export const resetPasswordController = async (req, res) => {
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
+};
+
+export const logoutUser = (req, res) => {
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+    });
+    res.json({ message: "Logged out successfully" });
+};
+
+export const getMe = (req, res) => {
+    // req.user is set by requireAuth middleware
+    res.json({
+        email: req.user.email,
+        userName: req.user.userName,
+        role: req.user.role,
+    });
 };

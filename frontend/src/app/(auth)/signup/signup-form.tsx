@@ -50,7 +50,7 @@ export default function SignupForm() {
             console.log("Signup response:", data);
 
             if (!res.ok) {
-                toast.error(data.message || "Signup failed");
+                toast.error(data.error || "Signup failed");
                 return;
             }
 

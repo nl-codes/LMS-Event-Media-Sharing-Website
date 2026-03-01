@@ -2,7 +2,7 @@
 import LandingButton from "@/components/buttons/LandingButton";
 import { useRouter } from "next/navigation";
 
-export default function HomeButtonsGroup() {
+export default function LandingPageButtonGroup() {
     const router = useRouter();
     return (
         <div className="button-area flex gap-8 justify-center items-center">

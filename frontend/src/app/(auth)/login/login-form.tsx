@@ -4,11 +4,14 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import LandingButton from "@/components/buttons/LandingButton";
 import { backend_url } from "@/config/backend";
+import { useUser } from "@/context/UserContext";
 
 export default function LoginForm() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+
+    const { setUser } = useUser();
 
     const handleLogin = async () => {
         // Null check
@@ -23,21 +26,32 @@ export default function LoginForm() {
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include",
                 body: JSON.stringify({ email, password }),
             });
 
             const data = await res.json();
-            // console.log("Login response:", data);
 
             if (!res.ok) {
                 toast.error(data.error || "Login failed");
                 return;
             }
 
+            // Fetch user info from the protected /me endpoint
+            // (the login response set the httpOnly cookie)
+            const meRes = await fetch(`${backend_url}/users/me`, {
+                credentials: "include",
+            });
+
+            if (!meRes.ok) {
+                toast.error("Session Expired. Login Again");
+                return;
+            }
+
+            const user = await meRes.json();
+            setUser(user);
+            router.push("/home");
             toast.success("Login successful!");
-            setTimeout(() => {
-                router.push("/home");
-            }, 800);
         } catch (err) {
             console.error(err);
             toast.error("Something went wrong");
