@@ -1,5 +1,5 @@
 import { User } from "../models/userModel.js";
-import { createProfile } from "../services/profileService.js";
+import { createProfile, getProfile } from "../services/profileService.js";
 
 export const addProfile = async (req, res) => {
     try {
@@ -21,6 +21,21 @@ export const addProfile = async (req, res) => {
         console.error("❌ Error creating profile: ", err);
         const status =
             err.message === "Profile already exists for this user" ? 409 : 400;
+        res.status(status).json({ error: err.message });
+    }
+};
+
+export const retrieveProfile = async (req, res) => {
+    try {
+        const { email } = req.user;
+        const user = await User.findOne({ email });
+        if (!user) throw new Error("User not found");
+
+        const profile = await getProfile(user._id);
+        res.status(200).json({ profile });
+    } catch (err) {
+        console.error("❌ Error retrieving profile: ", err);
+        const status = err.message === "Profile not found" ? 404 : 400;
         res.status(status).json({ error: err.message });
     }
 };
