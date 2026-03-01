@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
 
 // Routes that authenticated users should NOT access (redirect to /home)
 const AUTH_ONLY_PATHS = [
+    "/",
     "/login",
     "/signup",
     "/forgot-password",
