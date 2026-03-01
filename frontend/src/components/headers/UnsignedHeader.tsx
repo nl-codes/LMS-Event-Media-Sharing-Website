@@ -1,6 +1,6 @@
 "use client";
 import LandingButton from "@/components/buttons/LandingButton";
-import LogoRounded200 from "./Logo_200_Round";
+import LogoRounded200 from "../logo/Logo_200_Round";
 import Link from "next/link";
 
 export default function UnsignedHeader() {
