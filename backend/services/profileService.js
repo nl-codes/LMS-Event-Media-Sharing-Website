@@ -21,3 +21,12 @@ export const createProfile = async (userId, profileData) => {
 
     return await newProfile.save();
 };
+
+export const getProfile = async (userId) => {
+    const profile = await Profile.findOne({ user: userId }).populate(
+        "user",
+        "userName email",
+    );
+    if (!profile) throw new Error("Profile not found");
+    return profile;
+};
