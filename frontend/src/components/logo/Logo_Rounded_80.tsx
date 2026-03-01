@@ -7,6 +7,7 @@ export default function LogoRounded80() {
             src={lms_logo}
             alt="Logo"
             width={80}
+            priority
             height={80}
             className="border-2 border-[#474e93] cursor-pointer rounded-full object-contain"
         />
