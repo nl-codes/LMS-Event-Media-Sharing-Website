@@ -3,6 +3,7 @@ import {
     createProfile,
     getProfile,
     updateProfile,
+    deleteProfile,
 } from "../services/profileService.js";
 
 export const addProfile = async (req, res) => {
@@ -63,6 +64,21 @@ export const editProfile = async (req, res) => {
         });
     } catch (err) {
         console.error("❌ Error updating profile: ", err);
+        const status = err.message === "Profile not found" ? 404 : 400;
+        res.status(status).json({ error: err.message });
+    }
+};
+
+export const removeProfile = async (req, res) => {
+    try {
+        const { email } = req.user;
+        const user = await User.findOne({ email });
+        if (!user) throw new Error("User not found");
+
+        await deleteProfile(user._id);
+        res.status(200).json({ message: "Profile deleted successfully" });
+    } catch (err) {
+        console.error("❌ Error deleting profile: ", err);
         const status = err.message === "Profile not found" ? 404 : 400;
         res.status(status).json({ error: err.message });
     }
