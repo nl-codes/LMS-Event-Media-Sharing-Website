@@ -57,3 +57,21 @@ export const updateProfile = async (userId, updateData, newImageUrl) => {
 
     return await profile.save();
 };
+
+export const deleteProfile = async (userId) => {
+    const profile = await Profile.findOne({ user: userId });
+    if (!profile) throw new Error("Profile not found");
+
+    // Delete profile picture from Cloudinary if it exists
+    if (profile.profilePicture) {
+        // image stored in lms/profiles/uniqueId
+        const publicId = profile.profilePicture
+            .split("/")
+            .slice(-3)
+            .join("/")
+            .split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
+    }
+
+    await Profile.findOneAndDelete({ user: userId });
+};
