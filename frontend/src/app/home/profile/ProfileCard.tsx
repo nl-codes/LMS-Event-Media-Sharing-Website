@@ -89,7 +89,18 @@ export default function ProfileCard() {
         );
 
     return (
-        <div className="shadow-xl bg-cuscream rounded-xl p-8 w-[450px]">
+        <div className="relative shadow-xl bg-cuscream rounded-xl p-8 w-[450px]">
+            {profile.updatedAt && (
+                <div className="absolute top-4 right-4 text-[10px] font-medium text-gray-500 ">
+                    Last updated:{" "}
+                    {new Date(profile.updatedAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                    })}
+                </div>
+            )}
+
             <h2 className="text-2xl font-bold text-cusblue mb-6 text-center">
                 Your Profile
             </h2>
