@@ -6,4 +6,5 @@ export type Profile = {
     bio: string;
     profilePicture: string;
     user: User | null;
+    updatedAt: string;
 };
