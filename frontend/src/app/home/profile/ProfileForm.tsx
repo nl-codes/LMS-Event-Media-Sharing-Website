@@ -1,5 +1,5 @@
 "use client";
-import { Profile } from "@/types/Profile";
+import { useRef } from "react";
 import Image from "next/image";
 import default_profile from "public/profile-male.png";
 
@@ -21,34 +21,41 @@ export default function ProfileForm({
     isReadOnly,
     onChange,
 }: ProfileFormProps) {
+    const fileInputRef = useRef(null);
+
     const inputClasses =
         "w-full p-2 border rounded-md bg-white text-black disabled:bg-gray-100 disabled:cursor-not-allowed";
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0] && onChange) {
             onChange("profilePicture", e.target.files[0]);
         }
     };
 
-    // Determine the image source (handle both URL strings and File objects)
+    const handleImageClick = () => {
+        if (!isReadOnly && fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
     const getImageSrc = () => {
         if (!initialData?.profilePicture) return default_profile;
-
         if (typeof initialData.profilePicture === "string") {
             return initialData.profilePicture || default_profile;
         }
-
         if (initialData.profilePicture instanceof File) {
             return URL.createObjectURL(initialData.profilePicture);
         }
-
         return default_profile;
     };
 
     return (
         <div className="space-y-4 w-full">
             <div className="flex flex-col items-center gap-3">
-                <div className="relative w-32 h-32 overflow-hidden rounded-full border-4 border-cusblue">
+                <div
+                    onClick={handleImageClick}
+                    className={`relative w-32 h-32 overflow-hidden rounded-full border-4 border-cusblue
+                        ${!isReadOnly ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}>
                     <Image
                         src={getImageSrc()}
                         alt="Profile"
@@ -56,14 +63,29 @@ export default function ProfileForm({
                         className="object-cover"
                         priority
                     />
+                    {!isReadOnly && (
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                            <span className="text-white text-xs font-bold">
+                                Change
+                            </span>
+                        </div>
+                    )}
                 </div>
+
+                {/* 5. Hidden Input Field */}
                 {!isReadOnly && (
                     <input
+                        ref={fileInputRef}
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
-                        className="text-sm text-gray-600"
+                        className="hidden" // Hide the actual input
                     />
+                )}
+                {!isReadOnly && (
+                    <p className="text-xs text-gray-500">
+                        Click image to upload
+                    </p>
                 )}
             </div>
 
