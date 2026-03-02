@@ -2,6 +2,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import default_profile from "public/profile-male.png";
+import { Profile } from "@/types/Profile";
 
 export type ProfileFormData = {
     firstName: string;
@@ -21,12 +22,12 @@ export default function ProfileForm({
     isReadOnly,
     onChange,
 }: ProfileFormProps) {
-    const fileInputRef = useRef(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const inputClasses =
         "w-full p-2 border rounded-md bg-white text-black disabled:bg-gray-100 disabled:cursor-not-allowed";
 
-    const handleFileChange = (e) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0] && onChange) {
             onChange("profilePicture", e.target.files[0]);
         }
