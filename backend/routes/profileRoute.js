@@ -4,6 +4,7 @@ import {
     addProfile,
     retrieveProfile,
     editProfile,
+    removeProfile,
 } from "../controllers/profileController.js";
 import { uploadUserProfile } from "../middleware/uploadMiddleware.js";
 
@@ -22,5 +23,6 @@ router.put(
     uploadUserProfile.single("profilePicture"),
     editProfile,
 );
+router.delete("/", requireAuth, removeProfile);
 
 export default router;
