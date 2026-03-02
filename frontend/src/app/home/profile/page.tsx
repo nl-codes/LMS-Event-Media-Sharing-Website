@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import ProfileCard from "./ProfileCard";
 
 export const metadata: Metadata = {
     title: "View Profile | LMS 24",
@@ -6,5 +7,11 @@ export const metadata: Metadata = {
 };
 
 export default function ProfilePage() {
-    return <div>{/* Profile content goes here */}</div>;
+    return (
+        <main className="flex justify-center items-center min-h-[60vh] bg-cuscream">
+            <section className="max-w-xl w-full">
+                <ProfileCard />
+            </section>
+        </main>
+    );
 }
