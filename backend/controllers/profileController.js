@@ -11,7 +11,6 @@ export const addProfile = async (req, res) => {
         const { email } = req.user;
         const user = await User.findOne({ email });
         if (!user) throw new Error("User not found");
-        console.log(req.body);
         const profilePicture = req.file ? req.file.path : "";
         const profile = await createProfile(user._id, {
             ...req.body,
