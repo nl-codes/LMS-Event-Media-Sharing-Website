@@ -80,6 +80,7 @@ export default function EventDetailsPage() {
                 </Link>
                 <Link
                     href={`/home/events/${event._id}/edit`}
+                    replace
                     className="flex items-center gap-2 bg-white border border-cusblue/20 text-cusblue px-5 py-2 rounded-xl hover:bg-cusblue hover:text-white transition-all shadow-sm">
                     <Edit3 className="w-4 h-4" /> Edit Event
                 </Link>
