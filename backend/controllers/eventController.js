@@ -19,9 +19,8 @@ export const registerEvent = async (req, res) => {
                     "Event name, location, start time, and end time are required",
             });
         }
-
         const eventData = {
-            hostId: req.user.id,
+            hostEmail: req.user.email,
             eventName,
             description,
             location,
