@@ -25,7 +25,7 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
             </div>
 
             {/* Event Details */}
-            <div className="space-y-2 mb-6 flex-grow">
+            <div className="space-y-2 mb-6 grow">
                 <div className="flex items-center text-cusviolet/80 text-sm">
                     <MapPin className="w-4 h-4 mr-2 shrink-0" />
                     <span className="truncate">{event.location}</span>
