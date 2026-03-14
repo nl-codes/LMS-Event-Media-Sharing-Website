@@ -57,7 +57,7 @@ body {
     padding: 16px;
     background-color: #d6cece;
     border-radius: 16;
-    width: 360px;
+    width: 100%;
     height: 50px;
     font-size: larger;
 }
@@ -79,6 +79,7 @@ body {
 
 /* Custom shadow for cream theme */
 .shadow-xl {
-    box-shadow: 0 20px 25px -5px rgba(71, 78, 147, 0.1),
+    box-shadow:
+        0 20px 25px -5px rgba(71, 78, 147, 0.1),
         0 10px 10px -5px rgba(71, 78, 147, 0.04);
 }
