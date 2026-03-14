@@ -2,6 +2,7 @@ import {
     createEvent,
     findAllEventsByHost,
     findEventById,
+    findEventBySlug,
 } from "../services/eventService.js";
 
 export const registerEvent = async (req, res) => {
@@ -76,6 +77,23 @@ export const getHostEvents = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const getEventBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const event = await findEventBySlug(slug);
+
+        res.status(200).json({
+            success: true,
+            data: event,
+        });
+    } catch (error) {
+        res.status(404).json({
             success: false,
             message: error.message,
         });
