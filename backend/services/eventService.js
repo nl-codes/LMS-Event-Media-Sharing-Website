@@ -112,3 +112,30 @@ export const updateEvent = async (eventId, updateData, hostId) => {
         throw error;
     }
 };
+
+export const updateEventStatus = async (eventId, status, hostId) => {
+    try {
+        const event = await Event.findById(eventId);
+
+        if (!event) {
+            throw new Error("Event not found");
+        }
+
+        // Check if user is the host
+        if (event.hostId.toString() !== hostId) {
+            throw new Error(
+                "Unauthorized: Only event host can update event status",
+            );
+        }
+
+        const updatedEvent = await Event.findByIdAndUpdate(
+            eventId,
+            { status },
+            { new: true, runValidators: true },
+        ).populate("hostId", "username email");
+
+        return updatedEvent;
+    } catch (error) {
+        throw error;
+    }
+};
