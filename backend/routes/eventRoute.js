@@ -8,6 +8,7 @@ import {
     editEvent,
     editEventStatus,
     deleteEvent,
+    requestUploadSignature,
 } from "../controllers/eventController.js";
 
 const router = express.Router();
@@ -21,5 +22,6 @@ router.delete("/:id", requireAuth, deleteEvent);
 
 // Public routes (for QR code access)
 router.get("/:slug", getEventBySlug);
+router.post("/:slug/upload-check", requestUploadSignature);
 
 export default router;
