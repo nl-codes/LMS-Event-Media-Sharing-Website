@@ -55,6 +55,7 @@ export const loginUser = async (req, res) => {
             email: loginUser.email,
             userName: loginUser.userName,
             role: "user",
+            id: loginUser._id,
         });
         res.cookie("token", token, {
             httpOnly: true, // Prevents JS access (XSS protection)

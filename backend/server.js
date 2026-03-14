@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./database/connection.js";
 import userRoutes from "./routes/userRoute.js";
 import profileRoutes from "./routes/profileRoute.js";
+import eventRoutes from "./routes/eventRoute.js";
 
 dotenv.config();
 
@@ -28,3 +29,4 @@ connectDB();
 
 app.use("/users", userRoutes);
 app.use("/users/profile", profileRoutes);
+app.use("/events", eventRoutes);
