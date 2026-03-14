@@ -87,6 +87,4 @@ EventSchema.virtual("isUpcoming").get(function () {
     return new Date() < this.startTime;
 });
 
-const Event = mongoose.model("Event", EventSchema);
-
-export default Event;
+export const Event = mongoose.model("Event", EventSchema);
