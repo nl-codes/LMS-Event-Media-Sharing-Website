@@ -1,4 +1,8 @@
-import { createEvent, findEventById } from "../services/eventService.js";
+import {
+    createEvent,
+    findAllEventsByHost,
+    findEventById,
+} from "../services/eventService.js";
 
 export const registerEvent = async (req, res) => {
     try {
@@ -55,6 +59,23 @@ export const getEventById = async (req, res) => {
         });
     } catch (error) {
         res.status(404).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const getHostEvents = async (req, res) => {
+    try {
+        const events = await findAllEventsByHost(req.user.id);
+
+        res.status(200).json({
+            success: true,
+            total_events: events.length,
+            data: events,
+        });
+    } catch (error) {
+        res.status(500).json({
             success: false,
             message: error.message,
         });
