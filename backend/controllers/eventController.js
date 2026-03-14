@@ -185,3 +185,42 @@ export const deleteEvent = async (req, res) => {
         });
     }
 };
+
+export const requestUploadSignature = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const event = await findEventBySlug(slug);
+
+        // Check if event is live (Gatekeeper functionality)
+        if (!event.isLive) {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "Media upload not allowed. Event is not currently live.",
+                eventStatus: {
+                    status: event.status,
+                    isLive: event.isLive,
+                    isUpcoming: event.isUpcoming,
+                    startTime: event.startTime,
+                    endTime: event.endTime,
+                },
+            });
+        }
+
+        // If event is live, allow upload (return success)
+        res.status(200).json({
+            success: true,
+            message: "Upload authorized",
+            eventStatus: {
+                status: event.status,
+                isLive: event.isLive,
+                eventName: event.eventName,
+            },
+        });
+    } catch (error) {
+        res.status(404).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
