@@ -3,6 +3,7 @@ import {
     findAllEventsByHost,
     findEventById,
     findEventBySlug,
+    removeEvent,
     updateEvent,
     updateEventStatus,
 } from "../services/eventService.js";
@@ -154,6 +155,29 @@ export const editEventStatus = async (req, res) => {
             : error.message.includes("not found")
               ? 404
               : 400;
+
+        res.status(statusCode).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const deleteEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await removeEvent(id, req.user.id);
+
+        res.status(200).json({
+            success: true,
+            message: result.message,
+        });
+    } catch (error) {
+        const statusCode = error.message.includes("Unauthorized")
+            ? 403
+            : error.message.includes("not found")
+              ? 404
+              : 500;
 
         res.status(statusCode).json({
             success: false,
