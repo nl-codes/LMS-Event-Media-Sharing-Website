@@ -43,3 +43,14 @@ export const findEventById = async (eventId) => {
         throw error;
     }
 };
+
+export const findAllEventsByHost = async (hostId) => {
+    try {
+        const events = await Event.find({ hostId })
+            .populate("hostId", "username email")
+            .sort({ createdAt: -1 });
+        return events;
+    } catch (error) {
+        throw error;
+    }
+};
