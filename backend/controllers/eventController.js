@@ -1,4 +1,4 @@
-import * as eventService from "../services/eventService.js";
+import { createEvent, findEventById } from "../services/eventService.js";
 
 export const registerEvent = async (req, res) => {
     try {
@@ -29,7 +29,7 @@ export const registerEvent = async (req, res) => {
             isPremium: isPremium || false,
         };
 
-        const event = await eventService.createEvent(eventData);
+        const event = await createEvent(eventData);
 
         res.status(201).json({
             success: true,
@@ -38,6 +38,23 @@ export const registerEvent = async (req, res) => {
         });
     } catch (error) {
         res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const getEventById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const event = await findEventById(id);
+
+        res.status(200).json({
+            success: true,
+            data: event,
+        });
+    } catch (error) {
+        res.status(404).json({
             success: false,
             message: error.message,
         });
