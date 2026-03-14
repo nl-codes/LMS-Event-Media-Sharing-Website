@@ -3,6 +3,7 @@ import {
     findAllEventsByHost,
     findEventById,
     findEventBySlug,
+    updateEvent,
 } from "../services/eventService.js";
 
 export const registerEvent = async (req, res) => {
@@ -94,6 +95,32 @@ export const getEventBySlug = async (req, res) => {
         });
     } catch (error) {
         res.status(404).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const editEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        const updatedEvent = await updateEvent(id, updateData, req.user.id);
+
+        res.status(200).json({
+            success: true,
+            message: "Event updated successfully",
+            data: updatedEvent,
+        });
+    } catch (error) {
+        const statusCode = error.message.includes("Unauthorized")
+            ? 403
+            : error.message.includes("not found")
+              ? 404
+              : 400;
+
+        res.status(statusCode).json({
             success: false,
             message: error.message,
         });
