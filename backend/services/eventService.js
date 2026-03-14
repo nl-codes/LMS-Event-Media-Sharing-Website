@@ -26,3 +26,20 @@ export const createEvent = async (eventData) => {
         throw error;
     }
 };
+
+export const findEventById = async (eventId) => {
+    try {
+        const event = await Event.findById(eventId).populate(
+            "hostId",
+            "username email",
+        );
+
+        if (!event) {
+            throw new Error("Event not found");
+        }
+
+        return event;
+    } catch (error) {
+        throw error;
+    }
+};
