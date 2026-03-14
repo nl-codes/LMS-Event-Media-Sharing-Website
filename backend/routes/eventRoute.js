@@ -7,6 +7,7 @@ import {
     getEventBySlug,
     editEvent,
     editEventStatus,
+    deleteEvent,
 } from "../controllers/eventController.js";
 
 const router = express.Router();
@@ -16,6 +17,7 @@ router.get("/details/:id", requireAuth, getEventById);
 router.get("/host-events", requireAuth, getHostEvents);
 router.patch("/:id", requireAuth, editEvent);
 router.patch("/:id/status", requireAuth, editEventStatus);
+router.delete("/:id", requireAuth, deleteEvent);
 
 // Public routes (for QR code access)
 router.get("/:slug", getEventBySlug);
