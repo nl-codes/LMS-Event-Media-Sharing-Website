@@ -139,3 +139,25 @@ export const updateEventStatus = async (eventId, status, hostId) => {
         throw error;
     }
 };
+
+export const removeEvent = async (eventId, hostId) => {
+    try {
+        const event = await Event.findById(eventId);
+
+        if (!event) {
+            throw new Error("Event not found");
+        }
+
+        // Check if user is the host
+        if (event.hostId.toString() !== hostId) {
+            throw new Error(
+                "Unauthorized: Only event host can delete this event",
+            );
+        }
+
+        await Event.findByIdAndDelete(eventId);
+        return { message: "Event deleted successfully" };
+    } catch (error) {
+        throw error;
+    }
+};
