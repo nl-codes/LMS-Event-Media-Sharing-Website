@@ -54,3 +54,20 @@ export const findAllEventsByHost = async (hostId) => {
         throw error;
     }
 };
+
+export const findEventBySlug = async (slug) => {
+    try {
+        const event = await Event.findOne({ uniqueSlug: slug }).populate(
+            "hostId",
+            "username email",
+        );
+
+        if (!event) {
+            throw new Error("Event not found");
+        }
+
+        return event;
+    } catch (error) {
+        throw error;
+    }
+};
