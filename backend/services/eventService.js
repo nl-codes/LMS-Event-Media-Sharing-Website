@@ -71,3 +71,44 @@ export const findEventBySlug = async (slug) => {
         throw error;
     }
 };
+
+export const updateEvent = async (eventId, updateData, hostId) => {
+    try {
+        const event = await Event.findById(eventId);
+
+        if (!event) {
+            throw new Error("Event not found");
+        }
+
+        // Check if user is the host
+        if (event.hostId.toString() !== hostId) {
+            throw new Error(
+                "Unauthorized: Only event host can update this event",
+            );
+        }
+
+        // Validate times if being updated
+        if (updateData.startTime || updateData.endTime) {
+            const startTime = updateData.startTime
+                ? new Date(updateData.startTime)
+                : event.startTime;
+            const endTime = updateData.endTime
+                ? new Date(updateData.endTime)
+                : event.endTime;
+
+            if (startTime >= endTime) {
+                throw new Error("Start time must be before end time");
+            }
+        }
+
+        const updatedEvent = await Event.findByIdAndUpdate(
+            eventId,
+            updateData,
+            { new: true, runValidators: true },
+        ).populate("hostId", "username email");
+
+        return updatedEvent;
+    } catch (error) {
+        throw error;
+    }
+};
