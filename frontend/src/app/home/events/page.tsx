@@ -32,8 +32,6 @@ export default function EventsPage() {
     }, []);
 
     const onDelete = async (id: string) => {
-        // Using a more modern toast-based confirmation or simple native is fine,
-        // but let's keep the logic clean.
         if (!confirm("Are you sure you want to delete this event?")) return;
 
         const loadingToast = toast.loading("Deleting event...");
