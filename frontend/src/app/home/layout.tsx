@@ -1,7 +1,13 @@
 import SignedHeader from "@/components/headers/SignedHeader";
 import { userJWTToken } from "@/types/User";
 import { jwtDecode } from "jwt-decode";
+import { Metadata } from "next";
 import { cookies } from "next/headers";
+
+export const metadata: Metadata = {
+    title: "Home | LMS 24",
+    description: "User Dashboard",
+};
 
 export default async function UserLayout({
     children,

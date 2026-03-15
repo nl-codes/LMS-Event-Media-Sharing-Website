@@ -1,0 +1,285 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getEventById } from "@/lib/eventApi";
+import type { Event } from "@/types/Event";
+import { useParams } from "next/navigation";
+import {
+    Calendar,
+    MapPin,
+    Clock,
+    ArrowLeft,
+    Edit3,
+    Globe,
+    Info,
+    Loader2,
+    CheckCircle2,
+    XCircle,
+} from "lucide-react";
+
+export default function EventDetailsPage() {
+    const [event, setEvent] = useState<Event | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const params = useParams();
+    const eventId = typeof params?.id === "string" ? params.id : "";
+
+    useEffect(() => {
+        const run = async () => {
+            try {
+                const data = await getEventById(eventId);
+                setEvent(data);
+            } catch (e) {
+                setError((e as Error).message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        void run();
+    }, [eventId]);
+
+    if (loading) {
+        return (
+            <main className="flex items-center justify-center min-h-screen">
+                <Loader2 className="w-10 h-10 animate-spin text-cusblue opacity-50" />
+            </main>
+        );
+    }
+
+    if (error || !event) {
+        return (
+            <main className="max-w-4xl mx-auto px-6 py-20 text-center">
+                <div className="bg-red-50 border border-red-100 p-8 rounded-2xl">
+                    <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-cusblue mb-2">
+                        Oops!
+                    </h2>
+                    <p className="text-cusviolet mb-6">
+                        {error || "Event not found."}
+                    </p>
+                    <Link
+                        href="/home/events"
+                        className="text-cusblue font-semibold underline">
+                        Return to Events
+                    </Link>
+                </div>
+            </main>
+        );
+    }
+
+    return (
+        <main className="max-w-5xl mx-auto px-6 py-10 profile-card-animate">
+            {/* Navigation Header */}
+            <div className="flex items-center justify-between mb-8">
+                <Link
+                    href="/home/events"
+                    className="flex items-center gap-2 text-cusviolet hover:text-cusblue transition-colors font-medium">
+                    <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+                </Link>
+                <Link
+                    href={`/home/events/${event._id}/edit`}
+                    replace
+                    className="flex items-center gap-2 bg-white border border-cusblue/20 text-cusblue px-5 py-2 rounded-xl hover:bg-cusblue hover:text-white transition-all shadow-sm">
+                    <Edit3 className="w-4 h-4" /> Edit Event
+                </Link>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Content Card */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-xl border border-white">
+                        <div className="flex items-center gap-3 mb-4">
+                            {/* Status Badges */}
+                            <span
+                                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${
+                                    event.isLive
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-gray-100 text-gray-600"
+                                }`}>
+                                {event.isLive ? (
+                                    <>
+                                        <CheckCircle2 className="w-3 h-3" />{" "}
+                                        Live Now
+                                    </>
+                                ) : (
+                                    <>
+                                        <XCircle className="w-3 h-3" /> Draft /
+                                        Private
+                                    </>
+                                )}
+                            </span>
+                            {event.isPremium && (
+                                <span className="bg-custeal/20 text-custeal px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                    <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                                    Premium
+                                </span>
+                            )}
+                        </div>
+
+                        <h1 className="text-4xl font-bold text-cusblue mb-4 leading-tight">
+                            {event.eventName}
+                        </h1>
+
+                        <p className="text-cusviolet/80 text-lg leading-relaxed whitespace-pre-wrap mb-8">
+                            {event.description ||
+                                "No description provided for this event."}
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8 border-t border-cusblue/5">
+                            <div className="flex gap-4">
+                                <div className="bg-cuscream p-3 rounded-2xl h-fit">
+                                    <MapPin className="w-6 h-6 text-cusblue" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-cusviolet uppercase tracking-tight">
+                                        Location
+                                    </p>
+                                    <p className="text-cusblue font-medium">
+                                        {event.location}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex gap-4">
+                                <div className="bg-cuscream p-3 rounded-2xl h-fit">
+                                    <Globe className="w-6 h-6 text-cusblue" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-cusviolet uppercase tracking-tight">
+                                        Public URL
+                                    </p>
+                                    <p className="text-cusblue font-mono text-sm">
+                                        {event.uniqueSlug}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sidebar Info Card */}
+                <div className="space-y-6">
+                    <div className="bg-cusblue text-cuscream p-8 rounded-3xl shadow-xl">
+                        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                            <Calendar className="w-5 h-5" /> Schedule
+                        </h3>
+
+                        <div className="space-y-6">
+                            <div className="flex items-start gap-3">
+                                <CheckCircle2 className="w-5 h-5 text-cuscream/60 mt-1" />
+                                <div>
+                                    <p className="text-cuscream/60 text-xs uppercase font-bold mb-1">
+                                        Starts
+                                    </p>
+                                    <p className="text-lg font-semibold leading-tight">
+                                        {new Date(
+                                            event.startTime,
+                                        ).toLocaleDateString(undefined, {
+                                            weekday: "long",
+                                            month: "long",
+                                            day: "numeric",
+                                        })}
+                                    </p>
+                                    <p className="text-cuscream/80 italic flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {new Date(
+                                            event.startTime,
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="border-l-2 border-cuscream/20 pl-4 py-1 ml-2">
+                                <div className="flex items-start gap-3">
+                                    <CheckCircle2 className="w-5 h-5 text-cuscream/60 mt-1" />
+                                    <div>
+                                        <p className="text-cuscream/60 text-xs uppercase font-bold mb-1">
+                                            Ends
+                                        </p>
+                                        <p className="text-lg font-semibold leading-tight">
+                                            {new Date(
+                                                event.endTime,
+                                            ).toLocaleDateString(undefined, {
+                                                weekday: "short",
+                                                month: "long",
+                                                day: "numeric",
+                                            })}
+                                        </p>
+                                        <p className="text-cuscream/80 italic flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            {new Date(
+                                                event.endTime,
+                                            ).toLocaleTimeString([], {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-cuscream/10 text-center">
+                            <p className="text-sm font-medium opacity-80 mb-4 flex items-center justify-center gap-1">
+                                Event Status:{" "}
+                                <span className="capitalize flex items-center gap-1">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    {event.status}
+                                </span>
+                            </p>
+                            <Link
+                                href={`/events/${event.uniqueSlug}`}
+                                className="block w-full py-3 bg-cuscream text-cusblue rounded-xl font-bold hover:scale-[1.02] transition-transform">
+                                View Public Page
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="bg-white/50 border border-cusblue/10 p-6 rounded-3xl">
+                        <h4 className="flex items-center gap-2 text-cusblue font-bold mb-2">
+                            <Info className="w-4 h-4" /> Quick Info
+                        </h4>
+                        <ul className="text-sm text-cusviolet space-y-2">
+                            <li className="flex justify-between items-center">
+                                <span>Premium Event</span>
+                                <span className="font-bold flex items-center gap-1">
+                                    {event.isPremium ? (
+                                        <>
+                                            <CheckCircle2 className="w-4 h-4 text-custeal" />
+                                            Yes
+                                        </>
+                                    ) : (
+                                        <>
+                                            <XCircle className="w-4 h-4 text-gray-400" />
+                                            No
+                                        </>
+                                    )}
+                                </span>
+                            </li>
+                            <li className="flex justify-between items-center">
+                                <span>Live Status</span>
+                                <span className="font-bold flex items-center gap-1">
+                                    {event.isLive ? (
+                                        <>
+                                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                            Active
+                                        </>
+                                    ) : (
+                                        <>
+                                            <XCircle className="w-4 h-4 text-gray-400" />
+                                            Inactive
+                                        </>
+                                    )}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    );
+}
