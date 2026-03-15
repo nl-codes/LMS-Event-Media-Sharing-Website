@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getEventById } from "@/lib/eventApi";
 import type { Event } from "@/types/Event";
 import { useParams } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
+import QRModal from "@/components/events/QRModal";
 import {
     Calendar,
     MapPin,
@@ -18,125 +19,7 @@ import {
     CheckCircle2,
     XCircle,
     QrCode,
-    Download,
-    X,
 } from "lucide-react";
-
-function QRModal({
-    slug,
-    eventName,
-    onClose,
-}: {
-    slug: string;
-    eventName: string;
-    onClose: () => void;
-}) {
-    const canvasRef = useRef<HTMLDivElement>(null);
-    const qrUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/events/${slug}`;
-
-    const handleDownload = () => {
-        const canvas = canvasRef.current?.querySelector("canvas");
-        if (!canvas) return;
-
-        const padding = 24;
-        const size = canvas.width;
-        const total = size + padding * 2;
-
-        const out = document.createElement("canvas");
-        out.width = total;
-        out.height = total + 40; // extra space for label
-        const ctx = out.getContext("2d")!;
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, out.width, out.height);
-
-        ctx.drawImage(canvas, padding, padding, size, size);
-
-        // Slug label
-        ctx.fillStyle = "#1e3a5f";
-        ctx.font = "bold 13px monospace";
-        ctx.textAlign = "center";
-        ctx.fillText(slug, total / 2, total + 24);
-
-        const link = document.createElement("a");
-        link.download = `qr-${slug}.png`;
-        link.href = out.toDataURL("image/png");
-        link.click();
-    };
-
-    // Close on backdrop click
-    const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (e.target === e.currentTarget) onClose();
-    };
-
-    // Close on Escape
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
-    }, [onClose]);
-
-    return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-            onClick={handleBackdrop}
-            aria-modal="true"
-            role="dialog"
-            aria-label="Event QR Code">
-            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center gap-6 animate-[fadeInScale_0.2s_ease-out]">
-                {/* Close */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-1.5 rounded-full text-cusviolet hover:bg-cusblue/10 transition-colors"
-                    aria-label="Close QR modal">
-                    <X className="w-5 h-5" />
-                </button>
-
-                {/* Header */}
-                <div className="text-center">
-                    <div className="bg-cuscream w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                        <QrCode className="w-7 h-7 text-cusblue" />
-                    </div>
-                    <h2 className="text-xl font-bold text-cusblue leading-tight">
-                        {eventName}
-                    </h2>
-                    <p className="text-xs text-cusviolet/60 mt-1">
-                        Scan to open the event page
-                    </p>
-                </div>
-
-                {/* QR Code */}
-                <div
-                    ref={canvasRef}
-                    className="p-4 bg-white border-2 border-cusblue/10 rounded-2xl shadow-inner">
-                    <QRCodeCanvas
-                        value={qrUrl}
-                        size={200}
-                        bgColor="#ffffff"
-                        fgColor="#0f2d57" /* matches cusblue */
-                        level="H" /* High error-correction so logo overlays work */
-                        marginSize={1}
-                    />
-                </div>
-
-                {/* URL pill */}
-                <p className="text-xs font-mono text-cusviolet/70 bg-cuscream px-4 py-2 rounded-full text-center break-all">
-                    {qrUrl}
-                </p>
-
-                {/* Download */}
-                <button
-                    onClick={handleDownload}
-                    className="w-full flex items-center justify-center gap-2 bg-cusblue text-cuscream py-3 rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all shadow-md">
-                    <Download className="w-4 h-4" />
-                    Download PNG
-                </button>
-            </div>
-        </div>
-    );
-}
 
 export default function EventDetailsPage() {
     const [event, setEvent] = useState<Event | null>(null);
@@ -209,7 +92,6 @@ export default function EventDetailsPage() {
                         <ArrowLeft className="w-4 h-4" /> Back to Dashboard
                     </Link>
                     <div className="flex items-center gap-3">
-                        {/* ── QR Code Button ── */}
                         <button
                             onClick={() => setShowQR(true)}
                             className="flex items-center gap-2 bg-cuscream border border-cusblue/20 text-cusblue px-5 py-2 rounded-xl hover:bg-cusblue hover:text-white transition-all shadow-sm font-medium">
@@ -229,7 +111,6 @@ export default function EventDetailsPage() {
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-xl border border-white">
                             <div className="flex items-center gap-3 mb-4">
-                                {/* Status Badges */}
                                 <span
                                     className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${
                                         event.isLive
@@ -296,7 +177,7 @@ export default function EventDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Sidebar Info Card */}
+                    {/* Sidebar */}
                     <div className="space-y-6">
                         <div className="bg-cusblue text-cuscream p-8 rounded-3xl shadow-xl">
                             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -380,12 +261,11 @@ export default function EventDetailsPage() {
                             </div>
                         </div>
 
-                        {/* ── QR Code Preview Card ── */}
+                        {/* QR Preview Card */}
                         <div className="bg-white/50 border border-cusblue/10 p-6 rounded-3xl flex flex-col items-center gap-4">
                             <h4 className="flex items-center gap-2 text-cusblue font-bold self-start">
                                 <QrCode className="w-4 h-4" /> Event QR Code
                             </h4>
-                            {/* Tiny preview — not interactive, just visual */}
                             <div className="p-3 bg-white rounded-xl border border-cusblue/10 shadow-sm pointer-events-none select-none">
                                 <QRCodeCanvas
                                     value={`http://localhost:8080/events/${event.uniqueSlug}`}
@@ -404,6 +284,7 @@ export default function EventDetailsPage() {
                             </button>
                         </div>
 
+                        {/* Quick Info */}
                         <div className="bg-white/50 border border-cusblue/10 p-6 rounded-3xl">
                             <h4 className="flex items-center gap-2 text-cusblue font-bold mb-2">
                                 <Info className="w-4 h-4" /> Quick Info
