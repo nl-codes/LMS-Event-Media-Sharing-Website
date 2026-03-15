@@ -1,5 +1,6 @@
 "use client";
-import { Calendar } from "lucide-react";
+import Link from "next/link";
+import { Calendar, ArrowRight } from "lucide-react";
 
 export default function Home() {
     return (
@@ -18,6 +19,14 @@ export default function Home() {
                     Ready to check on your schedule or create something new?
                     Access all your hosted experiences in one place.
                 </p>
+
+                {/* Go to Events Button */}
+                <Link
+                    href="/home/events"
+                    className="group flex items-center gap-3 bg-cusblue text-cuscream px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:opacity-90 transition-all active:scale-95">
+                    Go to My Events
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
             </div>
         </main>
     );
