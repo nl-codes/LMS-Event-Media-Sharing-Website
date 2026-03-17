@@ -166,6 +166,7 @@ export const logoutUser = (req, res) => {
 export const getMe = (req, res) => {
     // req.user is set by requireAuth middleware
     res.json({
+        _id: req.user.id,
         email: req.user.email,
         userName: req.user.userName,
         role: req.user.role,
