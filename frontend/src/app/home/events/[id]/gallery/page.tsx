@@ -9,6 +9,7 @@ import HighlightsGrid from "@/components/media/HighlightsGrid";
 import { useUser } from "@/context/UserContext";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
+import { useGallerySocket } from "@/hooks/useGallerySocket";
 
 const GalleryPage = () => {
     const params = useParams();
@@ -19,6 +20,23 @@ const GalleryPage = () => {
 
     const isHost = user?.role === "host";
     const currentUserId = user?._id || "";
+
+    useGallerySocket({
+        eventId,
+        onNewMedia: (media) => {
+            setGallery((prev) =>
+                prev.find((m) => m._id === media._id) ? prev : [media, ...prev],
+            );
+        },
+        onMediaDeleted: (mediaId) => {
+            setGallery((prev) => prev.filter((m) => m._id !== mediaId));
+        },
+        onMediaLiked: ({ mediaId, likesCount }) => {
+            setGallery((prev) =>
+                prev.map((m) => (m._id === mediaId ? { ...m, likesCount } : m)),
+            );
+        },
+    });
 
     const fetchGallery = useCallback(async () => {
         try {
@@ -51,7 +69,6 @@ const GalleryPage = () => {
         try {
             await deleteMedia(mediaId);
             toast.success("Media deleted");
-            fetchGallery();
         } catch (err) {
             const errorMessage =
                 err instanceof Error ? err.message : "Delete failed";
@@ -62,7 +79,6 @@ const GalleryPage = () => {
     const handleLike = async (mediaId: string) => {
         try {
             await toggleLike(mediaId);
-            fetchGallery();
         } catch (err) {
             const errorMessage =
                 err instanceof Error ? err.message : "Like failed";
@@ -76,7 +92,7 @@ const GalleryPage = () => {
             <div className="mb-4 flex justify-between items-center">
                 <MediaUploadButton
                     eventId={eventId}
-                    onUploadSuccess={fetchGallery}
+                    onUploadSuccess={() => {}}
                 />
             </div>
 
