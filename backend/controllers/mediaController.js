@@ -6,11 +6,12 @@ import {
     getHighlights,
     setMediaLabel,
 } from "../services/mediaService.js";
+import Media from "../models/mediaModel.js";
+import { getIO } from "../config/socketConfig.js";
 
 // Handles POST /media/upload
 export const uploadMediaController = async (req, res) => {
     try {
-        console.log(req.user);
         // Auth: userId from req.user (if present), else guestId from req.body
         const eventId = req.body.eventId || req.query.eventId;
         const mediaType = req.body.mediaType || req.query.mediaType;
@@ -34,7 +35,35 @@ export const uploadMediaController = async (req, res) => {
             fileBuffer,
             mediaType,
         );
-        res.status(201).json({ success: true, data: media });
+
+        const savedMedia = await Media.findById(media._id).populate(
+            "uploaderId",
+            "userName",
+        );
+
+        const mediaPayload = savedMedia
+            ? {
+                  ...savedMedia.toObject(),
+                  uploaderId:
+                      savedMedia.uploaderId &&
+                      typeof savedMedia.uploaderId === "object"
+                          ? String(savedMedia.uploaderId._id)
+                          : savedMedia.uploaderId,
+                  uploader:
+                      savedMedia.uploaderId &&
+                      typeof savedMedia.uploaderId === "object"
+                          ? {
+                                _id: savedMedia.uploaderId._id,
+                                name: savedMedia.uploaderId.userName,
+                            }
+                          : undefined,
+              }
+            : media;
+
+        const io = getIO();
+        io.to(String(eventId)).emit("new_media", mediaPayload);
+
+        res.status(201).json({ success: true, data: mediaPayload });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }
@@ -62,7 +91,19 @@ export const deleteMediaController = async (req, res) => {
                 .status(401)
                 .json({ success: false, message: "Authentication required" });
         }
+
+        const mediaDoc = await Media.findById(mediaId).select("eventId");
+        if (!mediaDoc) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Media not found" });
+        }
+
         const result = await deleteMedia(mediaId, requesterId, requesterRole);
+
+        const io = getIO();
+        io.to(String(mediaDoc.eventId)).emit("media_deleted", { mediaId });
+
         res.status(200).json({ success: true, ...result });
     } catch (error) {
         res.status(403).json({ success: false, message: error.message });
@@ -79,8 +120,15 @@ export const toggleLikeController = async (req, res) => {
                 .status(401)
                 .json({ success: false, message: "Authentication required" });
         }
-        const media = await toggleLike(mediaId, userId);
-        res.status(200).json({ success: true, data: media });
+        const updatedMedia = await toggleLike(mediaId, userId);
+
+        const io = getIO();
+        io.to(String(updatedMedia.eventId)).emit("media_liked", {
+            mediaId,
+            likesCount: updatedMedia.likesCount,
+        });
+
+        res.status(200).json({ success: true, data: updatedMedia });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }
