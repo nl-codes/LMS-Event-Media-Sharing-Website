@@ -1,4 +1,4 @@
-"use client"; // Ensure this is the very first line
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { getGallery, deleteMedia, toggleLike } from "@/lib/mediaApi";
