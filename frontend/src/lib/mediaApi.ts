@@ -22,7 +22,7 @@ async function request<T>(path: string, options: RequestInit = {}) {
 }
 
 export async function uploadMedia(eventId: string, formData: FormData) {
-    const res = await fetch(`${API_BASE}/api/media/upload`, {
+    const res = await fetch(`${API_BASE}/media/upload`, {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -35,13 +35,13 @@ export async function uploadMedia(eventId: string, formData: FormData) {
 }
 
 export async function getGallery(eventId: string) {
-    const json = await request<Media[]>(`/api/media/${eventId}`);
+    const json = await request<Media[]>(`/media/${eventId}`);
     return json.data || [];
 }
 
 export async function deleteMedia(mediaId: string) {
     const json = await request<{ success: boolean; message: string }>(
-        `/api/media/${mediaId}`,
+        `/media/${mediaId}`,
         {
             method: "DELETE",
         },
@@ -50,14 +50,14 @@ export async function deleteMedia(mediaId: string) {
 }
 
 export async function toggleLike(mediaId: string) {
-    const json = await request<Media>(`/api/media/${mediaId}/like`, {
+    const json = await request<Media>(`/media/${mediaId}/like`, {
         method: "POST",
     });
     return json.data as Media;
 }
 
 export async function getHighlights(eventId: string) {
-    const json = await request<Media[]>(`/api/media/${eventId}/highlights`);
+    const json = await request<Media[]>(`/media/${eventId}/highlights`);
     return json.data || [];
 }
 
@@ -66,7 +66,7 @@ export async function setMediaLabel(
     label: string,
     eventId: string,
 ) {
-    const json = await request<Media>(`/api/media/${mediaId}/label`, {
+    const json = await request<Media>(`/media/${mediaId}/label`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label, eventId }),
