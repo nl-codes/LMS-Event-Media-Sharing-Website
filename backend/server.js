@@ -56,4 +56,4 @@ connectDB();
 app.use("/users", userRoutes);
 app.use("/users/profile", profileRoutes);
 app.use("/events", eventRoutes);
-app.use("/api", mediaRouter);
+app.use("/media", mediaRouter);
