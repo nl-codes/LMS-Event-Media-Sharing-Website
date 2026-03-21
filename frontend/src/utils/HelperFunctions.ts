@@ -19,6 +19,7 @@ export const getUserFromToken = (token: string): User | null => {
         const decoded = jwtDecode<userJWTToken>(token);
         if (!decoded.email || !decoded.userName || !decoded.role) return null;
         return {
+            _id: decoded.id,
             email: decoded.email,
             userName: decoded.userName,
             role: decoded.role,
