@@ -12,6 +12,7 @@ export type UserContextType = {
 };
 
 export interface userJWTToken {
+    id: string;
     email: string;
     userName: string;
     role: "user" | "admin" | "guest";
