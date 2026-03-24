@@ -11,6 +11,7 @@ import {
     deleteEvent,
     requestUploadSignature,
     verifyEventAccess,
+    joinAsGuest,
 } from "../controllers/eventController.js";
 
 const router = express.Router();
@@ -24,6 +25,7 @@ router.delete("/:id", requireAuth, deleteEvent);
 
 // Public routes (for QR code access)
 router.get("/verify/:eventId", identifyUser, verifyEventAccess);
+router.post("/join-as-guest", joinAsGuest);
 router.get("/:slug", getEventBySlug);
 router.post("/:slug/upload-check", requestUploadSignature);
 
