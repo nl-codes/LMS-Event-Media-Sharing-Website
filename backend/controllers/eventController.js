@@ -7,6 +7,10 @@ import {
     updateEvent,
     updateEventStatus,
 } from "../services/eventService.js";
+import { Event } from "../models/eventModel.js";
+import { Guest } from "../models/guestModel.js";
+import { v4 as uuidv4 } from "uuid";
+import { isNo, isNowBetweenwBetween } from "../utils/timeline.js";
 
 export const registerEvent = async (req, res) => {
     try {
@@ -219,6 +223,43 @@ export const requestUploadSignature = async (req, res) => {
         });
     } catch (error) {
         res.status(404).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const verifyEventAccess = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const event = await Event.findById(eventId);
+
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: "Event not found",
+            });
+        }
+
+        const isActiveWindow =
+            event.status === "Active" &&
+            isNowBetween(event.startTime, event.endTime);
+
+        if (!isActiveWindow) {
+            return res.status(403).json({
+                success: false,
+                message: "Event is not accepting uploads right now",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                isRegistered: Boolean(req.user),
+            },
+        });
+    } catch (error) {
+        return res.status(400).json({
             success: false,
             message: error.message,
         });
