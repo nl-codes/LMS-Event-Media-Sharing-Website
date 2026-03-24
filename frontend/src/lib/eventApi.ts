@@ -97,3 +97,13 @@ export async function requestUploadSignature(slug: string) {
     );
     return json;
 }
+
+export async function verifyEventAccess(eventId: string) {
+    const json = await request<{ isRegistered: boolean }>(
+        `/events/verify/${eventId}`,
+        {
+            method: "GET",
+        },
+    );
+    return json.data as { isRegistered: boolean };
+}
