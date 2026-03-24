@@ -12,16 +12,30 @@ import { getIO } from "../config/socketConfig.js";
 // Handles POST /media/upload
 export const uploadMediaController = async (req, res) => {
     try {
-        // Auth: userId from req.user (if present), else guestId from req.body
         const eventId = req.body.eventId || req.query.eventId;
         const mediaType = req.body.mediaType || req.query.mediaType;
-        let uploaderId = null;
-        let guestId = null;
-        if (req.user && req.user.id) {
-            uploaderId = req.user.id;
-        } else if (req.body.guestId) {
-            guestId = req.body.guestId;
+
+        const uploaderId = req.user?.id || null;
+        const guestId = req.guest?._id || null;
+
+        if (!uploaderId && !guestId) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication or guest verification required",
+            });
         }
+
+        if (
+            req.guest?.eventId &&
+            eventId &&
+            String(req.guest.eventId) !== String(eventId)
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "Guest identity is not valid for this event",
+            });
+        }
+
         if (!eventId || !mediaType || !req.file) {
             return res
                 .status(400)
@@ -36,10 +50,9 @@ export const uploadMediaController = async (req, res) => {
             mediaType,
         );
 
-        const savedMedia = await Media.findById(media._id).populate(
-            "uploaderId",
-            "userName",
-        );
+        const savedMedia = await Media.findById(media._id)
+            .populate("uploaderId", "userName")
+            .populate("guestId", "userName guest_id");
 
         const mediaPayload = savedMedia
             ? {
@@ -56,7 +69,13 @@ export const uploadMediaController = async (req, res) => {
                                 _id: savedMedia.uploaderId._id,
                                 name: savedMedia.uploaderId.userName,
                             }
-                          : undefined,
+                          : savedMedia.guestId &&
+                              typeof savedMedia.guestId === "object"
+                            ? {
+                                  _id: savedMedia.guestId._id,
+                                  name: savedMedia.guestId.userName,
+                              }
+                            : undefined,
               }
             : media;
 
