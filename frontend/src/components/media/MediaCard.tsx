@@ -19,7 +19,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     onLike,
     disableLike,
 }) => {
-    const isUploader = media.uploaderId === currentUserId;
+    const isUploader = media.uploaderId?._id === currentUserId;
     const canDelete = isHost || isUploader;
     const liked = media.likedBy?.includes(currentUserId);
 
@@ -42,7 +42,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
             )}
             <div className="flex items-center justify-between mt-2">
                 <span className="text-sm text-gray-700">
-                    {media.uploader?.name || "Guest"}
+                    {media.uploaderId?.userName ||
+                        media.guestId?.userName ||
+                        "Guest"}
                 </span>
                 <div className="flex items-center gap-2">
                     <button
