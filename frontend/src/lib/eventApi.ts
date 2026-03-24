@@ -107,3 +107,18 @@ export async function verifyEventAccess(eventId: string) {
     );
     return json.data as { isRegistered: boolean };
 }
+
+export async function joinAsGuest(payload: {
+    eventId: string;
+    userName: string;
+}) {
+    const json = await request<{
+        guest_id: string;
+        userName: string;
+        eventId: string;
+    }>("/events/join-as-guest", {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+    return json.data as { guest_id: string; userName: string; eventId: string };
+}
