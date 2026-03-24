@@ -14,7 +14,8 @@ const mediaSchema = new Schema({
         default: null,
     },
     guestId: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: "Guest",
         default: null,
     },
     mediaUrl: {
