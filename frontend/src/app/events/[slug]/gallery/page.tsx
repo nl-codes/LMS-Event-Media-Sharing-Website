@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
+import { useIdentity } from "@/context/IdentityContext";
 import { getEventBySlug } from "@/lib/eventApi";
 import { getGallery, deleteMedia, toggleLike } from "@/lib/mediaApi";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
@@ -16,6 +17,7 @@ export default function EventPublicGallery() {
     const params = useParams();
     const slug = typeof params?.slug === "string" ? params.slug : "";
     const { user } = useUser();
+    const { displayName } = useIdentity();
 
     const [eventId, setEventId] = useState("");
     const [gallery, setGallery] = useState<Media[]>([]);
@@ -145,10 +147,15 @@ export default function EventPublicGallery() {
             <h1 className="text-2xl font-bold mb-4">Event Gallery</h1>
 
             <div className="mb-4 flex justify-between items-center">
-                <MediaUploadButton
-                    eventId={eventId}
-                    onUploadSuccess={() => {}}
-                />
+                <div>
+                    <MediaUploadButton
+                        eventId={eventId}
+                        onUploadSuccess={() => {}}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        Uploading as {displayName}
+                    </p>
+                </div>
             </div>
 
             <HighlightsGrid
