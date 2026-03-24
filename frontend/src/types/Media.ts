@@ -1,8 +1,6 @@
 export interface Media {
     _id: string;
     eventId: string;
-    uploaderId?: string | null;
-    guestId?: string | null;
     mediaUrl: string;
     publicId: string;
     mediaType: "photo" | "video";
@@ -11,8 +9,12 @@ export interface Media {
     likedBy: string[];
     label?: string | null;
     createdAt: string;
-    uploader?: {
+    uploaderId?: {
         _id: string;
-        name: string;
+        userName: string;
+    };
+    guestId?: {
+        _id: string;
+        userName: string;
     };
 }
