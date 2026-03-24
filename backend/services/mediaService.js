@@ -10,11 +10,14 @@ export const uploadMedia = async (
     fileBuffer,
     mediaType,
 ) => {
-    // Check if event exists and is not "Closed"
+    // Check event exists and is currently accepting uploads.
     const event = await Event.findById(eventId);
     if (!event) throw new Error("Event not found");
+
+    const now = new Date();
     if (
-        event.status === "Closed" ||
+        event.status !== "Active" ||
+        !isNowBetween(event.startTime, event.endTime) ||
         event.status === "Completed" ||
         event.status === "Cancelled"
     ) {
@@ -53,7 +56,8 @@ export const uploadMedia = async (
 export const getGallery = async (eventId) => {
     return Media.find({ eventId })
         .sort({ createdAt: -1 })
-        .populate("uploaderId", "userName");
+        .populate("uploaderId", "userName")
+        .populate("guestId", "userName guest_id");
 };
 
 // Delete a media item
@@ -100,7 +104,8 @@ export const toggleLike = async (mediaId, userId) => {
 export const getHighlights = async (eventId) => {
     return Media.find({ eventId, isHighlight: true })
         .sort({ createdAt: -1 })
-        .populate("uploaderId", "userName");
+        .populate("uploaderId", "userName")
+        .populate("guestId", "userName guest_id");
 };
 
 // Delete all media for an event (auto-deletion)
