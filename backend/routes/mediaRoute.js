@@ -1,5 +1,6 @@
 import express from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { identifyUser } from "../middleware/identifyUser.js";
 import multer from "multer";
 import {
     uploadMediaController,
@@ -16,7 +17,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 // POST /upload (auth optional, guests allowed)
-router.post("/upload", upload.single("file"), uploadMediaController);
+router.post(
+    "/upload",
+    identifyUser,
+    upload.single("file"),
+    uploadMediaController,
+);
 
 // GET /:eventId (public)
 router.get("/:eventId", getGalleryController);
