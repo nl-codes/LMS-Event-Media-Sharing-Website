@@ -265,3 +265,68 @@ export const verifyEventAccess = async (req, res) => {
         });
     }
 };
+
+export const joinAsGuest = async (req, res) => {
+    try {
+        const { eventId, userName } = req.body;
+
+        if (!eventId || !userName || !String(userName).trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "eventId and userName are required",
+            });
+        }
+
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: "Event not found",
+            });
+        }
+
+        const eventEndTime = new Date(event.endTime);
+        const isActiveWindow =
+            event.status === "Active" &&
+            isNowBetween(event.startTime, eventEndTime);
+
+        if (!isActiveWindow) {
+            return res.status(403).json({
+                success: false,
+                message: "Event is not accepting uploads right now",
+            });
+        }
+
+        const guest_id = uuidv4();
+        const guest = await Guest.create({
+            guest_id,
+            userName: String(userName).trim(),
+            eventId,
+        });
+
+        const maxAge = Math.max(0, eventEndTime.getTime() - Date.now());
+
+        res.cookie("guest_id", guest_id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge,
+            path: "/",
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Guest access granted",
+            data: {
+                guest_id: guest.guest_id,
+                userName: guest.userName,
+                eventId: String(guest.eventId),
+            },
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
