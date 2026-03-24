@@ -10,7 +10,7 @@ import {
 import { Event } from "../models/eventModel.js";
 import { Guest } from "../models/guestModel.js";
 import { v4 as uuidv4 } from "uuid";
-import { isNo, isNowBetweenwBetween } from "../utils/timeline.js";
+import { isNowBetween } from "../utils/timeline.js";
 
 export const registerEvent = async (req, res) => {
     try {
