@@ -1,11 +1,73 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getEventBySlug, requestUploadSignature } from "@/lib/eventApi";
+import { getEventBySlug, joinAsGuest, verifyEventAccess } from "@/lib/eventApi";
 import type { Event } from "@/types/Event";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Loader2, AlertCircle } from "lucide-react";
 import EventDetailsPublicPage from "./EventDetailsPublicPage";
+import { useIdentity } from "@/context/IdentityContext";
+
+function UsernameModal({
+    open,
+    value,
+    loading,
+    onClose,
+    onChange,
+    onSubmit,
+}: {
+    open: boolean;
+    value: string;
+    loading: boolean;
+    onClose: () => void;
+    onChange: (value: string) => void;
+    onSubmit: () => void;
+}) {
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl">
+                <h3 className="text-xl font-bold text-cusblue mb-2">
+                    Continue as guest
+                </h3>
+                <p className="text-sm text-cusviolet/80 mb-4">
+                    Enter a display name for your uploads.
+                </p>
+
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full border border-cusblue/20 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-cusblue/40"
+                    maxLength={32}
+                />
+
+                <div className="mt-4 flex justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={loading}
+                        className="px-4 py-2 rounded-xl border border-cusblue/20 text-cusblue hover:bg-cusblue/5 disabled:opacity-50">
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onSubmit}
+                        disabled={loading || !value.trim()}
+                        className="px-4 py-2 rounded-xl bg-cusblue text-cuscream hover:opacity-90 disabled:opacity-50 flex items-center gap-2">
+                        {loading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            "Continue"
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function PublicEventPage() {
     const [event, setEvent] = useState<Event | null>(null);
@@ -15,9 +77,14 @@ export default function PublicEventPage() {
         success: boolean;
     } | null>(null);
     const [checking, setChecking] = useState(false);
+    const [joining, setJoining] = useState(false);
+    const [showGuestModal, setShowGuestModal] = useState(false);
+    const [guestName, setGuestName] = useState("");
 
     const params = useParams();
+    const router = useRouter();
     const slug = typeof params?.slug === "string" ? params.slug : "";
+    const { setGuestIdentity } = useIdentity();
 
     useEffect(() => {
         const run = async () => {
@@ -32,17 +99,46 @@ export default function PublicEventPage() {
     }, [slug]);
 
     const handleCheckUpload = async () => {
+        if (!event?._id) return;
+
         setChecking(true);
         try {
-            await requestUploadSignature(slug);
-            setGateResult({
-                msg: "You are authorized to upload media!",
-                success: true,
-            });
+            const result = await verifyEventAccess(event._id);
+            if (result.isRegistered) {
+                router.push(`/events/${slug}/gallery`);
+                return;
+            }
+
+            setGateResult(null);
+            setShowGuestModal(true);
         } catch (e) {
             setGateResult({ msg: (e as Error).message, success: false });
         } finally {
             setChecking(false);
+        }
+    };
+
+    const handleJoinGuest = async () => {
+        if (!event?._id || !guestName.trim()) return;
+
+        setJoining(true);
+        try {
+            const guest = await joinAsGuest({
+                eventId: event._id,
+                userName: guestName.trim(),
+            });
+
+            setGuestIdentity({
+                guestId: guest.guest_id,
+                userName: guest.userName,
+            });
+
+            setShowGuestModal(false);
+            router.push(`/events/${slug}/gallery`);
+        } catch (e) {
+            setGateResult({ msg: (e as Error).message, success: false });
+        } finally {
+            setJoining(false);
         }
     };
 
@@ -72,11 +168,22 @@ export default function PublicEventPage() {
     }
 
     return (
-        <EventDetailsPublicPage
-            event={event}
-            checking={checking}
-            gateResult={gateResult}
-            onCheckUpload={handleCheckUpload}
-        />
+        <>
+            <EventDetailsPublicPage
+                event={event}
+                checking={checking}
+                gateResult={gateResult}
+                onCheckUpload={handleCheckUpload}
+            />
+
+            <UsernameModal
+                open={showGuestModal}
+                value={guestName}
+                loading={joining}
+                onClose={() => setShowGuestModal(false)}
+                onChange={setGuestName}
+                onSubmit={handleJoinGuest}
+            />
+        </>
     );
 }
