@@ -1,6 +1,7 @@
 import Media from "../models/mediaModel.js";
 import { Event } from "../models/eventModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
+import { isNowBetween } from "../utils/timeline.js";
 
 // Upload media to Cloudinary and save to DB
 export const uploadMedia = async (
@@ -14,7 +15,6 @@ export const uploadMedia = async (
     const event = await Event.findById(eventId);
     if (!event) throw new Error("Event not found");
 
-    const now = new Date();
     if (
         event.status !== "Active" ||
         !isNowBetween(event.startTime, event.endTime) ||
