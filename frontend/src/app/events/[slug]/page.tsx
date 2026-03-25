@@ -8,6 +8,40 @@ import { Loader2, AlertCircle } from "lucide-react";
 import EventDetailsPublicPage from "./EventDetailsPublicPage";
 import { useIdentity } from "@/context/IdentityContext";
 
+type ScopedGuestCookie = {
+    guestId: string;
+    userName: string;
+    eventId: string;
+};
+
+function getScopedGuestCookie(eventSlug: string): ScopedGuestCookie | null {
+    if (typeof document === "undefined" || !eventSlug) return null;
+
+    const cookieKey = `guest_${eventSlug}`;
+    const cookieValue = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${cookieKey}=`))
+        ?.split("=")[1];
+
+    if (!cookieValue) return null;
+
+    try {
+        const parsed = JSON.parse(decodeURIComponent(cookieValue));
+        if (
+            parsed &&
+            typeof parsed.guestId === "string" &&
+            typeof parsed.userName === "string" &&
+            typeof parsed.eventId === "string"
+        ) {
+            return parsed as ScopedGuestCookie;
+        }
+    } catch {
+        return null;
+    }
+
+    return null;
+}
+
 function UsernameModal({
     open,
     value,
@@ -85,7 +119,7 @@ export default function PublicEventPage() {
     const router = useRouter();
     const slug = typeof params?.slug === "string" ? params.slug : "";
 
-    const { identity, setGuestIdentity } = useIdentity();
+    const { setGuestIdentity } = useIdentity();
 
     useEffect(() => {
         const run = async () => {
@@ -104,11 +138,13 @@ export default function PublicEventPage() {
 
         setChecking(true);
         try {
-            const result = await verifyEventAccess(event._id);
+            const result = await verifyEventAccess(event._id, slug);
+            const scopedGuest = getScopedGuestCookie(slug);
 
-            const hasLocalIdentity = !!identity?.guestId;
+            const hasScopedGuestIdentity =
+                !!scopedGuest && scopedGuest.eventId === event._id;
 
-            if (result.isRegistered || hasLocalIdentity) {
+            if (result.isRegistered || hasScopedGuestIdentity) {
                 router.push(`/events/${slug}/gallery`);
                 return;
             }
@@ -136,6 +172,16 @@ export default function PublicEventPage() {
                 guestId: guest.guest_id,
                 userName: guest.userName,
             });
+
+            const expiresAt = new Date(event.endTime).toUTCString();
+            const scopedCookie = encodeURIComponent(
+                JSON.stringify({
+                    guestId: guest.guest_id,
+                    userName: guest.userName,
+                    eventId: guest.eventId,
+                }),
+            );
+            document.cookie = `guest_${slug}=${scopedCookie}; path=/; expires=${expiresAt}; SameSite=Lax`;
 
             setShowGuestModal(false);
             router.push(`/events/${slug}/gallery`);
