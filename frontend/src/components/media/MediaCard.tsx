@@ -1,6 +1,8 @@
 import React from "react";
 import type { Media } from "@/types/Media";
 import Image from "next/image";
+import { Heart, Trash2Icon } from "lucide-react";
+import Button from "@/components/buttons/Button";
 
 interface MediaCardProps {
     media: Media;
@@ -22,6 +24,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
     const isUploader = media.uploaderId?._id === currentUserId;
     const canDelete = isHost || isUploader;
     const liked = media.likedBy?.includes(currentUserId);
+    const displayName =
+        media.uploaderId?.userName || media.guestId?.userName || "Guest";
 
     return (
         <div className="bg-white rounded shadow p-2 flex flex-col relative group">
@@ -41,51 +45,27 @@ const MediaCard: React.FC<MediaCardProps> = ({
                 />
             )}
             <div className="flex items-center justify-between mt-2">
-                <span className="text-sm text-gray-700">
-                    {media.uploaderId?.userName ||
-                        media.guestId?.userName ||
-                        "Guest"}
-                </span>
+                <span className="text-sm text-gray-700">{displayName}</span>
                 <div className="flex items-center gap-2">
-                    <button
-                        className={`text-red-500 hover:text-red-700 transition disabled:opacity-50 flex items-center`}
-                        onClick={() => onLike && onLike(media._id)}
+                    <Button
+                        className="bg-transparent p-0 hover:bg-transparent text-red-500 hover:text-red-700 disabled:opacity-50"
+                        handleClick={() => onLike && onLike(media._id)}
                         disabled={disableLike}
                         aria-label="Like">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill={liked ? "#ef4444" : "none"}
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-5 h-5">
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M21 8.25c0-2.485-2.239-4.5-5-4.5-1.657 0-3.156.832-4 2.086A4.978 4.978 0 0 0 7 3.75c-2.761 0-5 2.015-5 4.5 0 7.25 10 11 10 11s10-3.75 10-11z"
-                            />
-                        </svg>
+                        <Heart
+                            className="w-5 h-5"
+                            fill={liked ? "currentColor" : "none"}
+                            strokeWidth={1.8}
+                        />
                         <span className="ml-1 text-xs">{media.likesCount}</span>
-                    </button>
+                    </Button>
                     {canDelete && (
-                        <button
-                            className="text-gray-400 hover:text-red-600 transition"
-                            onClick={() => onDelete && onDelete(media._id)}
+                        <Button
+                            className="bg-transparent p-0 hover:bg-transparent text-gray-400 hover:text-red-600"
+                            handleClick={() => onDelete && onDelete(media._id)}
                             aria-label="Delete">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                className="w-5 h-5">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
-                        </button>
+                            <Trash2Icon className="w-5 h-5" />
+                        </Button>
                     )}
                 </div>
             </div>
