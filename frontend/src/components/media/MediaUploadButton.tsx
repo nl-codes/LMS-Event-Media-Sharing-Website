@@ -4,11 +4,13 @@ import toast from "react-hot-toast";
 
 interface MediaUploadButtonProps {
     eventId: string;
+    eventSlug?: string;
     onUploadSuccess: () => void;
 }
 
 const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
     eventId,
+    eventSlug,
     onUploadSuccess,
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -26,7 +28,7 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
             file.type.startsWith("video") ? "video" : "photo",
         );
         try {
-            await uploadMedia(eventId, formData);
+            await uploadMedia(eventId, formData, eventSlug);
             onUploadSuccess();
             toast.success("Media uploaded!");
         } catch (err) {
