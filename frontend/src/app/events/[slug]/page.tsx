@@ -84,7 +84,8 @@ export default function PublicEventPage() {
     const params = useParams();
     const router = useRouter();
     const slug = typeof params?.slug === "string" ? params.slug : "";
-    const { setGuestIdentity } = useIdentity();
+
+    const { identity, setGuestIdentity } = useIdentity();
 
     useEffect(() => {
         const run = async () => {
@@ -104,7 +105,10 @@ export default function PublicEventPage() {
         setChecking(true);
         try {
             const result = await verifyEventAccess(event._id);
-            if (result.isRegistered) {
+
+            const hasLocalIdentity = !!identity?.guestId;
+
+            if (result.isRegistered || hasLocalIdentity) {
                 router.push(`/events/${slug}/gallery`);
                 return;
             }
