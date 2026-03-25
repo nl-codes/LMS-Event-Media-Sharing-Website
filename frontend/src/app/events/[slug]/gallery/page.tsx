@@ -20,12 +20,35 @@ export default function EventPublicGallery() {
     const { displayName } = useIdentity();
 
     const [eventId, setEventId] = useState("");
+    const [eventName, setEventName] = useState("Event Gallery");
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadingGallery, setLoadingGallery] = useState(false);
 
     const isHost = user?.role === "host";
     const currentUserId = user?._id || "";
+    const scopedGuestDisplayName =
+        typeof document !== "undefined" && slug
+            ? (() => {
+                  const cookieValue = document.cookie
+                      .split("; ")
+                      .find((row) => row.startsWith(`guest_${slug}=`))
+                      ?.split("=")[1];
+                  if (!cookieValue) return null;
+                  try {
+                      const parsed = JSON.parse(
+                          decodeURIComponent(cookieValue),
+                      ) as {
+                          userName?: string;
+                      };
+                      return parsed.userName || null;
+                  } catch {
+                      return null;
+                  }
+              })()
+            : null;
+    const uploaderDisplayName =
+        user?.userName || scopedGuestDisplayName || displayName;
 
     useGallerySocket({
         eventId,
@@ -80,10 +103,12 @@ export default function EventPublicGallery() {
                 if (!isMounted) return;
 
                 setEventId(event._id);
+                setEventName(event.eventName || "Event Gallery");
                 await fetchGallery(event._id);
             } catch (err) {
                 if (isMounted) {
                     setEventId("");
+                    setEventName("Event Gallery");
                     setGallery([]);
                     const errorMessage =
                         err instanceof Error
@@ -121,9 +146,33 @@ export default function EventPublicGallery() {
     const handleLike = async (mediaId: string) => {
         if (!user) return;
 
+        const previousGallery = gallery;
+        setGallery((prev) =>
+            prev.map((media) => {
+                if (media._id !== mediaId) return media;
+
+                const likedBy = Array.isArray(media.likedBy)
+                    ? media.likedBy
+                    : [];
+                const alreadyLiked = likedBy.includes(currentUserId);
+                const nextLikedBy = alreadyLiked
+                    ? likedBy.filter((id) => id !== currentUserId)
+                    : [...likedBy, currentUserId];
+
+                return {
+                    ...media,
+                    likedBy: nextLikedBy,
+                    likesCount: alreadyLiked
+                        ? Math.max(0, media.likesCount - 1)
+                        : media.likesCount + 1,
+                };
+            }),
+        );
+
         try {
             await toggleLike(mediaId);
         } catch (err) {
+            setGallery(previousGallery);
             const errorMessage =
                 err instanceof Error ? err.message : "Like failed";
             toast.error(errorMessage);
@@ -144,16 +193,24 @@ export default function EventPublicGallery() {
 
     return (
         <div className="max-w-5xl mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Event Gallery</h1>
+            <h1 className="text-3xl font-bold mb-1 text-cusblue">
+                {eventName}
+            </h1>
+            <p className="text-sm text-cusviolet/80 mb-4">
+                Shared Event Gallery
+            </p>
 
             <div className="mb-4 flex justify-between items-center">
                 <div>
                     <MediaUploadButton
                         eventId={eventId}
-                        onUploadSuccess={() => {}}
+                        eventSlug={slug}
+                        onUploadSuccess={() => {
+                            void fetchGallery(eventId);
+                        }}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                        Uploading as {displayName}
+                        Uploading as {uploaderDisplayName}
                     </p>
                 </div>
             </div>
