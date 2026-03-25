@@ -1,6 +1,28 @@
 import jwt from "jsonwebtoken";
 import { Guest } from "../models/guestModel.js";
 
+const extractSlug = (req) => {
+    const fromHeader = req.headers?.["x-event-slug"];
+    if (typeof fromHeader === "string" && fromHeader.trim()) {
+        return fromHeader.trim();
+    }
+
+    if (typeof req.params?.slug === "string" && req.params.slug.trim()) {
+        return req.params.slug.trim();
+    }
+
+    if (typeof req.query?.slug === "string" && req.query.slug.trim()) {
+        return req.query.slug.trim();
+    }
+
+    const eventSlugMatch = req.originalUrl?.match(/\/events\/([^/?#]+)/);
+    if (eventSlugMatch?.[1]) {
+        return eventSlugMatch[1];
+    }
+
+    return "";
+};
+
 export const identifyUser = async (req, _res, next) => {
     const token = req.cookies?.token;
 
@@ -15,13 +37,28 @@ export const identifyUser = async (req, _res, next) => {
         }
     }
 
-    const guestCookieId = req.cookies?.guest_id;
-    if (!guestCookieId) {
+    const slug = extractSlug(req);
+    if (!slug) {
+        return next();
+    }
+
+    const scopedGuestCookie = req.cookies?.[`guest_${slug}`];
+    if (!scopedGuestCookie) {
         return next();
     }
 
     try {
-        const guest = await Guest.findOne({ guest_id: guestCookieId });
+        const parsedCookie =
+            typeof scopedGuestCookie === "string"
+                ? JSON.parse(scopedGuestCookie)
+                : scopedGuestCookie;
+
+        const guestId = parsedCookie?.guestId;
+        if (!guestId) {
+            return next();
+        }
+
+        const guest = await Guest.findOne({ guest_id: guestId });
         if (guest) {
             req.guest = guest;
         }
