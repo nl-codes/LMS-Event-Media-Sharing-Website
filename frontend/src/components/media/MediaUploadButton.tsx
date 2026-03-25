@@ -43,7 +43,7 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
         <>
             <button
                 type="button"
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+                className="bg-cusblue text-cuscream px-4 py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 font-medium"
                 onClick={() => inputRef.current?.click()}
                 disabled={loading}>
                 {loading ? "Uploading..." : "Upload Media"}
