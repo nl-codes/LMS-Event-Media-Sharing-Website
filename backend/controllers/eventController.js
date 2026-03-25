@@ -304,16 +304,6 @@ export const joinAsGuest = async (req, res) => {
             eventId,
         });
 
-        const maxAge = Math.max(0, eventEndTime.getTime() - Date.now());
-
-        res.cookie("guest_id", guest_id, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge,
-            path: "/",
-        });
-
         return res.status(201).json({
             success: true,
             message: "Guest access granted",
