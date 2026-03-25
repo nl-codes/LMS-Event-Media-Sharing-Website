@@ -54,30 +54,7 @@ export const uploadMediaController = async (req, res) => {
             .populate("uploaderId", "userName")
             .populate("guestId", "userName guest_id");
 
-        const mediaPayload = savedMedia
-            ? {
-                  ...savedMedia.toObject(),
-                  uploaderId:
-                      savedMedia.uploaderId &&
-                      typeof savedMedia.uploaderId === "object"
-                          ? String(savedMedia.uploaderId._id)
-                          : savedMedia.uploaderId,
-                  uploader:
-                      savedMedia.uploaderId &&
-                      typeof savedMedia.uploaderId === "object"
-                          ? {
-                                _id: savedMedia.uploaderId._id,
-                                name: savedMedia.uploaderId.userName,
-                            }
-                          : savedMedia.guestId &&
-                              typeof savedMedia.guestId === "object"
-                            ? {
-                                  _id: savedMedia.guestId._id,
-                                  name: savedMedia.guestId.userName,
-                              }
-                            : undefined,
-              }
-            : media;
+        const mediaPayload = savedMedia ? savedMedia.toObject() : media;
 
         const io = getIO();
         io.to(String(eventId)).emit("new_media", mediaPayload);
