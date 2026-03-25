@@ -21,10 +21,20 @@ async function request<T>(path: string, options: RequestInit = {}) {
     return json;
 }
 
-export async function uploadMedia(eventId: string, formData: FormData) {
+export async function uploadMedia(
+    eventId: string,
+    formData: FormData,
+    eventSlug?: string,
+) {
+    const headers: Record<string, string> = {};
+    if (eventSlug) {
+        headers["x-event-slug"] = eventSlug;
+    }
+
     const res = await fetch(`${API_BASE}/media/upload`, {
         method: "POST",
         credentials: "include",
+        headers,
         body: formData,
     });
     const json = (await res.json()) as ApiResponse<Media>;
