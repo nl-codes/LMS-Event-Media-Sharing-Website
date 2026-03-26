@@ -11,6 +11,32 @@ import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
 
+function normalizeLikedByIds(likedBy: unknown): string[] {
+    if (!Array.isArray(likedBy)) return [];
+
+    return likedBy
+        .map((entry) => {
+            if (typeof entry === "string") return entry;
+            if (
+                entry &&
+                typeof entry === "object" &&
+                "_id" in entry &&
+                typeof entry._id === "string"
+            ) {
+                return entry._id;
+            }
+            return "";
+        })
+        .filter(Boolean);
+}
+
+function normalizeMediaLikes(media: Media): Media {
+    return {
+        ...media,
+        likedBy: normalizeLikedByIds(media.likedBy),
+    };
+}
+
 const GalleryPage = () => {
     const params = useParams();
     const eventId = typeof params?.id === "string" ? params.id : "";
@@ -25,23 +51,21 @@ const GalleryPage = () => {
         eventId,
         onNewMedia: (media) => {
             setGallery((prev) =>
-                prev.find((m) => m._id === media._id) ? prev : [media, ...prev],
+                prev.find((m) => m._id === media._id)
+                    ? prev
+                    : [normalizeMediaLikes(media), ...prev],
             );
         },
         onMediaDeleted: (mediaId) => {
             setGallery((prev) => prev.filter((m) => m._id !== mediaId));
         },
-        onMediaLiked: ({ mediaId, likesCount }) => {
-            setGallery((prev) =>
-                prev.map((m) => (m._id === mediaId ? { ...m, likesCount } : m)),
-            );
-        },
+        onMediaLiked: () => {},
     });
 
     const fetchGallery = useCallback(async () => {
         try {
             const data = await getGallery(eventId);
-            setGallery(data);
+            setGallery(data.map(normalizeMediaLikes));
         } catch (err) {
             const errorMessage =
                 err instanceof Error ? err.message : "Failed to load gallery";
@@ -77,9 +101,32 @@ const GalleryPage = () => {
     };
 
     const handleLike = async (mediaId: string) => {
+        const previousGallery = gallery;
+
+        setGallery((prev) =>
+            prev.map((media) => {
+                if (media._id !== mediaId) return media;
+
+                const likedBy = normalizeLikedByIds(media.likedBy);
+                const alreadyLiked = likedBy.includes(currentUserId);
+                const nextLikedBy = alreadyLiked
+                    ? likedBy.filter((id) => id !== currentUserId)
+                    : [...likedBy, currentUserId];
+
+                return {
+                    ...media,
+                    likedBy: nextLikedBy,
+                    likesCount: alreadyLiked
+                        ? Math.max(0, media.likesCount - 1)
+                        : media.likesCount + 1,
+                };
+            }),
+        );
+
         try {
             await toggleLike(mediaId);
         } catch (err) {
+            setGallery(previousGallery);
             const errorMessage =
                 err instanceof Error ? err.message : "Like failed";
             toast.error(errorMessage);
