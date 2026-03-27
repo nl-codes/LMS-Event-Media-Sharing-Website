@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getGallery, deleteMedia, toggleLike } from "@/lib/mediaApi";
+import { getEventById } from "@/lib/eventApi";
 import type { Media } from "@/types/Media";
 import MediaCard from "@/components/media/MediaCard";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
@@ -43,9 +44,10 @@ const GalleryPage = () => {
     const { user } = useUser();
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isHost, setIsHost] = useState(false);
 
-    const isHost = user?.role === "host";
     const currentUserId = user?._id || "";
+    console.log(user);
 
     useGallerySocket({
         eventId,
@@ -75,11 +77,31 @@ const GalleryPage = () => {
         }
     }, [eventId]);
 
+    const fetchHostAccess = useCallback(async () => {
+        if (!eventId || !currentUserId) {
+            setIsHost(false);
+            return;
+        }
+
+        try {
+            const event = await getEventById(eventId);
+            const hostId =
+                typeof event.hostId === "string"
+                    ? event.hostId
+                    : event.hostId?._id || "";
+
+            setIsHost(hostId === currentUserId);
+        } catch {
+            setIsHost(false);
+        }
+    }, [eventId, currentUserId]);
+
     useEffect(() => {
         if (!user) return;
 
         fetchGallery();
-    }, [user, fetchGallery]);
+        fetchHostAccess();
+    }, [user, fetchGallery, fetchHostAccess]);
 
     if (!user) {
         return (
