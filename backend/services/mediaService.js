@@ -61,15 +61,19 @@ export const getGallery = async (eventId) => {
 };
 
 // Delete a media item
-export const deleteMedia = async (mediaId, requesterId, requesterRole) => {
+export const deleteMedia = async (mediaId, requesterId) => {
     const media = await Media.findById(mediaId);
     if (!media) throw new Error("Media not found");
 
-    // Only uploader or host can delete
-    if (
-        (media.uploaderId && media.uploaderId.toString() === requesterId) ||
-        requesterRole === "host"
-    ) {
+    const event = await Event.findById(media.eventId).select("hostId");
+    if (!event) throw new Error("Event not found");
+
+    const isUploader =
+        media.uploaderId && media.uploaderId.toString() === requesterId;
+    const isEventCreator = event.hostId.toString() === requesterId;
+
+    // Only uploader or event creator can delete
+    if (isUploader || isEventCreator) {
         // Delete from Cloudinary
         await cloudinary.uploader.destroy(media.publicId, {
             resource_type: media.mediaType === "video" ? "video" : "image",
