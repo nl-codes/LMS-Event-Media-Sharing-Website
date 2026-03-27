@@ -17,9 +17,14 @@ import {
 type EventCardProps = {
     event: Event;
     onDelete?: (id: string) => void;
+    isHost?: boolean;
 };
 
-export default function EventCard({ event, onDelete }: EventCardProps) {
+export default function EventCard({
+    event,
+    onDelete,
+    isHost = true,
+}: EventCardProps) {
     const [showQR, setShowQR] = useState(false);
 
     return (
@@ -79,18 +84,22 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
                         <Eye className="w-3 h-3" /> View
                     </Link>
 
-                    <Link
-                        href={`/home/events/${event._id}/edit`}
-                        className="flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg border border-cusblue text-cusblue hover:bg-cusblue/5 transition-colors">
-                        <Edit3 className="w-3 h-3" /> Edit
-                    </Link>
+                    {isHost && (
+                        <Link
+                            href={`/home/events/${event._id}/edit`}
+                            className="flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg border border-cusblue text-cusblue hover:bg-cusblue/5 transition-colors">
+                            <Edit3 className="w-3 h-3" /> Edit
+                        </Link>
+                    )}
 
-                    <button
-                        type="button"
-                        onClick={() => setShowQR(true)}
-                        className="col-span-2 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg border border-cusblue/30 text-cusblue hover:bg-cusblue hover:text-cuscream transition-all">
-                        <QrCode className="w-3 h-3" /> View QR Code
-                    </button>
+                    {isHost && (
+                        <button
+                            type="button"
+                            onClick={() => setShowQR(true)}
+                            className="col-span-2 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg border border-cusblue/30 text-cusblue hover:bg-cusblue hover:text-cuscream transition-all">
+                            <QrCode className="w-3 h-3" /> View QR Code
+                        </button>
+                    )}
 
                     <Link
                         href={`/events/${event.uniqueSlug}`}
@@ -98,7 +107,7 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
                         Public Page
                     </Link>
 
-                    {onDelete && (
+                    {isHost && onDelete && (
                         <button
                             type="button"
                             onClick={() => onDelete(event._id)}
