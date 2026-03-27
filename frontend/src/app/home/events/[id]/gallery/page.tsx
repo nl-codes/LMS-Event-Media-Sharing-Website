@@ -222,12 +222,28 @@ const GalleryPage = () => {
         }
     };
 
+    const hostObject =
+        event && typeof event.hostId === "object" && event.hostId
+            ? event.hostId
+            : null;
+    const hostDisplayName =
+        (hostObject &&
+            (("username" in hostObject && hostObject.username) ||
+                ("userName" in (hostObject as { userName?: string }) &&
+                    (hostObject as { userName?: string }).userName) ||
+                ("email" in hostObject && hostObject.email))) ||
+        "Host";
+    const gallerySubtitle = isHost
+        ? "Your Event Gallery"
+        : `${hostDisplayName}'s Gallery`;
+
     return (
         <div className="max-w-5xl mx-auto p-4">
             {event && (
                 <GalleryEventHeader
                     event={event}
-                    subtitle="Host Event Gallery"
+                    subtitle={gallerySubtitle}
+                    roleBadge={isHost ? "HOST" : undefined}
                     actionSlot={
                         <div className="rounded-2xl bg-white/60 p-4 shadow-sm backdrop-blur-md">
                             <div className="flex flex-wrap items-center gap-3">
