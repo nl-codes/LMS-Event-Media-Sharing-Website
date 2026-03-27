@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Event } from "@/types/Event";
 import EventCard from "@/components/events/EventCard";
+import JoinedEventsList from "@/components/events/JoinedEventsList";
 import BackButton from "@/components/navigation/BackButton";
 import { deleteEvent, getHostEvents } from "@/lib/eventApi";
 import { Plus, CalendarDays, Loader2 } from "lucide-react";
@@ -119,6 +120,17 @@ export default function EventsPage() {
                         onDelete={onDelete}
                     />
                 ))}
+            </div>
+
+            {/* Joined Events Section */}
+            <div className="mt-16">
+                <h2 className="text-3xl font-bold text-cusblue tracking-tight mb-2">
+                    Events I&apos;ve Joined
+                </h2>
+                <p className="text-cusviolet opacity-80 mb-8">
+                    Events you&apos;re participating in
+                </p>
+                <JoinedEventsList />
             </div>
         </main>
     );
