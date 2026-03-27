@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getEventById } from "@/lib/eventApi";
 import type { Event } from "@/types/Event";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import QRModal from "@/components/events/QRModal";
 import BackButton from "@/components/navigation/BackButton";
+import toast from "react-hot-toast";
 import {
     Calendar,
     MapPin,
@@ -27,9 +28,28 @@ export default function EventDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showQR, setShowQR] = useState(false);
+    const lastHandledPaymentRef = useRef<string | null>(null);
 
     const params = useParams();
+    const searchParams = useSearchParams();
     const eventId = typeof params?.id === "string" ? params.id : "";
+    const paymentStatus = searchParams.get("payment");
+
+    useEffect(() => {
+        if (!paymentStatus || paymentStatus === lastHandledPaymentRef.current) {
+            return;
+        }
+
+        if (paymentStatus === "success") {
+            toast.success("Payment successful. Your event is upgraded.");
+        }
+
+        if (paymentStatus === "cancel") {
+            toast.error("Payment canceled. No changes were made.");
+        }
+
+        lastHandledPaymentRef.current = paymentStatus;
+    }, [paymentStatus]);
 
     useEffect(() => {
         const run = async () => {
