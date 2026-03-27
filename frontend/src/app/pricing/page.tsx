@@ -1,7 +1,9 @@
 "use client";
 
 import PricingCardsGrid from "@/components/pricing/PricingCardsGrid";
+import { useUser } from "@/context/UserContext";
 import { PricingTier, TierKey } from "@/types/Pricing";
+import { useRouter } from "next/navigation";
 import { Sparkles, Zap } from "lucide-react";
 
 export const PRICING_TIERS_CONST: PricingTier[] = [
@@ -57,8 +59,21 @@ export const PRICING_TIERS_CONST: PricingTier[] = [
 ];
 
 export default function PricingPage() {
+    const router = useRouter();
+    const { user } = useUser();
+
     const handleCheckout = (tier: TierKey) => {
-        console.log(`Checkout initiated for: ${tier}`);
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+
+        if (tier === "free") {
+            router.push("/home/events");
+            return;
+        }
+
+        router.push("/home/events");
     };
 
     return (
