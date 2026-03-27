@@ -19,6 +19,7 @@ import {
     XCircle,
     QrCode,
     Images,
+    Zap,
 } from "lucide-react";
 
 export default function EventDetailsPage() {
@@ -87,6 +88,16 @@ export default function EventDetailsPage() {
                     <BackButton label="Back to My Events" />
 
                     <div className="flex flex-wrap items-center gap-3">
+                        {/* Upgrade Event Button - Added Here */}
+                        {!event.isPremium && (
+                            <Link
+                                href={`/home/events/${eventId}/upgrade`}
+                                className="flex items-center gap-2 bg-linear-to-r from-cusblue to-cusviolet text-white px-5 py-2 rounded-xl hover:shadow-lg hover:shadow-cusblue/20 hover:scale-[1.02] transition-all font-bold shadow-md">
+                                <Zap className="w-4 h-4 fill-current" />
+                                Upgrade Event
+                            </Link>
+                        )}
+
                         {/* QR Code Toggle */}
                         <button
                             onClick={() => setShowQR(true)}
