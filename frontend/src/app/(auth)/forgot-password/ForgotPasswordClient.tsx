@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { toast } from "react-hot-toast";
 import LandingButton from "@/components/buttons/LandingButton";
+import BackButton from "@/components/navigation/BackButton";
 
 export default function ForgotPasswordClient() {
     const [email, setEmail] = useState("");
@@ -25,7 +26,7 @@ export default function ForgotPasswordClient() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email }),
-                }
+                },
             );
 
             const data = await res.json();
@@ -46,6 +47,10 @@ export default function ForgotPasswordClient() {
             <form
                 onSubmit={handleSubmit}
                 className="form p-8 rounded-xl shadow-md">
+                <div className="mb-4 flex flex-row items-center gap-4">
+                    <BackButton label="Back to login" />
+                </div>
+
                 <h2 className="text-2xl font-semibold text-cusblue text-center">
                     Forgot Password
                 </h2>

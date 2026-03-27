@@ -14,6 +14,7 @@ import HighlightsGrid from "@/components/media/HighlightsGrid";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
 import type { Media } from "@/types/Media";
 import type { Event } from "@/types/Event";
+import BackButton from "@/components/navigation/BackButton";
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -195,6 +196,13 @@ export default function EventPublicGallery() {
 
     return (
         <div className="max-w-5xl mx-auto p-4">
+            <div className="mb-4 flex flex-row items-center gap-4">
+                <BackButton
+                    href={`/events/${slug}`}
+                    label="Back to Event"
+                />
+            </div>
+
             {event && (
                 <GalleryEventHeader
                     event={event}

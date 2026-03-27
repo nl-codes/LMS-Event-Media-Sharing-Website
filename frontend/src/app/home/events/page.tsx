@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Event } from "@/types/Event";
 import EventCard from "@/components/events/EventCard";
+import BackButton from "@/components/navigation/BackButton";
 import { deleteEvent, getHostEvents } from "@/lib/eventApi";
 import { Plus, CalendarDays, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -46,6 +47,10 @@ export default function EventsPage() {
 
     return (
         <main className="max-w-7xl mx-auto px-6 py-10 min-h-screen">
+            <div className="mb-6 flex flex-row items-center gap-4">
+                <BackButton label="Back to dashboard" />
+            </div>
+
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                 <div>

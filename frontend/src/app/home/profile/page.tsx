@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import ProfileCard from "./ProfileCard";
+import BackButton from "@/components/navigation/BackButton";
 
 export const metadata: Metadata = {
     title: "View Profile | LMS 24",
@@ -8,8 +9,11 @@ export const metadata: Metadata = {
 
 export default function ProfileViewPage() {
     return (
-        <main className="flex justify-center items-center min-h-[60vh] bg-cuscream">
-            <section className="max-w-xl w-full">
+        <main className="min-h-[60vh] bg-cuscream px-4 py-8">
+            <section className="max-w-xl w-full mx-auto">
+                <div className="mb-6 flex flex-row items-center gap-4">
+                    <BackButton label="Back to dashboard" />
+                </div>
                 <ProfileCard />
             </section>
         </main>

@@ -5,9 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import type { Event, EventStatus } from "@/types/Event";
 import { getEventById, updateEvent, updateEventStatus } from "@/lib/eventApi";
 import LandingButton from "@/components/buttons/LandingButton";
+import BackButton from "@/components/navigation/BackButton";
 import { toast } from "react-hot-toast";
-import { ArrowLeft, Settings2, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Settings2, Loader2 } from "lucide-react";
 import { ChevronDown } from "lucide-react";
 
 export default function EditEventPage() {
@@ -66,7 +66,7 @@ export default function EditEventPage() {
 
             await updateEventStatus(eventId, form.status);
             toast.success("Event updated successfully", { id: loadingToast });
-            router.push(`/home/events/${eventId}`);
+            router.replace(`/home/events/${eventId}`);
         } catch (e) {
             toast.error((e as Error).message, { id: loadingToast });
         } finally {
@@ -84,11 +84,9 @@ export default function EditEventPage() {
 
     return (
         <main className="max-w-3xl mx-auto px-6 py-10 profile-card-animate">
-            <Link
-                href={`/home/events/${eventId}`}
-                className="flex items-center gap-2 text-cusviolet hover:text-cusblue transition-colors mb-6 font-medium">
-                <ArrowLeft className="w-4 h-4" /> Cancel and go back
-            </Link>
+            <div className="mb-6 flex flex-row items-center gap-4">
+                <BackButton label="Cancel and go back" />
+            </div>
 
             <div className="bg-white/50 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white">
                 <div className="flex items-center gap-3 mb-8">

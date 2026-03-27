@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { backend_url } from "@/config/backend";
 import ProfileForm, { ProfileFormData } from "../ProfileForm";
 import LandingButton from "@/components/buttons/LandingButton";
+import BackButton from "@/components/navigation/BackButton";
 import { Profile } from "@/types/Profile";
 
 export default function ProfileEditPage() {
@@ -101,25 +102,33 @@ export default function ProfileEditPage() {
 
     return (
         <main className="flex justify-center items-center min-h-[60vh] bg-cuscream p-4">
-            <form
-                onSubmit={handleSubmit}
-                className="shadow-xl bg-white rounded-xl p-8 w-[450px]">
-                <h2 className="text-2xl font-bold text-cusblue mb-6 text-center">
-                    {profileExists ? "Edit Profile" : "Create Profile"}
-                </h2>
-                <ProfileForm
-                    initialData={formData}
-                    isReadOnly={false}
-                    onChange={handleChange}
-                />
-                <div className="mt-8">
-                    <LandingButton
-                        type="submit"
-                        className="w-full bg-cusblue text-white py-3 rounded-lg font-bold">
-                        {profileExists ? "Update Profile" : "Create Profile"}
-                    </LandingButton>
+            <div className="w-[450px]">
+                <div className="mb-6 flex flex-row items-center gap-4">
+                    <BackButton label="Back to Profile" />
                 </div>
-            </form>
+
+                <form
+                    onSubmit={handleSubmit}
+                    className="shadow-xl bg-white rounded-xl p-8">
+                    <h2 className="text-2xl font-bold text-cusblue mb-6 text-center">
+                        {profileExists ? "Edit Profile" : "Create Profile"}
+                    </h2>
+                    <ProfileForm
+                        initialData={formData}
+                        isReadOnly={false}
+                        onChange={handleChange}
+                    />
+                    <div className="mt-8">
+                        <LandingButton
+                            type="submit"
+                            className="w-full bg-cusblue text-white py-3 rounded-lg font-bold">
+                            {profileExists
+                                ? "Update Profile"
+                                : "Create Profile"}
+                        </LandingButton>
+                    </div>
+                </form>
+            </div>
         </main>
     );
 }

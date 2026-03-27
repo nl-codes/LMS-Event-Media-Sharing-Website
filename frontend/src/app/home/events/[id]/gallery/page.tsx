@@ -14,6 +14,7 @@ import MediaCard from "@/components/media/MediaCard";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
+import BackButton from "@/components/navigation/BackButton";
 import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
 import { useUser } from "@/context/UserContext";
 import toast from "react-hot-toast";
@@ -239,6 +240,10 @@ const GalleryPage = () => {
 
     return (
         <div className="max-w-5xl mx-auto p-4">
+            <div className="mb-4 flex flex-row items-center gap-4">
+                <BackButton label="Back to Event" />
+            </div>
+
             {event && (
                 <GalleryEventHeader
                     event={event}

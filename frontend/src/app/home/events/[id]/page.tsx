@@ -7,11 +7,11 @@ import type { Event } from "@/types/Event";
 import { useParams } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import QRModal from "@/components/events/QRModal";
+import BackButton from "@/components/navigation/BackButton";
 import {
     Calendar,
     MapPin,
     Clock,
-    ArrowLeft,
     Edit3,
     Globe,
     Loader2,
@@ -84,11 +84,7 @@ export default function EventDetailsPage() {
             <main className="max-w-5xl mx-auto px-6 py-10 profile-card-animate">
                 {/* Navigation Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <Link
-                        href="/home/events"
-                        className="flex items-center gap-2 text-cusviolet hover:text-cusblue transition-colors font-medium">
-                        <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-                    </Link>
+                    <BackButton label="Back to My Events" />
 
                     <div className="flex flex-wrap items-center gap-3">
                         {/* QR Code Toggle */}
