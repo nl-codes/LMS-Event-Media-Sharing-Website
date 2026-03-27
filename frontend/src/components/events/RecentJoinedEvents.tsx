@@ -2,25 +2,22 @@
 
 import { useEffect, useState } from "react";
 import type { Event } from "@/types/Event";
-import JoinedEventCard from "@/components/events/JoinedEventCard";
+import JoinedEventSmallCard from "@/components/events/JoinedEventSmallCard";
 import { getJoinedEvents } from "@/lib/membershipApi";
-import { CalendarDays, Loader2, ArrowRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 
 export default function RecentJoinedEvents() {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
 
     const load = async () => {
         try {
             setLoading(true);
             const data = await getJoinedEvents();
             setEvents(data.slice(0, 3));
-            setError("");
-        } catch (e) {
-            setError((e as Error).message);
+        } catch {
             toast.error("Failed to load recent events");
         } finally {
             setLoading(false);
@@ -33,41 +30,41 @@ export default function RecentJoinedEvents() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-8 text-cusblue">
-                <Loader2 className="w-6 h-6 animate-spin mr-2 opacity-50" />
-                <p className="text-sm font-medium animate-pulse">Loading...</p>
+            <div className="flex flex-col items-center justify-center py-12 p-8 bg-white/50 rounded-4xl border border-dashed border-slate-200">
+                <Loader2 className="w-8 h-8 animate-spin text-cusblue/40" />
             </div>
         );
     }
 
-    if (error || !events.length) {
-        return null;
-    }
+    if (!events.length) return null;
 
     return (
-        <div className="mt-12">
-            <div className="flex items-center justify-between mb-6">
+        <div className="relative p-6 rounded-[2.5rem] bg-slate-50/50 border border-slate-100">
+            <div className="flex items-center justify-between mb-6 px-2">
                 <div>
-                    <h2 className="text-2xl font-bold text-cusblue flex items-center gap-2">
-                        <CalendarDays className="w-6 h-6" /> Recent Joined
-                        Events
+                    <h2 className="text-lg font-black text-cusblue flex items-center gap-2 uppercase tracking-tight">
+                        Recent Activity
                     </h2>
-                    <p className="text-cusviolet/70 text-sm mt-1">
-                        Your most recently joined experiences
-                    </p>
                 </div>
                 <Link
                     href="/home/events"
-                    className="flex items-center gap-2 text-cusblue font-semibold hover:text-cusviolet transition-colors group">
-                    View all
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    className="text-[11px] font-bold uppercase tracking-widest text-cusblue/50 hover:text-cusblue transition-colors">
+                    View All
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* VERTICAL STACK */}
+            <div className="flex flex-col gap-3">
                 {events.map((event) => (
-                    <JoinedEventCard key={event._id} event={event} />
+                    <JoinedEventSmallCard key={event._id} event={event} />
                 ))}
+            </div>
+
+            {/* Visual Flair: Decorative element */}
+            <div className="mt-6 p-4 rounded-2xl bg-linear-to-br from-cusblue/5 to-cusviolet/5 border border-white flex items-center justify-center">
+                <p className="text-[10px] font-bold text-cusblue/40 uppercase tracking-widest text-center">
+                    Your recent {events.length} events
+                </p>
             </div>
         </div>
     );
