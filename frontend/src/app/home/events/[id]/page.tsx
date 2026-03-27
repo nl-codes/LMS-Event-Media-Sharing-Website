@@ -7,18 +7,18 @@ import type { Event } from "@/types/Event";
 import { useParams } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import QRModal from "@/components/events/QRModal";
+import BackButton from "@/components/navigation/BackButton";
 import {
     Calendar,
     MapPin,
     Clock,
-    ArrowLeft,
     Edit3,
     Globe,
-    Info,
     Loader2,
     CheckCircle2,
     XCircle,
     QrCode,
+    Images,
 } from "lucide-react";
 
 export default function EventDetailsPage() {
@@ -54,18 +54,16 @@ export default function EventDetailsPage() {
 
     if (error || !event) {
         return (
-            <main className="max-w-4xl mx-auto px-6 py-20 text-center">
+            <main className="max-w-4xl mx-auto px-6 py-20 text-center text-cusblue">
                 <div className="bg-red-50 border border-red-100 p-8 rounded-2xl">
                     <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-cusblue mb-2">
-                        Oops!
-                    </h2>
+                    <h2 className="text-2xl font-bold mb-2">Oops!</h2>
                     <p className="text-cusviolet mb-6">
                         {error || "Event not found."}
                     </p>
                     <Link
                         href="/home/events"
-                        className="text-cusblue font-semibold underline">
+                        className="font-semibold underline">
                         Return to Events
                     </Link>
                 </div>
@@ -85,22 +83,28 @@ export default function EventDetailsPage() {
 
             <main className="max-w-5xl mx-auto px-6 py-10 profile-card-animate">
                 {/* Navigation Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <Link
-                        href="/home/events"
-                        className="flex items-center gap-2 text-cusviolet hover:text-cusblue transition-colors font-medium">
-                        <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-                    </Link>
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <BackButton label="Back to My Events" />
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* QR Code Toggle */}
                         <button
                             onClick={() => setShowQR(true)}
                             className="flex items-center gap-2 bg-cuscream border border-cusblue/20 text-cusblue px-5 py-2 rounded-xl hover:bg-cusblue hover:text-white transition-all shadow-sm font-medium">
                             <QrCode className="w-4 h-4" /> QR Code
                         </button>
+
+                        {/* Event Gallery Button */}
+                        <Link
+                            href={`/home/events/${event._id}/gallery`}
+                            className="flex items-center gap-2 bg-white border border-cusblue/20 text-cusblue px-5 py-2 rounded-xl hover:bg-custeal hover:border-custeal hover:text-white transition-all shadow-sm font-medium">
+                            <Images className="w-4 h-4" /> View Gallery
+                        </Link>
+
+                        {/* Edit Button */}
                         <Link
                             href={`/home/events/${event._id}/edit`}
-                            replace
-                            className="flex items-center gap-2 bg-white border border-cusblue/20 text-cusblue px-5 py-2 rounded-xl hover:bg-cusblue hover:text-white transition-all shadow-sm">
+                            className="flex items-center gap-2 bg-white border border-cusblue/20 text-cusblue px-5 py-2 rounded-xl hover:bg-cusblue hover:text-white transition-all shadow-sm font-medium">
                             <Edit3 className="w-4 h-4" /> Edit Event
                         </Link>
                     </div>
@@ -183,76 +187,55 @@ export default function EventDetailsPage() {
                             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                                 <Calendar className="w-5 h-5" /> Schedule
                             </h3>
-
                             <div className="space-y-6">
-                                <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="w-5 h-5 text-cuscream/60 mt-1" />
-                                    <div>
-                                        <p className="text-cuscream/60 text-xs uppercase font-bold mb-1">
-                                            Starts
-                                        </p>
-                                        <p className="text-lg font-semibold leading-tight">
-                                            {new Date(
-                                                event.startTime,
-                                            ).toLocaleDateString(undefined, {
-                                                weekday: "long",
-                                                month: "long",
-                                                day: "numeric",
-                                            })}
-                                        </p>
-                                        <p className="text-cuscream/80 italic flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {new Date(
-                                                event.startTime,
-                                            ).toLocaleTimeString([], {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}
-                                        </p>
-                                    </div>
+                                <div>
+                                    <p className="text-cuscream/60 text-xs uppercase font-bold mb-1">
+                                        Starts
+                                    </p>
+                                    <p className="text-lg font-semibold leading-tight">
+                                        {new Date(
+                                            event.startTime,
+                                        ).toLocaleDateString(undefined, {
+                                            weekday: "long",
+                                            month: "long",
+                                            day: "numeric",
+                                        })}
+                                    </p>
+                                    <p className="text-cuscream/80 italic flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />{" "}
+                                        {new Date(
+                                            event.startTime,
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </p>
                                 </div>
-
                                 <div className="border-l-2 border-cuscream/20 pl-4 py-1 ml-2">
-                                    <div className="flex items-start gap-3">
-                                        <CheckCircle2 className="w-5 h-5 text-cuscream/60 mt-1" />
-                                        <div>
-                                            <p className="text-cuscream/60 text-xs uppercase font-bold mb-1">
-                                                Ends
-                                            </p>
-                                            <p className="text-lg font-semibold leading-tight">
-                                                {new Date(
-                                                    event.endTime,
-                                                ).toLocaleDateString(
-                                                    undefined,
-                                                    {
-                                                        weekday: "short",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                    },
-                                                )}
-                                            </p>
-                                            <p className="text-cuscream/80 italic flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
-                                                {new Date(
-                                                    event.endTime,
-                                                ).toLocaleTimeString([], {
-                                                    hour: "2-digit",
-                                                    minute: "2-digit",
-                                                })}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    <p className="text-cuscream/60 text-xs uppercase font-bold mb-1">
+                                        Ends
+                                    </p>
+                                    <p className="text-lg font-semibold leading-tight">
+                                        {new Date(
+                                            event.endTime,
+                                        ).toLocaleDateString(undefined, {
+                                            weekday: "short",
+                                            month: "long",
+                                            day: "numeric",
+                                        })}
+                                    </p>
+                                    <p className="text-cuscream/80 italic flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />{" "}
+                                        {new Date(
+                                            event.endTime,
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </p>
                                 </div>
                             </div>
-
                             <div className="mt-8 pt-6 border-t border-cuscream/10 text-center">
-                                <p className="text-sm font-medium opacity-80 mb-4 flex items-center justify-center gap-1">
-                                    Event Status:{" "}
-                                    <span className="capitalize flex items-center gap-1">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        {event.status}
-                                    </span>
-                                </p>
                                 <Link
                                     href={`/events/${event.uniqueSlug}`}
                                     className="block w-full py-3 bg-cuscream text-cusblue rounded-xl font-bold hover:scale-[1.02] transition-transform">
@@ -261,7 +244,7 @@ export default function EventDetailsPage() {
                             </div>
                         </div>
 
-                        {/* QR Preview Card */}
+                        {/* Quick Info & QR Preview Card */}
                         <div className="bg-white/50 border border-cusblue/10 p-6 rounded-3xl flex flex-col items-center gap-4">
                             <h4 className="flex items-center gap-2 text-cusblue font-bold self-start">
                                 <QrCode className="w-4 h-4" /> Event QR Code
@@ -279,50 +262,8 @@ export default function EventDetailsPage() {
                             <button
                                 onClick={() => setShowQR(true)}
                                 className="w-full flex items-center justify-center gap-2 border border-cusblue/30 text-cusblue py-2.5 rounded-xl font-semibold hover:bg-cusblue hover:text-white transition-all text-sm">
-                                <QrCode className="w-4 h-4" /> View &amp;
-                                Download
+                                View &amp; Download QR
                             </button>
-                        </div>
-
-                        {/* Quick Info */}
-                        <div className="bg-white/50 border border-cusblue/10 p-6 rounded-3xl">
-                            <h4 className="flex items-center gap-2 text-cusblue font-bold mb-2">
-                                <Info className="w-4 h-4" /> Quick Info
-                            </h4>
-                            <ul className="text-sm text-cusviolet space-y-2">
-                                <li className="flex justify-between items-center">
-                                    <span>Premium Event</span>
-                                    <span className="font-bold flex items-center gap-1">
-                                        {event.isPremium ? (
-                                            <>
-                                                <CheckCircle2 className="w-4 h-4 text-custeal" />
-                                                Yes
-                                            </>
-                                        ) : (
-                                            <>
-                                                <XCircle className="w-4 h-4 text-gray-400" />
-                                                No
-                                            </>
-                                        )}
-                                    </span>
-                                </li>
-                                <li className="flex justify-between items-center">
-                                    <span>Live Status</span>
-                                    <span className="font-bold flex items-center gap-1">
-                                        {event.isLive ? (
-                                            <>
-                                                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                                Active
-                                            </>
-                                        ) : (
-                                            <>
-                                                <XCircle className="w-4 h-4 text-gray-400" />
-                                                Inactive
-                                            </>
-                                        )}
-                                    </span>
-                                </li>
-                            </ul>
                         </div>
                     </div>
                 </div>

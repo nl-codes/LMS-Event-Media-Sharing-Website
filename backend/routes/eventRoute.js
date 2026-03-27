@@ -1,5 +1,6 @@
 import express from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { identifyUser } from "../middleware/identifyUser.js";
 import {
     registerEvent,
     getEventById,
@@ -9,6 +10,8 @@ import {
     editEventStatus,
     deleteEvent,
     requestUploadSignature,
+    verifyEventAccess,
+    joinAsGuest,
 } from "../controllers/eventController.js";
 
 const router = express.Router();
@@ -21,6 +24,8 @@ router.patch("/:id/status", requireAuth, editEventStatus);
 router.delete("/:id", requireAuth, deleteEvent);
 
 // Public routes (for QR code access)
+router.get("/verify/:eventId", identifyUser, verifyEventAccess);
+router.post("/join-as-guest", joinAsGuest);
 router.get("/:slug", getEventBySlug);
 router.post("/:slug/upload-check", requestUploadSignature);
 

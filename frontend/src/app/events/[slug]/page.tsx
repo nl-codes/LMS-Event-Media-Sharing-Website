@@ -1,18 +1,107 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getEventBySlug, requestUploadSignature } from "@/lib/eventApi";
+import { getEventBySlug, joinAsGuest, verifyEventAccess } from "@/lib/eventApi";
 import type { Event } from "@/types/Event";
-import { useParams } from "next/navigation";
-import {
-    Calendar,
-    MapPin,
-    ShieldCheck,
-    Lock,
-    Loader2,
-    AlertCircle,
-    Camera,
-} from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { Loader2, AlertCircle } from "lucide-react";
+import EventDetailsPublicPage from "./EventDetailsPublicPage";
+import { useIdentity } from "@/context/IdentityContext";
+
+type ScopedGuestCookie = {
+    guestId: string;
+    userName: string;
+    eventId: string;
+};
+
+function getScopedGuestCookie(eventSlug: string): ScopedGuestCookie | null {
+    if (typeof document === "undefined" || !eventSlug) return null;
+
+    const cookieKey = `guest_${eventSlug}`;
+    const cookieValue = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${cookieKey}=`))
+        ?.split("=")[1];
+
+    if (!cookieValue) return null;
+
+    try {
+        const parsed = JSON.parse(decodeURIComponent(cookieValue));
+        if (
+            parsed &&
+            typeof parsed.guestId === "string" &&
+            typeof parsed.userName === "string" &&
+            typeof parsed.eventId === "string"
+        ) {
+            return parsed as ScopedGuestCookie;
+        }
+    } catch {
+        return null;
+    }
+
+    return null;
+}
+
+function UsernameModal({
+    open,
+    value,
+    loading,
+    onClose,
+    onChange,
+    onSubmit,
+}: {
+    open: boolean;
+    value: string;
+    loading: boolean;
+    onClose: () => void;
+    onChange: (value: string) => void;
+    onSubmit: () => void;
+}) {
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl">
+                <h3 className="text-xl font-bold text-cusblue mb-2">
+                    Continue as guest
+                </h3>
+                <p className="text-sm text-cusviolet/80 mb-4">
+                    Enter a display name for your uploads.
+                </p>
+
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full border border-cusblue/20 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-cusblue/40"
+                    maxLength={32}
+                />
+
+                <div className="mt-4 flex justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={loading}
+                        className="px-4 py-2 rounded-xl border border-cusblue/20 text-cusblue hover:bg-cusblue/5 disabled:opacity-50">
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onSubmit}
+                        disabled={loading || !value.trim()}
+                        className="px-4 py-2 rounded-xl bg-cusblue text-cuscream hover:opacity-90 disabled:opacity-50 flex items-center gap-2">
+                        {loading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            "Continue"
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function PublicEventPage() {
     const [event, setEvent] = useState<Event | null>(null);
@@ -22,9 +111,15 @@ export default function PublicEventPage() {
         success: boolean;
     } | null>(null);
     const [checking, setChecking] = useState(false);
+    const [joining, setJoining] = useState(false);
+    const [showGuestModal, setShowGuestModal] = useState(false);
+    const [guestName, setGuestName] = useState("");
 
     const params = useParams();
+    const router = useRouter();
     const slug = typeof params?.slug === "string" ? params.slug : "";
+
+    const { setGuestIdentity } = useIdentity();
 
     useEffect(() => {
         const run = async () => {
@@ -38,18 +133,62 @@ export default function PublicEventPage() {
         void run();
     }, [slug]);
 
-    const checkUpload = async () => {
+    const handleCheckUpload = async () => {
+        if (!event?._id) return;
+
         setChecking(true);
         try {
-            await requestUploadSignature(slug);
-            setGateResult({
-                msg: "You are authorized to upload media!",
-                success: true,
-            });
+            const result = await verifyEventAccess(event._id, slug);
+            const scopedGuest = getScopedGuestCookie(slug);
+
+            const hasScopedGuestIdentity =
+                !!scopedGuest && scopedGuest.eventId === event._id;
+
+            if (result.isRegistered || hasScopedGuestIdentity) {
+                router.push(`/events/${slug}/gallery`);
+                return;
+            }
+
+            setGateResult(null);
+            setShowGuestModal(true);
         } catch (e) {
             setGateResult({ msg: (e as Error).message, success: false });
         } finally {
             setChecking(false);
+        }
+    };
+
+    const handleJoinGuest = async () => {
+        if (!event?._id || !guestName.trim()) return;
+
+        setJoining(true);
+        try {
+            const guest = await joinAsGuest({
+                eventId: event._id,
+                userName: guestName.trim(),
+            });
+
+            setGuestIdentity({
+                guestId: guest.guest_id,
+                userName: guest.userName,
+            });
+
+            const expiresAt = new Date(event.endTime).toUTCString();
+            const scopedCookie = encodeURIComponent(
+                JSON.stringify({
+                    guestId: guest.guest_id,
+                    userName: guest.userName,
+                    eventId: guest.eventId,
+                }),
+            );
+            document.cookie = `guest_${slug}=${scopedCookie}; path=/; expires=${expiresAt}; SameSite=Lax`;
+
+            setShowGuestModal(false);
+            router.push(`/events/${slug}/gallery`);
+        } catch (e) {
+            setGateResult({ msg: (e as Error).message, success: false });
+        } finally {
+            setJoining(false);
         }
     };
 
@@ -79,124 +218,22 @@ export default function PublicEventPage() {
     }
 
     return (
-        <main className="min-h-screen bg-cuscream selection:bg-custeal selection:text-white pb-20">
-            {/* Minimal Public Header */}
-            <div className="max-w-4xl mx-auto px-6 pt-12 text-center profile-card-animate">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white shadow-sm border border-cusblue/5 mb-6">
-                    <span
-                        className={`w-2 h-2 rounded-full ${event.isLive ? "bg-green-500 animate-pulse" : "bg-gray-400"}`}
-                    />
-                    <span className="text-xs font-bold text-cusblue uppercase tracking-widest">
-                        {event.isLive ? "Live Event" : "Upcoming Event"}
-                    </span>
-                </div>
+        <>
+            <EventDetailsPublicPage
+                event={event}
+                checking={checking}
+                gateResult={gateResult}
+                onCheckUpload={handleCheckUpload}
+            />
 
-                <h1 className="text-4xl md:text-6xl font-bold text-cusblue mb-6 tracking-tight">
-                    {event.eventName}
-                </h1>
-
-                <p className="text-lg md:text-xl text-cusviolet/80 max-w-2xl mx-auto leading-relaxed mb-10">
-                    {event.description ||
-                        "Join us for this exclusive event experience."}
-                </p>
-
-                {/* Event Meta Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-12">
-                    <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-white flex items-center gap-4 shadow-sm">
-                        <div className="bg-cusblue/5 p-3 rounded-xl text-cusblue">
-                            <MapPin className="w-6 h-6" />
-                        </div>
-                        <div className="text-left">
-                            <p className="text-[10px] font-bold text-cusviolet uppercase tracking-wider opacity-60">
-                                Where
-                            </p>
-                            <p className="text-cusblue font-semibold truncate">
-                                {event.location}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-white flex items-center gap-4 shadow-sm">
-                        <div className="bg-cusblue/5 p-3 rounded-xl text-cusblue">
-                            <Calendar className="w-6 h-6" />
-                        </div>
-                        <div className="text-left">
-                            <p className="text-[10px] font-bold text-cusviolet uppercase tracking-wider opacity-60">
-                                When
-                            </p>
-                            <p className="text-cusblue font-semibold">
-                                {new Date(event.startTime).toLocaleDateString(
-                                    [],
-                                    { month: "short", day: "numeric" },
-                                )}{" "}
-                                @{" "}
-                                {new Date(event.startTime).toLocaleTimeString(
-                                    [],
-                                    { hour: "2-digit", minute: "2-digit" },
-                                )}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Gate/Action Section */}
-                <div className="max-w-md mx-auto bg-cusblue rounded-[2.5rem] p-8 md:p-10 shadow-2xl text-cuscream relative overflow-hidden group">
-                    {/* Decorative Circle */}
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full transition-transform group-hover:scale-150 duration-700" />
-
-                    <div className="relative z-10 text-center">
-                        <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                            <Camera className="w-8 h-8 text-cuscream" />
-                        </div>
-
-                        <h3 className="text-2xl font-bold mb-2">
-                            Event Access
-                        </h3>
-                        <p className="text-cuscream/70 text-sm mb-8">
-                            Verify your permissions to upload photos and videos
-                            to this event&apos;s shared gallery.
-                        </p>
-
-                        {!gateResult ? (
-                            <button
-                                onClick={checkUpload}
-                                disabled={checking}
-                                className="w-full bg-cuscream text-cusblue py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-white transition-all active:scale-95 disabled:opacity-50">
-                                {checking ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    <>
-                                        <ShieldCheck className="w-5 h-5" />
-                                        Verify Access
-                                    </>
-                                )}
-                            </button>
-                        ) : (
-                            <div
-                                className={`p-4 rounded-2xl flex items-start gap-3 text-left animate-in fade-in slide-in-from-bottom-2 ${
-                                    gateResult.success
-                                        ? "bg-green-500/20 border border-green-500/30"
-                                        : "bg-red-500/20 border border-red-500/30"
-                                }`}>
-                                {gateResult.success ? (
-                                    <ShieldCheck className="w-5 h-5 shrink-0" />
-                                ) : (
-                                    <Lock className="w-5 h-5 shrink-0" />
-                                )}
-                                <p className="text-sm font-medium leading-tight">
-                                    {gateResult.msg}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Footer Branding */}
-            <div className="mt-20 text-center">
-                <p className="text-xs font-bold text-cusblue/30 uppercase tracking-[0.3em]">
-                    Powered by LMS
-                </p>
-            </div>
-        </main>
+            <UsernameModal
+                open={showGuestModal}
+                value={guestName}
+                loading={joining}
+                onClose={() => setShowGuestModal(false)}
+                onChange={setGuestName}
+                onSubmit={handleJoinGuest}
+            />
+        </>
     );
 }

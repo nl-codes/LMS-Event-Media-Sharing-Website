@@ -81,7 +81,6 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
                     <Link
                         href={`/home/events/${event._id}/edit`}
-                        replace
                         className="flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg border border-cusblue text-cusblue hover:bg-cusblue/5 transition-colors">
                         <Edit3 className="w-3 h-3" /> Edit
                     </Link>

@@ -7,6 +7,10 @@ import {
     updateEvent,
     updateEventStatus,
 } from "../services/eventService.js";
+import { Event } from "../models/eventModel.js";
+import { Guest } from "../models/guestModel.js";
+import { v4 as uuidv4 } from "uuid";
+import { isNowBetween } from "../utils/timeline.js";
 
 export const registerEvent = async (req, res) => {
     try {
@@ -219,6 +223,98 @@ export const requestUploadSignature = async (req, res) => {
         });
     } catch (error) {
         res.status(404).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const verifyEventAccess = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const event = await Event.findById(eventId);
+
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: "Event not found",
+            });
+        }
+
+        const isActiveWindow =
+            event.status === "Active" &&
+            isNowBetween(event.startTime, event.endTime);
+
+        if (!isActiveWindow) {
+            return res.status(403).json({
+                success: false,
+                message: "Event is not accepting uploads right now",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                isRegistered: Boolean(req.user),
+            },
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const joinAsGuest = async (req, res) => {
+    try {
+        const { eventId, userName } = req.body;
+
+        if (!eventId || !userName || !String(userName).trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "eventId and userName are required",
+            });
+        }
+
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: "Event not found",
+            });
+        }
+
+        const eventEndTime = new Date(event.endTime);
+        const isActiveWindow =
+            event.status === "Active" &&
+            isNowBetween(event.startTime, eventEndTime);
+
+        if (!isActiveWindow) {
+            return res.status(403).json({
+                success: false,
+                message: "Event is not accepting uploads right now",
+            });
+        }
+
+        const guest_id = uuidv4();
+        const guest = await Guest.create({
+            guest_id,
+            userName: String(userName).trim(),
+            eventId,
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Guest access granted",
+            data: {
+                guest_id: guest.guest_id,
+                userName: guest.userName,
+                eventId: String(guest.eventId),
+            },
+        });
+    } catch (error) {
+        return res.status(400).json({
             success: false,
             message: error.message,
         });

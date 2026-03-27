@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 export default function SignupNewButton() {
     const router = useRouter();
     const handleSignup = () => router.replace("/signup");
-    const handleForgotPassword = () => router.replace("/forgot-password");
+    const handleForgotPassword = () => router.push("/forgot-password");
     return (
         <>
             <p>

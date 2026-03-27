@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEvent } from "@/lib/eventApi";
 import LandingButton from "@/components/buttons/LandingButton";
+import BackButton from "@/components/navigation/BackButton";
 import { toast } from "react-hot-toast";
 
 export default function CreateEventPage() {
@@ -39,6 +40,10 @@ export default function CreateEventPage() {
                 onSubmit={onSubmit}
                 className="form p-8 rounded-xl shadow-xl bg-white/50 backdrop-blur-sm profile-card-animate w-full"
                 style={{ width: "100%", maxWidth: "600px" }}>
+                <div className="mb-4 flex flex-row items-center gap-4">
+                    <BackButton label="Back to My Events" />
+                </div>
+
                 <h2 className="text-3xl font-bold text-cusblue text-center mb-2">
                     Create Event
                 </h2>

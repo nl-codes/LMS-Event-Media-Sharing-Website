@@ -97,3 +97,34 @@ export async function requestUploadSignature(slug: string) {
     );
     return json;
 }
+
+export async function verifyEventAccess(eventId: string, slug?: string) {
+    const headers: Record<string, string> = {};
+    if (slug) {
+        headers["x-event-slug"] = slug;
+    }
+
+    const json = await request<{ isRegistered: boolean }>(
+        `/events/verify/${eventId}`,
+        {
+            method: "GET",
+            headers,
+        },
+    );
+    return json.data as { isRegistered: boolean };
+}
+
+export async function joinAsGuest(payload: {
+    eventId: string;
+    userName: string;
+}) {
+    const json = await request<{
+        guest_id: string;
+        userName: string;
+        eventId: string;
+    }>("/events/join-as-guest", {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+    return json.data as { guest_id: string; userName: string; eventId: string };
+}
