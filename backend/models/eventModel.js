@@ -47,6 +47,19 @@ const EventSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        tier: {
+            type: String,
+            enum: ["free", "premium", "pro"],
+            default: "free",
+        },
+        expiresAt: {
+            type: Date,
+            default: null,
+        },
+        uploadLimit: {
+            type: Number,
+            default: 100,
+        },
 
         participantCount: {
             type: Number,
