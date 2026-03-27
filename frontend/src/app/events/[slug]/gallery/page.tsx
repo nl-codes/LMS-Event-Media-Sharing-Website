@@ -258,8 +258,17 @@ export default function EventPublicGallery() {
 
             {/* Chat Section */}
             {event && (
-                <div className="mt-12 mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Group Chat</h2>
+                <div className="mt-20 mb-20 max-w-3xl mx-auto">
+                    <div className="flex flex-col items-center text-center mb-8">
+                        <span className="text-cusblue font-black uppercase tracking-[0.3em] text-[10px] mb-2">
+                            Social Hub
+                        </span>
+                        <h2 className="text-3xl font-black text-cusblue tracking-tighter">
+                            Event Live Chat
+                        </h2>
+                        <div className="h-1 w-12 bg-linear-to-r from-cusblue to-cusviolet rounded-full mt-4" />
+                    </div>
+
                     <ChatContainer
                         eventId={eventId}
                         eventName={event.eventName || "Event"}

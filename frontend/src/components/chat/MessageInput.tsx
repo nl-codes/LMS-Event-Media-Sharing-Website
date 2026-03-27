@@ -1,104 +1,65 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { Send } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 
 interface MessageInputProps {
     onSendMessage: (text: string) => void;
     disabled?: boolean;
     placeholder?: string;
-    value?: string;
-    onChange?: (value: string) => void;
 }
 
-/**
- * MessageInput Component
- * Provides input field and send button for chat messages
- */
 const MessageInput: React.FC<MessageInputProps> = ({
     onSendMessage,
     disabled = false,
     placeholder = "Type a message...",
-    value = "",
-    onChange,
 }) => {
-    const [localValue, setLocalValue] = useState("");
-    const displayValue = value !== undefined ? value : localValue;
+    const [value, setValue] = useState("");
 
-    /**
-     * Handle text input change
-     */
-    const handleChange = useCallback(
-        (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            const newValue = e.target.value;
-            if (onChange) {
-                onChange(newValue);
-            } else {
-                setLocalValue(newValue);
-            }
-        },
-        [onChange],
-    );
+    const handleSend = useCallback(() => {
+        if (!value.trim() || disabled) return;
+        onSendMessage(value);
+        setValue("");
+    }, [value, disabled, onSendMessage]);
 
-    /**
-     * Handle send button click
-     */
-    const handleSend = useCallback(async () => {
-        if (!displayValue.trim() || disabled) return;
-
-        try {
-            onSendMessage(displayValue);
-            // Clear input
-            if (onChange) {
-                onChange("");
-            } else {
-                setLocalValue("");
-            }
-        } catch (error) {
-            console.error("Error sending message:", error);
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
         }
-    }, [displayValue, disabled, onSendMessage, onChange]);
+    };
 
-    /**
-     * Handle Enter key to send message
-     * Shift+Enter for new line
-     */
-    const handleKeyDown = useCallback(
-        (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-            }
-        },
-        [handleSend],
-    );
-
-    const isLoading = disabled;
-    const canSend = displayValue.trim() && !isLoading;
+    const canSend = value.trim() && !disabled;
 
     return (
-        <div className="flex gap-2 items-end">
+        <div className="relative flex items-center gap-3 bg-white p-2 rounded-4xl border border-slate-200 shadow-inner group focus-within:border-cusblue/30 transition-all">
+            <div className="pl-3 text-cusblue/30 group-focus-within:text-cusblue transition-colors">
+                <Sparkles size={18} />
+            </div>
             <textarea
-                value={displayValue}
-                onChange={handleChange}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
                 disabled={disabled}
-                rows={2}
-                className={`flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 text-sm resize-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all ${
-                    disabled ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                rows={1}
+                className="flex-1 bg-transparent py-2 text-slate-700 placeholder-slate-400 text-sm resize-none focus:outline-none scrollbar-hide min-h-10 max-h-[120px]"
             />
             <button
                 onClick={handleSend}
                 disabled={!canSend}
-                className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${
+                className={`h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                     canSend
-                        ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                        : "bg-slate-700 text-slate-400 cursor-not-allowed"
-                }`}
-                title="Send message (Shift+Enter for new line)">
-                <Send size={18} />
+                        ? "bg-cusblue text-white shadow-lg shadow-cusblue/30 scale-100 hover:scale-110 active:scale-90"
+                        : "bg-slate-100 text-slate-300 scale-90"
+                }`}>
+                <Send
+                    size={16}
+                    strokeWidth={2.5}
+                    className={
+                        canSend ? "translate-x-0.5 -translate-y-0.5" : ""
+                    }
+                />
             </button>
         </div>
     );
