@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Event } from "@/types/Event";
-import EventCard from "@/components/events/EventCard";
+import MyEventCard from "@/components/events/MyEventCard";
 import JoinedEventsList from "@/components/events/JoinedEventsList";
 import BackButton from "@/components/navigation/BackButton";
 import { deleteEvent, getHostEvents } from "@/lib/eventApi";
@@ -114,7 +114,7 @@ export default function EventsPage() {
             {/* Events Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {events.map((event) => (
-                    <EventCard
+                    <MyEventCard
                         key={event._id}
                         event={event}
                         onDelete={onDelete}
