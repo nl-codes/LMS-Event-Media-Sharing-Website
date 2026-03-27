@@ -9,6 +9,8 @@ import userRoutes from "./routes/userRoute.js";
 import profileRoutes from "./routes/profileRoute.js";
 import eventRoutes from "./routes/eventRoute.js";
 import mediaRouter from "./routes/mediaRoute.js";
+import eventMembershipRoutes from "./routes/eventMembershipRoute.js";
+
 import { setIO } from "./config/socketConfig.js";
 
 dotenv.config();
@@ -57,3 +59,4 @@ app.use("/users", userRoutes);
 app.use("/users/profile", profileRoutes);
 app.use("/events", eventRoutes);
 app.use("/media", mediaRouter);
+app.use("/event-memberships", eventMembershipRoutes);

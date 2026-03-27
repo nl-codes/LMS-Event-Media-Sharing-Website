@@ -14,12 +14,12 @@ import {
     QrCode,
 } from "lucide-react";
 
-type EventCardProps = {
+type MyEventCardProps = {
     event: Event;
     onDelete?: (id: string) => void;
 };
 
-export default function EventCard({ event, onDelete }: EventCardProps) {
+export default function MyEventCard({ event, onDelete }: MyEventCardProps) {
     const [showQR, setShowQR] = useState(false);
 
     return (

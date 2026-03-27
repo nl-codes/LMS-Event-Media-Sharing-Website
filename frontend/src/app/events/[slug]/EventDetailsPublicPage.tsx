@@ -9,6 +9,8 @@ import {
     Camera,
 } from "lucide-react";
 import type { Event } from "@/types/Event";
+import BackButton from "@/components/navigation/BackButton";
+import { useUser } from "@/context/UserContext";
 
 interface EventDetailsPublicPageProps {
     event: Event;
@@ -23,8 +25,16 @@ export default function EventDetailsPublicPage({
     gateResult,
     onCheckUpload,
 }: EventDetailsPublicPageProps) {
+    const { user, isInitialized } = useUser();
+
     return (
         <main className="min-h-screen bg-cuscream selection:bg-custeal selection:text-white pb-20">
+            {isInitialized && user && (
+                <div className="max-w-4xl mx-auto px-6 pt-8">
+                    <BackButton label="Back" />
+                </div>
+            )}
+
             {/* Minimal Public Header */}
             <div className="max-w-4xl mx-auto px-6 pt-12 text-center profile-card-animate">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white shadow-sm border border-cusblue/5 mb-6">

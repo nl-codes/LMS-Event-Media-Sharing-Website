@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getEventBySlug, joinAsGuest, verifyEventAccess } from "@/lib/eventApi";
+import { joinEvent } from "@/lib/membershipApi";
 import type { Event } from "@/types/Event";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -145,6 +146,9 @@ export default function PublicEventPage() {
                 !!scopedGuest && scopedGuest.eventId === event._id;
 
             if (result.isRegistered || hasScopedGuestIdentity) {
+                if (result.isRegistered) {
+                    await joinEvent(event._id);
+                }
                 router.push(`/events/${slug}/gallery`);
                 return;
             }

@@ -200,6 +200,7 @@ export default function EventPublicGallery() {
                 <BackButton
                     href={`/events/${slug}`}
                     label="Back to Event"
+                    replace={true}
                 />
             </div>
 
