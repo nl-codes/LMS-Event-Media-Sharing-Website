@@ -2,6 +2,7 @@ import {
     uploadMultipleMedia,
     getGallery,
     deleteMedia,
+    deleteMultipleMedia,
     toggleLike,
     getHighlights,
     setMediaLabel,
@@ -108,6 +109,41 @@ export const deleteMediaController = async (req, res) => {
         io.to(String(mediaDoc.eventId)).emit("media_deleted", { mediaId });
 
         res.status(200).json({ success: true, ...result });
+    } catch (error) {
+        res.status(403).json({ success: false, message: error.message });
+    }
+};
+
+// Handles DELETE /media
+export const deleteMultipleMediaController = async (req, res) => {
+    try {
+        const requesterId = req.user?.id;
+        if (!requesterId) {
+            return res
+                .status(401)
+                .json({ success: false, message: "Authentication required" });
+        }
+
+        const { mediaIds } = req.body;
+        if (!Array.isArray(mediaIds) || mediaIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "mediaIds must be a non-empty array",
+            });
+        }
+
+        const result = await deleteMultipleMedia(mediaIds, requesterId);
+
+        const io = getIO();
+        result.deletedMedia.forEach(({ eventId, mediaId }) => {
+            io.to(String(eventId)).emit("media_deleted", { mediaId });
+        });
+
+        res.status(200).json({
+            success: true,
+            message: result.message,
+            data: { deletedCount: result.deletedMedia.length },
+        });
     } catch (error) {
         res.status(403).json({ success: false, message: error.message });
     }
