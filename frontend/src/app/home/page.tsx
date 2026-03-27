@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Calendar, ArrowRight } from "lucide-react";
+import RecentJoinedEvents from "@/components/events/RecentJoinedEvents";
 
 export default function Home() {
     return (
@@ -28,6 +29,9 @@ export default function Home() {
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
             </div>
+
+            {/* Recent Joined Events Section */}
+            <RecentJoinedEvents />
         </main>
     );
 }
