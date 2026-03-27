@@ -12,6 +12,7 @@ import MediaCard from "@/components/media/MediaCard";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
+import ChatContainer from "@/components/chat/ChatContainer";
 import type { Media } from "@/types/Media";
 import type { Event } from "@/types/Event";
 import BackButton from "@/components/navigation/BackButton";
@@ -252,6 +253,17 @@ export default function EventPublicGallery() {
                             disableLike={!user}
                         />
                     ))}
+                </div>
+            )}
+
+            {/* Chat Section */}
+            {event && (
+                <div className="mt-12 mb-8">
+                    <h2 className="text-xl font-semibold mb-4">Group Chat</h2>
+                    <ChatContainer
+                        eventId={eventId}
+                        eventName={event.eventName || "Event"}
+                    />
                 </div>
             )}
         </div>
