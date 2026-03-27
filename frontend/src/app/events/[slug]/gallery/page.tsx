@@ -11,7 +11,9 @@ import { useGallerySocket } from "@/hooks/useGallerySocket";
 import MediaCard from "@/components/media/MediaCard";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
+import GalleryEventHeader from "@/components/events/GalleryEventHeader";
 import type { Media } from "@/types/Media";
+import type { Event } from "@/types/Event";
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -20,7 +22,7 @@ export default function EventPublicGallery() {
     const { displayName } = useIdentity();
 
     const [eventId, setEventId] = useState("");
-    const [eventName, setEventName] = useState("Event Gallery");
+    const [event, setEvent] = useState<Event | null>(null);
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadingGallery, setLoadingGallery] = useState(false);
@@ -103,12 +105,12 @@ export default function EventPublicGallery() {
                 if (!isMounted) return;
 
                 setEventId(event._id);
-                setEventName(event.eventName || "Event Gallery");
+                setEvent(event);
                 await fetchGallery(event._id);
             } catch (err) {
                 if (isMounted) {
                     setEventId("");
-                    setEventName("Event Gallery");
+                    setEvent(null);
                     setGallery([]);
                     const errorMessage =
                         err instanceof Error
@@ -193,27 +195,26 @@ export default function EventPublicGallery() {
 
     return (
         <div className="max-w-5xl mx-auto p-4">
-            <h1 className="text-3xl font-bold mb-1 text-cusblue">
-                {eventName}
-            </h1>
-            <p className="text-sm text-cusviolet/80 mb-4">
-                Shared Event Gallery
-            </p>
-
-            <div className="mb-4 flex justify-between items-center">
-                <div>
-                    <MediaUploadButton
-                        eventId={eventId}
-                        eventSlug={slug}
-                        onUploadSuccess={() => {
-                            void fetchGallery(eventId);
-                        }}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                        Uploading as {uploaderDisplayName}
-                    </p>
-                </div>
-            </div>
+            {event && (
+                <GalleryEventHeader
+                    event={event}
+                    subtitle="Shared Event Gallery"
+                    actionSlot={
+                        <div className="rounded-2xl bg-white/60 p-4 shadow-sm backdrop-blur-md">
+                            <MediaUploadButton
+                                eventId={eventId}
+                                eventSlug={slug}
+                                onUploadSuccess={() => {
+                                    void fetchGallery(eventId);
+                                }}
+                            />
+                            <p className="mt-2 text-xs text-cusviolet/70">
+                                Uploading as {uploaderDisplayName}
+                            </p>
+                        </div>
+                    }
+                />
+            )}
 
             <HighlightsGrid
                 eventId={eventId}
