@@ -81,7 +81,6 @@ export const deleteMediaController = async (req, res) => {
     try {
         const { mediaId } = req.params;
         const requesterId = req.user?.id;
-        const requesterRole = req.user?.role;
         if (!requesterId) {
             return res
                 .status(401)
@@ -95,7 +94,7 @@ export const deleteMediaController = async (req, res) => {
                 .json({ success: false, message: "Media not found" });
         }
 
-        const result = await deleteMedia(mediaId, requesterId, requesterRole);
+        const result = await deleteMedia(mediaId, requesterId);
 
         const io = getIO();
         io.to(String(mediaDoc.eventId)).emit("media_deleted", { mediaId });
