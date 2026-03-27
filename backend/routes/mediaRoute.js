@@ -20,7 +20,7 @@ const router = express.Router();
 router.post(
     "/upload",
     identifyUser,
-    upload.single("file"),
+    upload.array("files", 10),
     uploadMediaController,
 );
 

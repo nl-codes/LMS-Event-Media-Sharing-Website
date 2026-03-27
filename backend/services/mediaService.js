@@ -3,13 +3,12 @@ import { Event } from "../models/eventModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { isNowBetween } from "../utils/timeline.js";
 
-// Upload media to Cloudinary and save to DB
-export const uploadMedia = async (
+// Upload multiple files to Cloudinary and save them to DB
+export const uploadMultipleMedia = async (
     eventId,
     uploaderId,
     guestId,
-    fileBuffer,
-    mediaType,
+    files,
 ) => {
     // Check event exists and is currently accepting uploads.
     const event = await Event.findById(eventId);
@@ -24,32 +23,79 @@ export const uploadMedia = async (
         throw new Error("Event is not accepting uploads");
     }
 
-    // Upload to Cloudinary
-    const uploadResult = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-            {
-                resource_type: mediaType === "video" ? "video" : "image",
-                folder: `events/${eventId}`,
-            },
-            (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-            },
-        );
-        stream.end(fileBuffer);
-    });
+    if (!Array.isArray(files) || files.length === 0) {
+        throw new Error("No files provided");
+    }
 
-    // Save to MongoDB
-    const mediaDoc = new Media({
-        eventId,
-        uploaderId: uploaderId || null,
-        guestId: guestId || null,
-        mediaUrl: uploadResult.secure_url,
-        publicId: uploadResult.public_id,
-        mediaType,
-    });
-    await mediaDoc.save();
-    return mediaDoc;
+    const uploadedAssets = [];
+    const createdMediaIds = [];
+
+    const results = await Promise.all(
+        files.map(async (file) => {
+            try {
+                const mediaType = file?.mimetype?.startsWith("video/")
+                    ? "video"
+                    : "image";
+
+                const uploadResult = await new Promise((resolve, reject) => {
+                    const stream = cloudinary.uploader.upload_stream(
+                        {
+                            resource_type:
+                                mediaType === "video" ? "video" : "image",
+                            folder: `events/${eventId}`,
+                        },
+                        (error, result) => {
+                            if (error) reject(error);
+                            else resolve(result);
+                        },
+                    );
+                    stream.end(file.buffer);
+                });
+
+                uploadedAssets.push({
+                    publicId: uploadResult.public_id,
+                    mediaType,
+                });
+
+                const mediaDoc = new Media({
+                    eventId,
+                    uploaderId: uploaderId || null,
+                    guestId: guestId || null,
+                    mediaUrl: uploadResult.secure_url,
+                    publicId: uploadResult.public_id,
+                    mediaType,
+                });
+                await mediaDoc.save();
+                createdMediaIds.push(mediaDoc._id);
+
+                return { success: true, media: mediaDoc };
+            } catch (error) {
+                return { success: false, error };
+            }
+        }),
+    );
+
+    const failedResult = results.find((result) => !result.success);
+    if (failedResult) {
+        await Promise.all(
+            uploadedAssets.map((asset) =>
+                cloudinary.uploader.destroy(asset.publicId, {
+                    resource_type:
+                        asset.mediaType === "video" ? "video" : "image",
+                }),
+            ),
+        );
+
+        if (createdMediaIds.length > 0) {
+            await Media.deleteMany({ _id: { $in: createdMediaIds } });
+        }
+
+        throw new Error(
+            failedResult.error?.message || "Failed to upload media",
+        );
+    }
+
+    return results.map((result) => result.media);
 };
 
 // Get all media for an event

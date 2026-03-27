@@ -1,5 +1,5 @@
 import {
-    uploadMedia,
+    uploadMultipleMedia,
     getGallery,
     deleteMedia,
     toggleLike,
@@ -13,7 +13,6 @@ import { getIO } from "../config/socketConfig.js";
 export const uploadMediaController = async (req, res) => {
     try {
         const eventId = req.body.eventId || req.query.eventId;
-        const mediaType = req.body.mediaType || req.query.mediaType;
 
         const uploaderId = req.user?.id || null;
         const guestId = req.guest?._id || null;
@@ -36,28 +35,37 @@ export const uploadMediaController = async (req, res) => {
             });
         }
 
-        if (!eventId || !mediaType || !req.file) {
+        if (!eventId || !req.files || req.files.length === 0) {
             return res
                 .status(400)
                 .json({ success: false, message: "Missing required fields" });
         }
-        const fileBuffer = req.file.buffer;
-        const media = await uploadMedia(
+
+        const mediaDocs = await uploadMultipleMedia(
             eventId,
             uploaderId,
             guestId,
-            fileBuffer,
-            mediaType,
+            req.files,
         );
 
-        const savedMedia = await Media.findById(media._id)
+        const savedMedia = await Media.find({
+            _id: { $in: mediaDocs.map((media) => media._id) },
+        })
             .populate("uploaderId", "userName")
             .populate("guestId", "userName guest_id");
 
-        const mediaPayload = savedMedia ? savedMedia.toObject() : media;
+        const mediaMap = new Map(
+            savedMedia.map((media) => [String(media._id), media]),
+        );
+        const mediaPayload = mediaDocs.map((media) => {
+            const populated = mediaMap.get(String(media._id));
+            return populated ? populated.toObject() : media.toObject();
+        });
 
         const io = getIO();
-        io.to(String(eventId)).emit("new_media", mediaPayload);
+        mediaPayload.forEach((item) => {
+            io.to(String(eventId)).emit("new_media", item);
+        });
 
         res.status(201).json({ success: true, data: mediaPayload });
     } catch (error) {
