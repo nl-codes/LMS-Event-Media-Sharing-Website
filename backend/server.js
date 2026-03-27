@@ -10,8 +10,10 @@ import profileRoutes from "./routes/profileRoute.js";
 import eventRoutes from "./routes/eventRoute.js";
 import mediaRouter from "./routes/mediaRoute.js";
 import eventMembershipRoutes from "./routes/eventMembershipRoute.js";
+import chatRoutes from "./routes/chatRoute.js";
 
 import { setIO } from "./config/socketConfig.js";
+import { saveChatMessage } from "./services/chatService.js";
 
 dotenv.config();
 
@@ -35,7 +37,14 @@ const io = new Server(server, {
 
 setIO(io);
 
+/**
+ * Socket.io Connection Handler
+ * Manages real-time connections, chat, and gallery events
+ */
 io.on("connection", (socket) => {
+    const getChatRoomName = (eventId) => `chat_${eventId}`;
+
+    // Gallery events (existing functionality)
     socket.on("join_gallery", (eventId) => {
         socket.join(eventId);
     });
@@ -44,7 +53,85 @@ io.on("connection", (socket) => {
         socket.leave(eventId);
     });
 
-    socket.on("disconnect", () => {});
+    /**
+     * Chat Events
+     * send_message: Receives a message from a client, saves it to DB, and broadcasts to the room
+     */
+    socket.on("send_message", async (data) => {
+        try {
+            const { eventId, senderId, senderName, senderEmail, text } = data;
+
+            // Validate required fields
+            if (!eventId || !senderId || !text) {
+                socket.emit("message_error", {
+                    error: "Missing required fields: eventId, senderId, and text",
+                });
+                return;
+            }
+
+            // Only registered users can send messages
+            // Guests must have a senderId (registered userId)
+            if (!senderId || senderId === "guest") {
+                socket.emit("message_error", {
+                    error: "Only registered users can send messages",
+                });
+                return;
+            }
+
+            // Save message to database
+            const savedMessage = await saveChatMessage(
+                eventId,
+                senderId,
+                senderName || "Anonymous",
+                senderEmail || "unknown@email.com",
+                text,
+            );
+
+            // Populate sender info for broadcast
+            const populatedMessage = {
+                _id: savedMessage._id,
+                eventId: savedMessage.eventId,
+                senderId: savedMessage.senderId,
+                senderName: savedMessage.senderName,
+                senderEmail: savedMessage.senderEmail,
+                text: savedMessage.text,
+                createdAt: savedMessage.createdAt,
+            };
+
+            // Broadcast message to all users in the event room
+            io.to(getChatRoomName(eventId)).emit(
+                "receive_message",
+                populatedMessage,
+            );
+        } catch (error) {
+            console.error("❌ Error sending message:", error);
+            socket.emit("message_error", {
+                error: error.message || "Failed to send message",
+            });
+        }
+    });
+
+    /**
+     * join_chat_room: User joins a chat room for an event
+     */
+    socket.on("join_chat_room", (eventId) => {
+        if (eventId) {
+            socket.join(getChatRoomName(eventId));
+        }
+    });
+
+    /**
+     * leave_chat_room: User leaves a chat room
+     */
+    socket.on("leave_chat_room", (eventId) => {
+        if (eventId) {
+            socket.leave(getChatRoomName(eventId));
+        }
+    });
+
+    socket.on("disconnect", () => {
+        // Cleanup if needed
+    });
 });
 
 const port = process.env.PORT;
@@ -60,3 +147,4 @@ app.use("/users/profile", profileRoutes);
 app.use("/events", eventRoutes);
 app.use("/media", mediaRouter);
 app.use("/event-memberships", eventMembershipRoutes);
+app.use("/chats", chatRoutes);
