@@ -50,7 +50,11 @@ function ConfirmDialogContent({
                         ? "bg-rose-50 text-rose-500"
                         : "bg-cusblue/5 text-cusblue"
                 }`}>
-                {isDanger ? <AlertCircle size={24} /> : <HelpCircle size={24} />}
+                {isDanger ? (
+                    <AlertCircle size={24} />
+                ) : (
+                    <HelpCircle size={24} />
+                )}
             </div>
 
             <div className="mb-6">
