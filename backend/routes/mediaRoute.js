@@ -6,6 +6,7 @@ import {
     uploadMediaController,
     getGalleryController,
     deleteMediaController,
+    deleteMultipleMediaController,
     toggleLikeController,
     getHighlightsController,
     setMediaLabelController,
@@ -26,6 +27,9 @@ router.post(
 
 // GET /:eventId (public)
 router.get("/:eventId", getGalleryController);
+
+// DELETE / (auth required, bulk delete with body)
+router.delete("/", requireAuth, deleteMultipleMediaController);
 
 // DELETE /:mediaId (auth required)
 router.delete("/:mediaId", requireAuth, deleteMediaController);
