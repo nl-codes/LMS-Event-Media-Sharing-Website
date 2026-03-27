@@ -3,7 +3,7 @@ import { ArrowRight, Check, Zap } from "lucide-react";
 
 type PricingCardsGridProps = {
     tiers: PricingTier[];
-    onCheckout: (tier: TierKey) => void;
+    onCheckout: (tier: TierKey) => void | Promise<void>;
 };
 
 function PricingCard({
@@ -11,7 +11,7 @@ function PricingCard({
     onCheckout,
 }: {
     tier: PricingTier;
-    onCheckout: (tier: TierKey) => void;
+    onCheckout: (tier: TierKey) => void | Promise<void>;
 }) {
     const Icon = tier.icon;
 
@@ -75,7 +75,9 @@ function PricingCard({
 
             <button
                 type="button"
-                onClick={() => onCheckout(tier.key)}
+                onClick={() => {
+                    void onCheckout(tier.key);
+                }}
                 className={[
                     "group/btn relative flex items-center justify-center gap-2 overflow-hidden rounded-2xl px-6 py-4 text-sm font-bold transition-all duration-300 active:scale-[0.98]",
                     tier.highlighted
