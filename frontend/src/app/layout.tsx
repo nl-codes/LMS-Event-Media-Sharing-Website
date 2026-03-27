@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { jetBrainsMono } from "@/styles/fonts";
 import "@/styles/globals.css";
+import "react-confirm-alert/src/react-confirm-alert.css";
 import CustomToast from "@/components/toast/CustomToast";
 import { UserProvider } from "@/context/UserContext";
 import { IdentityProvider } from "@/context/IdentityContext";
