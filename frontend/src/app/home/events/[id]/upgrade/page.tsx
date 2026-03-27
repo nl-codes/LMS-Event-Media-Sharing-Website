@@ -1,60 +1,11 @@
 "use client";
 
+import { PRICING_TIERS_CONST } from "@/app/pricing/page";
 import PricingCardsGrid from "@/components/pricing/PricingCardsGrid";
-import { PricingTier, TierKey } from "@/types/Pricing";
-import { Sparkles, Zap } from "lucide-react";
+import { TierKey } from "@/types/Pricing";
+import { Sparkles } from "lucide-react";
 
-export const PRICING_TIERS_CONST: PricingTier[] = [
-    {
-        key: "free",
-        name: "Free",
-        price: "$0",
-        billing: "Always free",
-        tagline:
-            "Great for family gatherings, birthdays, and other small events.",
-        features: [
-            "Up to 100 uploads",
-            "Unlimited guests",
-            "Saved for 7 days",
-            "Active for 24 hours",
-        ],
-        cta: "Start for Free",
-        icon: Sparkles,
-    },
-    {
-        key: "premium",
-        name: "Premium",
-        price: "$19.50",
-        billing: "One-time fee",
-        tagline: "Perfect for bachelor parties and mid-size college events.",
-        features: [
-            "Up to 500 uploads",
-            "Unlimited guests",
-            "Saved for 1 month",
-            "High-Quality (HQ) uploads",
-            "Download All feature",
-        ],
-        cta: "Upgrade to Premium",
-        icon: Zap,
-        highlighted: true,
-    },
-    {
-        key: "pro",
-        name: "Pro",
-        price: "$49.50",
-        billing: "One-time fee",
-        tagline: "Best for large weddings, conferences, and public events.",
-        features: [
-            "Unlimited uploads",
-            "Unlimited guests",
-            "Saved for 1 year",
-            "Active for 3 months",
-            "Priority HQ processing",
-        ],
-        cta: "Go Pro",
-        icon: Sparkles,
-    },
-];
+const tiers = PRICING_TIERS_CONST;
 
 export default function PricingPage() {
     const handleCheckout = (tier: TierKey) => {
@@ -81,10 +32,7 @@ export default function PricingPage() {
                     </p>
                 </div>
 
-                <PricingCardsGrid
-                    tiers={PRICING_TIERS_CONST}
-                    onCheckout={handleCheckout}
-                />
+                <PricingCardsGrid tiers={tiers} onCheckout={handleCheckout} />
 
                 <div className="mt-8 text-center">
                     <div className="inline-flex flex-col items-center gap-4">
