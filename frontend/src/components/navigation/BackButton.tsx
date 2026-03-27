@@ -6,16 +6,15 @@ import { useRouter } from "next/navigation";
 interface BackButtonProps {
     href?: string;
     label?: string;
+    replace?: boolean;
 }
 
-export default function BackButton({ href, label }: BackButtonProps) {
+export default function BackButton({ href, label, replace }: BackButtonProps) {
     const router = useRouter();
 
     const handleClick = () => {
-        if (href) {
-            router.push(href);
-            return;
-        }
+        const navigate = replace ? router.replace : router.push;
+        if (href) navigate(href);
 
         router.back();
     };
