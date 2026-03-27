@@ -22,10 +22,9 @@ async function request<T>(path: string, options: RequestInit = {}) {
 }
 
 export async function uploadMedia(
-    eventId: string,
     formData: FormData,
     eventSlug?: string,
-) {
+): Promise<Media[]> {
     const headers: Record<string, string> = {};
     if (eventSlug) {
         headers["x-event-slug"] = eventSlug;
@@ -37,11 +36,11 @@ export async function uploadMedia(
         headers,
         body: formData,
     });
-    const json = (await res.json()) as ApiResponse<Media>;
+    const json = (await res.json()) as ApiResponse<Media[]>;
     if (!res.ok || !json.success) {
         throw new Error(json.message || "Upload failed");
     }
-    return json.data as Media;
+    return json.data || [];
 }
 
 export async function getGallery(eventId: string) {
