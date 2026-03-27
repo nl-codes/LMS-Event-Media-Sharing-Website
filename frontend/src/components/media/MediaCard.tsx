@@ -3,7 +3,8 @@
 import React from "react";
 import type { Media } from "@/types/Media";
 import Image from "next/image";
-import { Heart, Trash2Icon } from "lucide-react";
+import { Heart } from "lucide-react";
+import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButton";
 
 interface MediaCardProps {
     media: Media;
@@ -29,20 +30,20 @@ const MediaCard: React.FC<MediaCardProps> = ({
         media.uploaderId?.userName || media.guestId?.userName || "Guest";
 
     return (
-        <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+        <div className="group relative flex flex-col overflow-hidden rounded-4xl bg-white border border-slate-100 shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2">
             {/* Media Container */}
-            <div className="relative h-64 w-full overflow-hidden bg-slate-100">
+            <div className="relative h-72 w-full overflow-hidden bg-slate-100">
                 {media.mediaType === "photo" ? (
                     <Image
                         src={media.mediaUrl}
                         alt={media.label || "Event media"}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="object-cover transition-transform duration-1000 group-hover:scale-110"
                     />
                 ) : (
                     <video
                         src={media.mediaUrl}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                         muted
                         loop
                         onMouseOver={(e) => e.currentTarget.play()}
@@ -52,52 +53,45 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
                 {/* Aesthetic Label Overlay */}
                 {media.label && (
-                    <div className="absolute top-3 left-3">
-                        <span className="backdrop-blur-md bg-white/70 text-slate-800 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm border border-white/50">
+                    <div className="absolute top-4 left-4">
+                        <span className="backdrop-blur-xl bg-black/30 text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full border border-white/20">
                             {media.label}
                         </span>
                     </div>
                 )}
 
-                {/* Action Overlay (Visible on Hover) */}
+                {/* Delete Button - Smooth fade & slide */}
                 {canDelete && (
-                    <div className="absolute top-3 right-3 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                        <button
-                            onClick={() => onDelete?.(media._id)}
-                            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-400 backdrop-blur-sm transition-colors hover:bg-red-500 hover:text-white shadow-lg"
-                            title="Delete Media">
-                            <Trash2Icon className="h-4 w-4" />
-                        </button>
+                    <div className="absolute top-4 right-4 translate-x-4 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
+                        <DeleteMediaConfirmButton
+                            mediaId={media._id}
+                            onConfirm={onDelete}
+                        />
                     </div>
                 )}
             </div>
 
-            {/* Content Section */}
-            <div className="flex items-center justify-between p-4">
+            {/* Bottom Bar */}
+            <div className="flex items-center justify-between p-5 bg-gradient-to-b from-transparent to-white">
                 <div className="flex flex-col">
-                    <span className="text-xs font-semibold uppercase tracking-tight text-slate-400">
-                        Uploaded by
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        Contributor
                     </span>
-                    <span className="text-sm font-bold text-slate-700 truncate max-w-[120px]">
+                    <span className="text-sm font-extrabold text-slate-800 tracking-tight">
                         {displayName}
                     </span>
                 </div>
 
-                {/* Like Button Component */}
                 <button
                     onClick={() => onLike?.(media._id)}
                     disabled={disableLike}
-                    className={`
-                        relative flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-300 active:scale-95
-                        ${
-                            isLiked
-                                ? "bg-rose-50 text-rose-500 shadow-sm"
-                                : "bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                        }
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                    `}>
+                    className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all duration-300 active:scale-90 ${
+                        isLiked
+                            ? "bg-rose-50 text-rose-500 shadow-inner"
+                            : "bg-slate-50 text-slate-400 hover:bg-slate-100"
+                    }`}>
                     <Heart
-                        className={`h-5 w-5 transition-all duration-300 ${isLiked ? "fill-current scale-110" : "fill-none"}`}
+                        className={`h-5 w-5 transition-transform duration-300 ${isLiked ? "fill-current scale-110" : ""}`}
                         strokeWidth={2.5}
                     />
                     <span className="text-xs font-black">
