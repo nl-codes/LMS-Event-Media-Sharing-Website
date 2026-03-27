@@ -2,14 +2,56 @@
 
 import { PRICING_TIERS_CONST } from "@/app/pricing/page";
 import PricingCardsGrid from "@/components/pricing/PricingCardsGrid";
+import { initiateStripeCheckout } from "@/lib/stripe";
 import { TierKey } from "@/types/Pricing";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Sparkles } from "lucide-react";
+import { useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 
 const tiers = PRICING_TIERS_CONST;
 
 export default function PricingPage() {
-    const handleCheckout = (tier: TierKey) => {
-        console.log(`Checkout initiated for: ${tier}`);
+    const params = useParams();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const lastHandledPaymentRef = useRef<string | null>(null);
+    const eventId = typeof params?.id === "string" ? params.id : "";
+    const paymentStatus = searchParams.get("payment");
+
+    useEffect(() => {
+        if (!paymentStatus || paymentStatus === lastHandledPaymentRef.current) {
+            return;
+        }
+
+        if (paymentStatus === "cancel") {
+            toast.error("Payment canceled. No changes were made.");
+        }
+
+        lastHandledPaymentRef.current = paymentStatus;
+    }, [paymentStatus]);
+
+    const handleCheckout = async (tier: TierKey) => {
+        if (tier === "free") {
+            router.push("/home/events");
+            return;
+        }
+
+        if (!eventId) {
+            toast.error("Missing event id");
+            return;
+        }
+
+        try {
+            await initiateStripeCheckout(eventId, tier);
+        } catch (error) {
+            console.error("Stripe checkout failed:", error);
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to start checkout",
+            );
+        }
     };
 
     return (
