@@ -1,22 +1,31 @@
 "use client";
 
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import MessageInput from "@/components/chat/MessageInput";
 import { useUser } from "@/context/UserContext";
-import { MessageSquare, ShieldAlert, Loader2, Circle } from "lucide-react";
+import {
+    MessageSquare,
+    X,
+    Circle,
+    ChevronDown,
+    Maximize2,
+    Minimize2,
+} from "lucide-react";
 
 interface ChatContainerProps {
     eventId: string;
     eventName: string;
 }
 
+type ViewMode = "minimized" | "window" | "full";
+
 export const ChatContainer: React.FC<ChatContainerProps> = ({
     eventId,
     eventName,
 }) => {
     const { user } = useUser();
-    const isGuest = !user || !user._id;
+    const [viewMode, setViewMode] = useState<ViewMode>("minimized");
     const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
     const {
@@ -25,7 +34,6 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         isLoading,
         isLoadingOlder,
         hasMore,
-        error,
         sendMessage,
         loadOlderMessages,
         clearError,
@@ -33,7 +41,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     } = useChatSocket({
         eventId,
         userId: user?._id || "",
-        enabled: !isGuest,
+        enabled: !!user?._id,
     });
 
     const displayMessages = useMemo(() => {
@@ -43,15 +51,6 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                 new Date(b.createdAt).getTime(),
         );
     }, [messages]);
-
-    const handleMessagesScroll = async (
-        event: React.UIEvent<HTMLDivElement>,
-    ) => {
-        if (!hasMore || isLoadingOlder) return;
-        const container = event.currentTarget;
-        if (container.scrollTop > 80) return;
-        await loadOlderMessages();
-    };
 
     const handleSendMessage = async (text: string) => {
         if (!user?._id) return;
@@ -67,106 +66,144 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         }
     };
 
-    if (isGuest) {
-        return (
-            <div className="bg-white/40 backdrop-blur-xl border border-slate-200 rounded-[2.5rem] p-12 h-[600px] flex flex-col items-center justify-center text-center shadow-sm">
-                <div className="bg-cusblue/10 p-4 rounded-3xl mb-4 text-cusblue">
-                    <MessageSquare size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-cusblue mb-2">
-                    Join the Conversation
-                </h3>
-                <p className="text-cusviolet/60 text-sm max-w-60">
-                    Login to participate in the group chat for{" "}
-                    <strong>{eventName}</strong>
-                </p>
-            </div>
-        );
-    }
+    const handleMessagesScroll = async (
+        event: React.UIEvent<HTMLDivElement>,
+    ) => {
+        if (!hasMore || isLoadingOlder || isLoading) {
+            return;
+        }
+
+        const container = event.currentTarget;
+        if (container.scrollTop > 80) {
+            return;
+        }
+
+        const previousScrollHeight = container.scrollHeight;
+        const previousScrollTop = container.scrollTop;
+
+        await loadOlderMessages();
+
+        requestAnimationFrame(() => {
+            const activeContainer = messagesContainerRef.current;
+            if (!activeContainer) {
+                return;
+            }
+
+            const nextScrollHeight = activeContainer.scrollHeight;
+            activeContainer.scrollTop =
+                nextScrollHeight - previousScrollHeight + previousScrollTop;
+        });
+    };
+
+    if (!user?._id) return null;
+
+    const containerClasses = {
+        minimized:
+            "w-0 h-0 opacity-0 pointer-events-none scale-90 translate-y-10",
+        window: "w-[380px] sm:w-[420px] h-[580px] opacity-100 scale-100 translate-y-0 bottom-24 right-6 rounded-[2.5rem]",
+        full: "fixed inset-0 w-full h-full z-[100] bg-white opacity-100 scale-100 sm:inset-4 sm:w-[calc(100%-2rem)] sm:h-[calc(100%-2rem)] sm:rounded-[3rem]",
+    };
 
     return (
-        <div className="bg-white border border-slate-100 rounded-[2.5rem] h-[650px] flex flex-col overflow-hidden shadow-xl shadow-slate-200/50">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-                <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-linear-to-br from-cusblue to-cusviolet flex items-center justify-center text-white shadow-lg shadow-cusblue/20">
-                        <MessageSquare size={20} />
-                    </div>
-                    <div>
-                        <h3 className="text-cusblue font-black text-sm uppercase tracking-tight">
-                            Group Chat
-                        </h3>
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-bold text-slate-400 truncate max-w-[150px] uppercase tracking-widest">
-                                {eventName}
-                            </span>
-                            {isConnected && (
-                                <Circle
-                                    size={6}
-                                    className="fill-green-500 text-green-500 animate-pulse"
-                                />
-                            )}
+        <>
+            {/* FULL SCREEN OVERLAY BACKGROUND */}
+            {viewMode === "full" && (
+                <div className="fixed inset-0 z-90 bg-slate-900/40 backdrop-blur-xl animate-in fade-in duration-300" />
+            )}
+
+            <div
+                className={`
+                fixed z-100 flex flex-col overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+                bg-white border border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)]
+                ${containerClasses[viewMode]}
+            `}>
+                {/* Header */}
+                <div
+                    className={`px-6 py-5 border-b border-slate-50 flex items-center justify-between ${viewMode === "full" ? "bg-white" : "bg-slate-50/50"}`}>
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-linear-to-br from-cusblue to-cusviolet flex items-center justify-center text-white shadow-lg">
+                            <MessageSquare size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-cusblue font-black text-sm uppercase tracking-tight">
+                                Live Chat
+                            </h3>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {eventName}
+                                </span>
+                                {isConnected && (
+                                    <Circle
+                                        size={6}
+                                        className="fill-green-500 text-green-500 animate-pulse"
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() =>
+                                setViewMode(
+                                    viewMode === "full" ? "window" : "full",
+                                )
+                            }
+                            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors hidden sm:block">
+                            {viewMode === "full" ? (
+                                <Minimize2 size={18} />
+                            ) : (
+                                <Maximize2 size={18} />
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setViewMode("minimized")}
+                            className="p-2 hover:bg-slate-100 rounded-full text-slate-400">
+                            {viewMode === "full" ? (
+                                <X size={20} />
+                            ) : (
+                                <ChevronDown size={20} />
+                            )}
+                        </button>
+                    </div>
                 </div>
-                {error && (
-                    <div className="flex items-center gap-2 bg-rose-50 text-rose-500 text-[10px] font-bold px-3 py-1.5 rounded-full border border-rose-100">
-                        <ShieldAlert size={12} />
-                        {error}
-                    </div>
-                )}
-            </div>
 
-            {/* Messages Area */}
-            <div
-                ref={messagesContainerRef}
-                onScroll={handleMessagesScroll}
-                className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide bg-linear-to-b from-transparent to-slate-50/50">
-                {isLoadingOlder && (
-                    <div className="flex justify-center py-2">
-                        <Loader2
-                            size={16}
-                            className="animate-spin text-cusblue/40"
-                        />
-                    </div>
-                )}
-
-                {displayMessages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center opacity-40">
-                        <p className="text-cusblue font-bold text-sm">
-                            {isLoading
-                                ? "Fetching history..."
-                                : "No messages yet. Say hi! 👋"}
-                        </p>
-                    </div>
-                ) : (
-                    displayMessages.map((message) => {
-                        const isCurrentUser =
+                {/* Messages Feed */}
+                <div
+                    ref={messagesContainerRef}
+                    onScroll={handleMessagesScroll}
+                    className={`flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth ${viewMode === "full" ? "max-w-4xl mx-auto w-full" : ""}`}>
+                    {isLoadingOlder && (
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
+                            Loading older messages...
+                        </div>
+                    )}
+                    {isLoading && displayMessages.length === 0 && (
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
+                            Loading chat history...
+                        </div>
+                    )}
+                    {displayMessages.map((message) => {
+                        const isMe =
                             (typeof message.senderId === "string"
                                 ? message.senderId
                                 : message.senderId?._id) === user?._id;
-
                         return (
                             <div
                                 key={message._id}
-                                className={`flex flex-col ${isCurrentUser ? "items-end" : "items-start"}`}>
-                                {!isCurrentUser && (
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-1">
+                                className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                                {!isMe && (
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-1.5">
                                         {message.senderName}
                                     </span>
                                 )}
                                 <div
-                                    className={`relative max-w-[80%] px-5 py-3 rounded-3xl text-sm shadow-sm transition-all hover:shadow-md ${
-                                        isCurrentUser
-                                            ? "bg-cusblue text-white rounded-tr-none font-medium"
-                                            : "bg-white border border-slate-100 text-slate-700 rounded-tl-none"
-                                    }`}>
+                                    className={`px-5 py-3 rounded-3xl text-[13px] shadow-sm ${isMe ? "bg-cusblue text-white rounded-tr-none" : "bg-white border border-slate-100 text-slate-700 rounded-tl-none"}`}>
                                     <p className="leading-relaxed whitespace-pre-wrap wrap-break-word">
                                         {message.text}
                                     </p>
                                 </div>
-                                <span
-                                    className={`text-[9px] font-bold mt-1.5 opacity-50 uppercase tracking-tighter ${isCurrentUser ? "mr-2" : "ml-2"}`}>
+                                <span className="text-[9px] font-bold mt-1.5 opacity-40 uppercase">
                                     {new Date(
                                         message.createdAt,
                                     ).toLocaleTimeString([], {
@@ -176,20 +213,53 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                                 </span>
                             </div>
                         );
-                    })
-                )}
-                <div ref={messageEndRef} />
+                    })}
+                    <div ref={messageEndRef} />
+                </div>
+
+                {/* Footer/Input */}
+                <div
+                    className={`p-4 bg-white border-t border-slate-50 ${viewMode === "full" ? "pb-8 sm:pb-4" : ""}`}>
+                    <div
+                        className={
+                            viewMode === "full"
+                                ? "max-w-4xl mx-auto w-full"
+                                : ""
+                        }>
+                        <MessageInput
+                            onSendMessage={handleSendMessage}
+                            disabled={false}
+                        />
+                    </div>
+                </div>
             </div>
 
-            {/* Input Area */}
-            <div className="p-4 bg-slate-50/50 border-t border-slate-100">
-                <MessageInput
-                    onSendMessage={handleSendMessage}
-                    disabled={!isConnected}
-                    placeholder="Share a thought..."
-                />
-            </div>
-        </div>
+            {/* --- FLOATING TRIGGER BUTTON --- */}
+            {viewMode !== "full" && (
+                <div className="fixed bottom-6 right-6 z-110">
+                    <button
+                        onClick={() =>
+                            setViewMode(
+                                viewMode === "minimized"
+                                    ? "window"
+                                    : "minimized",
+                            )
+                        }
+                        className={`group relative h-16 w-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 active:scale-90
+                            ${viewMode === "minimized" ? "bg-cusblue text-white" : "bg-white text-cusblue border border-slate-100 rotate-90"}
+                        `}>
+                        {viewMode === "minimized" ? (
+                            <MessageSquare
+                                size={28}
+                                className="group-hover:scale-110"
+                            />
+                        ) : (
+                            <X size={28} />
+                        )}
+                    </button>
+                </div>
+            )}
+        </>
     );
 };
 
