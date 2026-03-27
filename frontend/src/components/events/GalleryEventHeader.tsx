@@ -15,6 +15,7 @@ interface GalleryEventHeaderProps {
         | "isLive"
     >;
     subtitle?: string;
+    roleBadge?: string;
     actionSlot?: ReactNode;
 }
 
@@ -49,6 +50,7 @@ function formatTimeLabel(dateValue: string) {
 export default function GalleryEventHeader({
     event,
     subtitle = "Shared Event Gallery",
+    roleBadge,
     actionSlot,
 }: GalleryEventHeaderProps) {
     const [now, setNow] = useState(() => Date.now());
@@ -136,7 +138,14 @@ export default function GalleryEventHeader({
                     <h1 className="mb-2 text-3xl font-bold tracking-tight text-cusblue md:text-4xl">
                         {event.eventName || "Event Gallery"}
                     </h1>
-                    <p className="mb-4 text-sm text-cusviolet/80">{subtitle}</p>
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                        <p className="text-sm text-cusviolet/80">{subtitle}</p>
+                        {roleBadge && (
+                            <span className="rounded-full bg-cusblue px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-cuscream">
+                                {roleBadge}
+                            </span>
+                        )}
+                    </div>
 
                     <p className="max-w-2xl text-base leading-relaxed text-cusviolet/85">
                         {shouldTruncate && !expandedDescription
