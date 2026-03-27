@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getEventById } from "@/lib/eventApi";
+import { confirmStripeCheckoutSession } from "@/lib/stripe";
 import type { Event } from "@/types/Event";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import QRModal from "@/components/events/QRModal";
 import BackButton from "@/components/navigation/BackButton";
+import toast from "react-hot-toast";
 import {
     Calendar,
     MapPin,
@@ -19,6 +21,7 @@ import {
     XCircle,
     QrCode,
     Images,
+    Zap,
 } from "lucide-react";
 
 export default function EventDetailsPage() {
@@ -26,9 +29,52 @@ export default function EventDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showQR, setShowQR] = useState(false);
+    const lastHandledPaymentRef = useRef<string | null>(null);
 
     const params = useParams();
+    const searchParams = useSearchParams();
     const eventId = typeof params?.id === "string" ? params.id : "";
+    const paymentStatus = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
+
+    useEffect(() => {
+        if (!paymentStatus || paymentStatus === lastHandledPaymentRef.current) {
+            return;
+        }
+
+        const run = async () => {
+            if (paymentStatus === "success") {
+                if (!sessionId) {
+                    toast.error("Missing payment session id.");
+                    lastHandledPaymentRef.current = paymentStatus;
+                    return;
+                }
+
+                try {
+                    await confirmStripeCheckoutSession(sessionId);
+                    const data = await getEventById(eventId);
+                    setEvent(data);
+                    toast.success(
+                        "Payment successful. Your event is upgraded.",
+                    );
+                } catch (error) {
+                    toast.error(
+                        error instanceof Error
+                            ? error.message
+                            : "Failed to confirm payment",
+                    );
+                }
+            }
+
+            if (paymentStatus === "cancel") {
+                toast.error("Payment canceled. No changes were made.");
+            }
+
+            lastHandledPaymentRef.current = paymentStatus;
+        };
+
+        void run();
+    }, [eventId, paymentStatus, sessionId]);
 
     useEffect(() => {
         const run = async () => {
@@ -87,6 +133,16 @@ export default function EventDetailsPage() {
                     <BackButton label="Back to My Events" />
 
                     <div className="flex flex-wrap items-center gap-3">
+                        {/* Upgrade Event Button - Added Here */}
+                        {!event.isPremium && (
+                            <Link
+                                href={`/home/events/${eventId}/upgrade`}
+                                className="flex items-center gap-2 bg-linear-to-r from-cusblue to-cusviolet text-white px-5 py-2 rounded-xl hover:shadow-lg hover:shadow-cusblue/20 hover:scale-[1.02] transition-all font-bold shadow-md">
+                                <Zap className="w-4 h-4 fill-current" />
+                                Upgrade Event
+                            </Link>
+                        )}
+
                         {/* QR Code Toggle */}
                         <button
                             onClick={() => setShowQR(true)}
