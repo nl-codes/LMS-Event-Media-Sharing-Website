@@ -12,6 +12,11 @@ type CheckoutSessionResponse = {
     };
 };
 
+type ConfirmCheckoutResponse = {
+    success: boolean;
+    message?: string;
+};
+
 export async function initiateStripeCheckout(eventId: string, tier: PaidTier) {
     const response = await fetch(`${backend_url}/payments/checkout`, {
         method: "POST",
@@ -37,4 +42,21 @@ export async function initiateStripeCheckout(eventId: string, tier: PaidTier) {
     }
 
     throw new Error("Checkout URL missing from session response");
+}
+
+export async function confirmStripeCheckoutSession(sessionId: string) {
+    const response = await fetch(`${backend_url}/payments/confirm`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId }),
+    });
+
+    const payload = (await response.json()) as ConfirmCheckoutResponse;
+
+    if (!response.ok || !payload.success) {
+        throw new Error(payload.message || "Failed to confirm payment");
+    }
 }
