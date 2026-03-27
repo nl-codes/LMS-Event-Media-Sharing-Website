@@ -72,7 +72,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
             </div>
 
             {/* Bottom Bar */}
-            <div className="flex items-center justify-between p-5 bg-gradient-to-b from-transparent to-white">
+            <div className="flex items-center justify-between p-5 bg-linear-to-b from-transparent to-white">
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                         Contributor
