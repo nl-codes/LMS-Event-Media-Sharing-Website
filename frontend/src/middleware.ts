@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
     "/signup/activate",
     "/signup/reactivate",
     "/events",
+    "/pricing",
 ];
 
 // Routes that authenticated users should NOT access (redirect to /home)
