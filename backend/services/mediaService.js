@@ -131,6 +131,68 @@ export const deleteMedia = async (mediaId, requesterId) => {
     }
 };
 
+// Delete multiple media items (host only)
+export const deleteMultipleMedia = async (mediaIds, requesterId) => {
+    if (!requesterId) throw new Error("Authentication required");
+
+    if (!Array.isArray(mediaIds) || mediaIds.length === 0) {
+        throw new Error("mediaIds must be a non-empty array");
+    }
+
+    if (mediaIds.length > 20) {
+        throw new Error("You can delete up to 20 media items at once");
+    }
+
+    const uniqueMediaIds = [...new Set(mediaIds.map(String))];
+
+    const mediaDocs = await Media.find({ _id: { $in: uniqueMediaIds } }).select(
+        "_id eventId publicId mediaType",
+    );
+
+    if (mediaDocs.length !== uniqueMediaIds.length) {
+        throw new Error("Some media items were not found");
+    }
+
+    const uniqueEventIds = [
+        ...new Set(mediaDocs.map((m) => String(m.eventId))),
+    ];
+    const events = await Event.find({ _id: { $in: uniqueEventIds } }).select(
+        "_id hostId",
+    );
+
+    if (events.length !== uniqueEventIds.length) {
+        throw new Error("Some events were not found");
+    }
+
+    const eventHostMap = new Map(
+        events.map((event) => [String(event._id), event]),
+    );
+
+    for (const media of mediaDocs) {
+        const event = eventHostMap.get(String(media.eventId));
+        if (!event || String(event.hostId) !== String(requesterId)) {
+            throw new Error("Not authorized to delete one or more media items");
+        }
+    }
+
+    for (const media of mediaDocs) {
+        await cloudinary.uploader.destroy(media.publicId, {
+            resource_type: media.mediaType === "video" ? "video" : "image",
+        });
+    }
+
+    await Media.deleteMany({ _id: { $in: uniqueMediaIds } });
+
+    return {
+        success: true,
+        message: "Media deleted",
+        deletedMedia: mediaDocs.map((media) => ({
+            mediaId: String(media._id),
+            eventId: String(media.eventId),
+        })),
+    };
+};
+
 // Toggle like/unlike
 export const toggleLike = async (mediaId, userId) => {
     if (!userId) throw new Error("Guests cannot like media");
