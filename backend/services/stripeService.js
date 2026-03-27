@@ -93,11 +93,20 @@ export const createStripeCheckoutSession = async ({
             userId,
             tier,
         },
-        success_url: `${frontendUrl}/home/events/${eventId}?payment=success`,
+        success_url: `${frontendUrl}/home/events/${eventId}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${frontendUrl}/home/events/${eventId}/upgrade?payment=cancel`,
     });
 
     return session;
+};
+
+export const getStripeCheckoutSession = async (sessionId) => {
+    if (!sessionId) {
+        throw new Error("sessionId is required");
+    }
+
+    const stripe = getStripeClient();
+    return stripe.checkout.sessions.retrieve(sessionId);
 };
 
 export const constructStripeWebhookEvent = (rawBody, signature) => {
