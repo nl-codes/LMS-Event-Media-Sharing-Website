@@ -1,16 +1,24 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getGallery, deleteMedia, toggleLike } from "@/lib/mediaApi";
+import {
+    getGallery,
+    deleteMedia,
+    toggleLike,
+    deleteMultipleMedia,
+} from "@/lib/mediaApi";
 import { getEventById } from "@/lib/eventApi";
 import type { Media } from "@/types/Media";
 import MediaCard from "@/components/media/MediaCard";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
+import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
 import { useUser } from "@/context/UserContext";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
+
+const MAX_BULK_DELETE_ITEMS = 20;
 
 function normalizeLikedByIds(likedBy: unknown): string[] {
     if (!Array.isArray(likedBy)) return [];
@@ -45,6 +53,8 @@ const GalleryPage = () => {
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
     const [isHost, setIsHost] = useState(false);
+    const [isSelectMode, setIsSelectMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const currentUserId = user?._id || "";
     console.log(user);
@@ -60,6 +70,7 @@ const GalleryPage = () => {
         },
         onMediaDeleted: (mediaId) => {
             setGallery((prev) => prev.filter((m) => m._id !== mediaId));
+            setSelectedIds((prev) => prev.filter((id) => id !== mediaId));
         },
         onMediaLiked: () => {},
     });
@@ -122,6 +133,60 @@ const GalleryPage = () => {
         }
     };
 
+    const toggleSelectMode = () => {
+        if (!isHost) return;
+        setIsSelectMode((prev) => !prev);
+        setSelectedIds([]);
+    };
+
+    const handleSelectToggle = (mediaId: string) => {
+        if (!isSelectMode) return;
+
+        setSelectedIds((prev) => {
+            if (prev.includes(mediaId)) {
+                return prev.filter((id) => id !== mediaId);
+            }
+
+            if (prev.length >= MAX_BULK_DELETE_ITEMS) {
+                toast.error("You can select up to 20 items only");
+                return prev;
+            }
+
+            return [...prev, mediaId];
+        });
+    };
+
+    const handleConfirmBulkDelete = () => {
+        if (!selectedIds.length) return;
+
+        const selectedCount = selectedIds.length;
+        const idsToDelete = [...selectedIds];
+
+        openConfirmationDialog({
+            title: "Delete selected media?",
+            message: `This will permanently delete ${selectedCount} media item${selectedCount > 1 ? "s" : ""}. This action cannot be undone.`,
+            confirmText: "Delete",
+            cancelText: "Cancel",
+            isDanger: true,
+            onConfirm: async () => {
+                await toast.promise(deleteMultipleMedia(idsToDelete), {
+                    loading: "Deleting selected media...",
+                    success: `Deleted ${selectedCount} item${selectedCount > 1 ? "s" : ""}`,
+                    error: (err) =>
+                        err instanceof Error
+                            ? err.message
+                            : "Bulk delete failed",
+                });
+
+                setGallery((prev) =>
+                    prev.filter((media) => !idsToDelete.includes(media._id)),
+                );
+                setSelectedIds([]);
+                setIsSelectMode(false);
+            },
+        });
+    };
+
     const handleLike = async (mediaId: string) => {
         const previousGallery = gallery;
 
@@ -159,10 +224,39 @@ const GalleryPage = () => {
         <div className="max-w-5xl mx-auto p-4">
             <h1 className="text-2xl font-bold mb-4">Event Gallery</h1>
             <div className="mb-4 flex justify-between items-center">
-                <MediaUploadButton
-                    eventId={eventId}
-                    onUploadSuccess={() => {}}
-                />
+                <div className="flex items-center gap-3">
+                    <MediaUploadButton
+                        eventId={eventId}
+                        onUploadSuccess={() => {}}
+                    />
+
+                    {isHost && !isSelectMode && (
+                        <button
+                            type="button"
+                            onClick={toggleSelectMode}
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                            Bulk Delete
+                        </button>
+                    )}
+
+                    {isHost && isSelectMode && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleConfirmBulkDelete}
+                                disabled={!selectedIds.length}
+                                className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60">
+                                Confirm Delete ({selectedIds.length})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={toggleSelectMode}
+                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                                Cancel
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
             <HighlightsGrid
@@ -190,6 +284,9 @@ const GalleryPage = () => {
                             onDelete={handleDelete}
                             onLike={handleLike}
                             disableLike={!user}
+                            isSelectMode={isSelectMode}
+                            isSelected={selectedIds.includes(media._id)}
+                            onSelectToggle={handleSelectToggle}
                         />
                     ))}
                 </div>
