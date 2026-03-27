@@ -28,8 +28,11 @@ const mediaSchema = new Schema({
     },
     mediaType: {
         type: String,
-        enum: ["photo", "video"],
         required: true,
+        lowercase: true,
+        trim: true,
+        enum: ["photo", "video", "image"],
+        message: "{VALUE} is not a supported media type",
     },
     isHighlight: {
         type: Boolean,

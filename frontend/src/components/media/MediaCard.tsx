@@ -33,7 +33,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
         <div className="group relative flex flex-col overflow-hidden rounded-4xl bg-white border border-slate-100 shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2">
             {/* Media Container */}
             <div className="relative h-72 w-full overflow-hidden bg-slate-100">
-                {media.mediaType === "photo" ? (
+                {["photo", "image"].includes(media.mediaType?.toLowerCase()) ? (
                     <Image
                         src={media.mediaUrl}
                         alt={media.label || "Event media"}
