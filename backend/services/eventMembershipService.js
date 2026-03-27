@@ -19,3 +19,16 @@ export const joinEvent = async (eventId, userId) => {
         },
     );
 };
+
+export const getUserMemberships = async (userId) => {
+    if (!userId) {
+        throw new Error("userId is required");
+    }
+
+    return await EventMembership.find({ userId })
+        .populate(
+            "eventId",
+            "eventName startTime uniqueSlug location description",
+        )
+        .sort({ lastAccessedAt: -1 });
+};
