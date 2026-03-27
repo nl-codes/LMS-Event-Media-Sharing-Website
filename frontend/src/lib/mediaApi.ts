@@ -58,6 +58,15 @@ export async function deleteMedia(mediaId: string) {
     return json;
 }
 
+export async function deleteMultipleMedia(mediaIds: string[]) {
+    const json = await request<{ deletedCount: number }>(`/media`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mediaIds }),
+    });
+    return json.data;
+}
+
 export async function toggleLike(mediaId: string) {
     const json = await request<Media>(`/media/${mediaId}/like`, {
         method: "POST",
