@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { getEventById } from "@/lib/eventApi";
+import { confirmStripeCheckoutSession } from "@/lib/stripe";
 import type { Event } from "@/types/Event";
 import { useParams, useSearchParams } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
@@ -34,22 +35,46 @@ export default function EventDetailsPage() {
     const searchParams = useSearchParams();
     const eventId = typeof params?.id === "string" ? params.id : "";
     const paymentStatus = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
 
     useEffect(() => {
         if (!paymentStatus || paymentStatus === lastHandledPaymentRef.current) {
             return;
         }
 
-        if (paymentStatus === "success") {
-            toast.success("Payment successful. Your event is upgraded.");
-        }
+        const run = async () => {
+            if (paymentStatus === "success") {
+                if (!sessionId) {
+                    toast.error("Missing payment session id.");
+                    lastHandledPaymentRef.current = paymentStatus;
+                    return;
+                }
 
-        if (paymentStatus === "cancel") {
-            toast.error("Payment canceled. No changes were made.");
-        }
+                try {
+                    await confirmStripeCheckoutSession(sessionId);
+                    const data = await getEventById(eventId);
+                    setEvent(data);
+                    toast.success(
+                        "Payment successful. Your event is upgraded.",
+                    );
+                } catch (error) {
+                    toast.error(
+                        error instanceof Error
+                            ? error.message
+                            : "Failed to confirm payment",
+                    );
+                }
+            }
 
-        lastHandledPaymentRef.current = paymentStatus;
-    }, [paymentStatus]);
+            if (paymentStatus === "cancel") {
+                toast.error("Payment canceled. No changes were made.");
+            }
+
+            lastHandledPaymentRef.current = paymentStatus;
+        };
+
+        void run();
+    }, [eventId, paymentStatus, sessionId]);
 
     useEffect(() => {
         const run = async () => {
