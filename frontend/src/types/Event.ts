@@ -11,6 +11,9 @@ export interface Event {
     uniqueSlug: string;
     status: EventStatus;
     isPremium: boolean;
+    tier?: "free" | "premium" | "pro";
+    expiresAt?: string | null;
+    uploadLimit?: number;
     participantCount?: number;
     isLive?: boolean;
     isUpcoming?: boolean;
