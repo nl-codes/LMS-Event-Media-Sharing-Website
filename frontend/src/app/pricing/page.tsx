@@ -190,17 +190,10 @@ export default function PricingPage() {
                 </section>
 
                 {/* Footer Info */}
-                <div className="mt-20 text-center">
+                <div className="mt-8 text-center">
                     <div className="inline-flex flex-col items-center gap-4">
                         <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">
                             Secure payment via Stripe
-                        </p>
-                        <div className="h-px w-12 bg-black/10" />
-                        <p className="text-sm text-slate-500 font-medium">
-                            Need a custom plan?{" "}
-                            <button className="text-cusblue hover:text-cusviolet transition-colors font-bold decoration-cusblue/30 underline underline-offset-4">
-                                Contact Sales
-                            </button>
                         </p>
                     </div>
                 </div>
