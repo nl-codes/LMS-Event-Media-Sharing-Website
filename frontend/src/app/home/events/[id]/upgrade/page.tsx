@@ -8,6 +8,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
+import BackButton from "@/components/navigation/BackButton";
 
 const tiers = PRICING_TIERS_CONST;
 
@@ -56,6 +57,9 @@ export default function PricingPage() {
 
     return (
         <main className="min-h-screen bg-cuscream selection:bg-cusblue/20 px-4 py-4 text-slate-900 sm:px-8">
+            <div className="flex flex-row">
+                <BackButton label="Back to Events" />
+            </div>
             <div className="relative z-10 mx-auto w-full max-w-6xl">
                 <div className="mx-auto mb-20 max-w-3xl text-center">
                     <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-cusblue shadow-sm">
