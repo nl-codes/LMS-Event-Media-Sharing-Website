@@ -1,7 +1,6 @@
 import Media from "../models/mediaModel.js";
 import { Event } from "../models/eventModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
-import { isNowBetween } from "../utils/timeline.js";
 
 // Upload multiple files to Cloudinary and save them to DB
 export const uploadMultipleMedia = async (
@@ -14,13 +13,34 @@ export const uploadMultipleMedia = async (
     const event = await Event.findById(eventId);
     if (!event) throw new Error("Event not found");
 
-    if (
-        event.status !== "Active" ||
-        !isNowBetween(event.startTime, event.endTime) ||
-        event.status === "Completed" ||
-        event.status === "Cancelled"
-    ) {
-        throw new Error("Event is not accepting uploads");
+    const now = new Date();
+    const start = new Date(event.startTime);
+    const end = new Date(event.endTime);
+
+    if (event.status === "Cancelled") {
+        throw new Error(
+            "This event has been cancelled and is no longer accepting uploads.",
+        );
+    }
+
+    if (event.status === "Completed" || now > end) {
+        throw new Error(
+            "This event has ended. The upload window is now closed.",
+        );
+    }
+
+    if (now < start) {
+        const timeString = start.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+        throw new Error(
+            `This event hasn't started yet. Please come back at ${timeString} to upload.`,
+        );
+    }
+
+    if (event.status !== "Active") {
+        throw new Error("Uploads are currently disabled for this event.");
     }
 
     if (!Array.isArray(files) || files.length === 0) {

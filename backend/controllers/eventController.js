@@ -241,14 +241,43 @@ export const verifyEventAccess = async (req, res) => {
             });
         }
 
-        const isActiveWindow =
-            event.status === "Active" &&
-            isNowBetween(event.startTime, event.endTime);
+        const now = new Date();
+        const startTime = new Date(event.startTime);
+        const endTime = new Date(event.endTime);
 
-        if (!isActiveWindow) {
+        if (event.status === "Cancelled") {
             return res.status(403).json({
                 success: false,
-                message: "Event is not accepting uploads right now",
+                message:
+                    "This event has been cancelled and is no longer accepting uploads.",
+            });
+        }
+
+        if (event.status === "Completed" || now > endTime) {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "This event has already finished. The upload window is closed.",
+            });
+        }
+
+        if (now < startTime) {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "The event hasn't started yet. Uploads will open at " +
+                    startTime.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    }) +
+                    ".",
+            });
+        }
+
+        if (event.status !== "Active") {
+            return res.status(403).json({
+                success: false,
+                message: "Uploads are currently disabled for this event.",
             });
         }
 
