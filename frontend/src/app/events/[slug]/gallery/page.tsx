@@ -29,7 +29,8 @@ export default function EventPublicGallery() {
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadingGallery, setLoadingGallery] = useState(false);
 
-    const isHost = user?.role === "host";
+    const [hostName, setHostName] = useState("");
+    const isHost = event?.hostId === eventId;
     const currentUserId = user?._id || "";
     const scopedGuestDisplayName =
         typeof document !== "undefined" && slug
@@ -84,7 +85,6 @@ export default function EventPublicGallery() {
             setLoadingGallery(false);
         }
     }, []);
-
     useEffect(() => {
         let isMounted = true;
 
@@ -108,6 +108,9 @@ export default function EventPublicGallery() {
 
                 setEventId(event._id);
                 setEvent(event);
+                if (event.hostId && typeof event.hostId === "object") {
+                    setHostName(event.hostId.userName || "");
+                }
                 await fetchGallery(event._id);
             } catch (err) {
                 if (isMounted) {
@@ -209,6 +212,7 @@ export default function EventPublicGallery() {
                 <GalleryEventHeader
                     event={event}
                     subtitle="Shared Event Gallery"
+                    roleBadge={`${hostName}'s Event`}
                     actionSlot={
                         <div className="rounded-2xl bg-white/60 p-4 shadow-sm backdrop-blur-md">
                             <MediaUploadButton

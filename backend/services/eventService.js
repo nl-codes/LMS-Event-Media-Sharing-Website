@@ -59,7 +59,7 @@ export const findEventBySlug = async (slug) => {
     try {
         const event = await Event.findOne({ uniqueSlug: slug }).populate(
             "hostId",
-            "username email",
+            "userName email",
         );
 
         if (!event) {
