@@ -82,7 +82,6 @@ export default function EditEventPage() {
             </div>
         );
     }
-    console.log(form);
     return (
         <main className="max-w-3xl mx-auto px-6 py-10 profile-card-animate">
             <div className="mb-6 flex flex-row items-center gap-4">
