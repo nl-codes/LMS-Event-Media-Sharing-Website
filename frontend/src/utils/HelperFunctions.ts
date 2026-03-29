@@ -29,3 +29,12 @@ export const getUserFromToken = (token: string): User | null => {
         return null;
     }
 };
+
+export const formatToLocalDatetime = (dateString: string) => {
+    const date = new Date(dateString);
+    const offset = date.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(date.getTime() - offset)
+        .toISOString()
+        .slice(0, 16);
+    return localISOTime;
+};
