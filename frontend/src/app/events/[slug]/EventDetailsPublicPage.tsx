@@ -58,14 +58,14 @@ export default function EventDetailsPublicPage({
                 {/* Event Meta Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-12">
                     <div className="bg-white/60 backdrop-blur-md p-6 rounded-2xl border border-white flex items-center gap-4 shadow-sm">
-                        <div className="bg-cusblue/5 p-3 rounded-xl text-cusblue">
+                        <div className="bg-cusblue/5 p-3 rounded-xl text-cusblue shrink-0">
                             <MapPin className="w-6 h-6" />
                         </div>
-                        <div className="text-left">
+                        <div className="text-left overflow-hidden">
                             <p className="text-[10px] font-bold text-cusviolet uppercase tracking-wider opacity-60">
                                 Where
                             </p>
-                            <p className="text-cusblue font-semibold truncate">
+                            <p className="text-cusblue font-semibold wrap-break-word whitespace-normal">
                                 {event.location}
                             </p>
                         </div>
