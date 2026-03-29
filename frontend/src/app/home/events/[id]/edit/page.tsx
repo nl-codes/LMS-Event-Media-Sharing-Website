@@ -9,6 +9,7 @@ import BackButton from "@/components/navigation/BackButton";
 import { toast } from "react-hot-toast";
 import { Settings2, Loader2 } from "lucide-react";
 import { ChevronDown } from "lucide-react";
+import { formatToLocalDatetime } from "@/utils/HelperFunctions";
 
 export default function EditEventPage() {
     const router = useRouter();
@@ -36,8 +37,8 @@ export default function EditEventPage() {
                     eventName: event.eventName,
                     description: event.description || "",
                     location: event.location,
-                    startTime: event.startTime.slice(0, 16),
-                    endTime: event.endTime.slice(0, 16),
+                    startTime: formatToLocalDatetime(event.startTime),
+                    endTime: formatToLocalDatetime(event.endTime),
                     isPremium: !!event.isPremium,
                     status: event.status,
                 });
@@ -59,8 +60,8 @@ export default function EditEventPage() {
                 eventName: form.eventName,
                 description: form.description,
                 location: form.location,
-                startTime: form.startTime,
-                endTime: form.endTime,
+                startTime: new Date(form.startTime).toISOString(),
+                endTime: new Date(form.endTime).toISOString(),
                 isPremium: form.isPremium,
             });
 
@@ -81,7 +82,7 @@ export default function EditEventPage() {
             </div>
         );
     }
-
+    console.log(form);
     return (
         <main className="max-w-3xl mx-auto px-6 py-10 profile-card-animate">
             <div className="mb-6 flex flex-row items-center gap-4">
@@ -185,7 +186,7 @@ export default function EditEventPage() {
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cusblue pointer-events-none" />
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 px-4 py-2">
+                    {/* <div className="flex items-center gap-3 px-4 py-2">
                         <input
                             type="checkbox"
                             id="isPremium"
@@ -203,7 +204,7 @@ export default function EditEventPage() {
                             className="text-cusblue font-medium cursor-pointer">
                             Premium Event Status
                         </label>
-                    </div>
+                    </div> */}
                     <div className="pt-6">
                         <LandingButton
                             type="submit"
