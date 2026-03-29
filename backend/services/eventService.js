@@ -72,7 +72,7 @@ export const findEventBySlug = async (slug) => {
     }
 };
 
-export const updateEvent = async (eventId, updateData, hostId) => {
+export const updateEvent = async (eventId, updateData, requesterId) => {
     try {
         const event = await Event.findById(eventId);
 
@@ -81,7 +81,7 @@ export const updateEvent = async (eventId, updateData, hostId) => {
         }
 
         // Check if user is the host
-        if (event.hostId.toString() !== hostId) {
+        if (event.hostId.toString() !== requesterId) {
             throw new Error(
                 "Unauthorized: Only event host can update this event",
             );
@@ -113,7 +113,7 @@ export const updateEvent = async (eventId, updateData, hostId) => {
     }
 };
 
-export const updateEventStatus = async (eventId, status, hostId) => {
+export const updateEventStatus = async (eventId, status, requesterId) => {
     try {
         const event = await Event.findById(eventId);
 
@@ -122,7 +122,7 @@ export const updateEventStatus = async (eventId, status, hostId) => {
         }
 
         // Check if user is the host
-        if (event.hostId.toString() !== hostId) {
+        if (event.hostId.toString() !== requesterId) {
             throw new Error(
                 "Unauthorized: Only event host can update event status",
             );
@@ -140,7 +140,7 @@ export const updateEventStatus = async (eventId, status, hostId) => {
     }
 };
 
-export const removeEvent = async (eventId, hostId) => {
+export const removeEvent = async (eventId, requesterId) => {
     try {
         const event = await Event.findById(eventId);
 
@@ -149,7 +149,7 @@ export const removeEvent = async (eventId, hostId) => {
         }
 
         // Check if user is the host
-        if (event.hostId.toString() !== hostId) {
+        if (event.hostId.toString() !== requesterId) {
             throw new Error(
                 "Unauthorized: Only event host can delete this event",
             );
