@@ -114,7 +114,7 @@ export default function CreateEventPage() {
                         />
                     </div>
                 </div>
-                {/* Premium Toggle */}
+                {/* Premium Toggle
                 <div className="flex items-center gap-3 px-4 py-2">
                     <input
                         type="checkbox"
@@ -130,7 +130,7 @@ export default function CreateEventPage() {
                         className="text-cusblue font-medium cursor-pointer">
                         This is a Premium Event
                     </label>
-                </div>
+                </div> */}
                 <div className="mt-4">
                     <LandingButton
                         type="submit"
