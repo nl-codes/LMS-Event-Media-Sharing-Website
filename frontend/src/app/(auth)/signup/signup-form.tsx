@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import Button from "@/components/buttons/Button";
 import { backend_url } from "@/config/backend";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
+import { showPopUp } from "@/utils/Popup";
 
 export default function SignupForm() {
     const router = useRouter();
@@ -21,16 +22,16 @@ export default function SignupForm() {
     const handleSignup = async () => {
         if (isSubmitting) return;
 
-        // Null checks
+        // Validations
         if (!email || !userName || !password || !confirmPassword) {
             toast.error("All fields are required");
             return;
         }
 
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Email Vvalidation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
-            toast.error("Enter a valid email");
+            toast.error("Please enter a valid email address");
             return;
         }
 
@@ -45,14 +46,8 @@ export default function SignupForm() {
         try {
             const res = await fetch(`${backend_url}/users/signup`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email,
-                    userName,
-                    password,
-                }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, userName, password }),
             });
 
             const data = await res.json();
@@ -65,9 +60,14 @@ export default function SignupForm() {
 
             // Successful Signup
             toast.success("Account created successfully!");
-            setTimeout(() => {
-                router.push("/login");
-            }, 1000);
+
+            // Show pop up for activation email
+            showPopUp({
+                title: "Check Your Email",
+                message: `We've sent an activation link to ${email}. Please verify your account to continue.`,
+                confirmLabel: "Go to Login",
+                onConfirm: () => router.push("/login"),
+            });
         } catch (err) {
             console.error(err);
             toast.error("Something went wrong");
@@ -83,81 +83,79 @@ export default function SignupForm() {
                     Email Address
                 </span>
                 <input
-                    className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
+                    className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-cusviolet/20 transition-all placeholder:text-gray-400"
                     placeholder="johndoe@gmail.com"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                 />
             </div>
-
             {/* Username Field */}
             <div className="form-section flex flex-col gap-1.5">
                 <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
                     Username
                 </span>
                 <input
-                    className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
+                    className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-cusviolet/20 transition-all placeholder:text-gray-400"
                     placeholder="johndoe_25"
                     type="text"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                 />
             </div>
-
             {/* Password Field */}
-            <div className="form-section flex flex-col gap-1.5">
-                <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
-                    Password
-                </span>
-                <div className="relative w-full">
-                    <input
-                        className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
-                        placeholder="*********"
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
-                        tabIndex={-1}>
-                        {showPassword ? (
-                            <EyeOff className="w-5 h-5" />
-                        ) : (
-                            <Eye className="w-5 h-5" />
-                        )}
-                    </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="form-section flex flex-col gap-1.5 relative">
+                    <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                        Password
+                    </span>
+                    <div className="relative">
+                        <input
+                            className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-cusviolet/20 transition-all placeholder:text-gray-400"
+                            placeholder="*********"
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
+                            tabIndex={-1}>
+                            {showPassword ? (
+                                <EyeOff size={18} />
+                            ) : (
+                                <Eye size={18} />
+                            )}
+                        </button>
+                    </div>
                 </div>
-            </div>
-
-            {/* Confirm Password Field */}
-            <div className="form-section flex flex-col gap-1.5">
-                <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
-                    Confirm Password
-                </span>
-                <div className="relative w-full">
-                    <input
-                        className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
-                        placeholder="*********"
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
-                        tabIndex={-1}>
-                        {showConfirmPassword ? (
-                            <EyeOff className="w-5 h-5" />
-                        ) : (
-                            <Eye className="w-5 h-5" />
-                        )}
-                    </button>
+                <div className="form-section flex flex-col gap-1.5 relative">
+                    <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                        Confirm
+                    </span>
+                    <div className="relative">
+                        <input
+                            className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-cusviolet/20 transition-all placeholder:text-gray-400"
+                            placeholder="*********"
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                            }
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
+                            tabIndex={-1}>
+                            {showConfirmPassword ? (
+                                <EyeOff size={18} />
+                            ) : (
+                                <Eye size={18} />
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
 
