@@ -20,7 +20,7 @@ export default function Button({
             disabled={loading || disabled}
             className={clsx(
                 "relative flex justify-center items-center gap-2 overflow-hidden",
-                "bg-linear-to-r from-cusblue to-cusviolet text-white",
+                "bg-linear-to-r from-cusblue to-cusviolet text-cuscream",
                 "px-6 py-3 rounded-2xl font-bold text-sm tracking-wide",
 
                 "transition-all duration-300 active:scale-[0.97] hover:brightness-110 hover:shadow-lg hover:shadow-cusblue/20 hover:cursor-pointer",
