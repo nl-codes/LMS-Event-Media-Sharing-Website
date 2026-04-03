@@ -105,59 +105,59 @@ export default function SignupForm() {
                 />
             </div>
 
-            {/* Password Fields Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="form-section flex flex-col gap-1.5">
-                    <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
-                        Password
-                    </span>
-                    <div className="relative group">
-                        <input
-                            className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
-                            placeholder="*********"
-                            type={showPassword ? "text" : "password"}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
-                            tabIndex={-1}>
-                            {showPassword ? (
-                                <EyeOff className="w-5 h-5" />
-                            ) : (
-                                <Eye className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
+            {/* Password Field */}
+            <div className="form-section flex flex-col gap-1.5">
+                <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                    Password
+                </span>
+                <div className="relative w-full">
+                    <input
+                        className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
+                        placeholder="*********"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
+                        tabIndex={-1}>
+                        {showPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                        ) : (
+                            <Eye className="w-5 h-5" />
+                        )}
+                    </button>
                 </div>
-                <div className="form-section flex flex-col gap-1.5">
-                    <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
-                        Confirm
-                    </span>
-                    <div className="relative group">
-                        <input
-                            className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
-                            placeholder="*********"
-                            type={showConfirmPassword ? "text" : "password"}
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                        />
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
-                            tabIndex={-1}>
-                            {showConfirmPassword ? (
-                                <EyeOff className="w-5 h-5" />
-                            ) : (
-                                <Eye className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="form-section flex flex-col gap-1.5">
+                <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                    Confirm Password
+                </span>
+                <div className="relative w-full">
+                    <input
+                        className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
+                        placeholder="*********"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
+                        tabIndex={-1}>
+                        {showConfirmPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                        ) : (
+                            <Eye className="w-5 h-5" />
+                        )}
+                    </button>
                 </div>
             </div>
 
