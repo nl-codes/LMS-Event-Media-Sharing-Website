@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import LoginForm from "./login-form";
-import SignupNewButton from "./SignupNewButton";
+import SignupNewButton from "./SignupOptions";
 
 export const metadata: Metadata = {
     title: "Sign in | LMS 24",

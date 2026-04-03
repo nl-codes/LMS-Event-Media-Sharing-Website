@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 
-export default function SignupNewButton() {
+export default function SignupOptions() {
     const router = useRouter();
     const handleSignup = () => router.replace("/signup");
     const handleForgotPassword = () => router.push("/forgot-password");
