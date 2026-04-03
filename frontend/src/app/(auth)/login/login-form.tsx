@@ -6,13 +6,13 @@ import toast from "react-hot-toast";
 import Button from "@/components/buttons/Button";
 import { backend_url } from "@/config/backend";
 import { useUser } from "@/context/UserContext";
-import { LogIn, Eye, EyeOff } from "lucide-react"; // Import Eye icons
+import { LogIn, Eye, EyeOff } from "lucide-react";
 
 export default function LoginForm() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false); // New state
+    const [showPassword, setShowPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { setUser } = useUser();
@@ -91,7 +91,7 @@ export default function LoginForm() {
                     <input
                         className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
                         placeholder="*********"
-                        type={showPassword ? "text" : "password"} // Toggle type
+                        type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
@@ -99,8 +99,7 @@ export default function LoginForm() {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
-                        tabIndex={-1} // Skip focus so it's not annoying during typing
-                    >
+                        tabIndex={-1}>
                         {showPassword ? (
                             <EyeOff className="w-5 h-5" />
                         ) : (
