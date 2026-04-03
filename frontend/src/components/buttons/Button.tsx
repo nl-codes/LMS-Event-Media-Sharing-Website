@@ -2,7 +2,16 @@
 
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
-import { ButtonProps } from "./buttonDefinition";
+
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+    type?: "button" | "submit";
+    loading?: boolean;
+    children: ReactNode;
+    className?: string;
+    handleClick?: () => void;
+}
 
 export default function Button({
     children,
