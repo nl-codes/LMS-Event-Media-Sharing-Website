@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 
-export default function LoginExistingButton() {
+export default function LoginOptions() {
     const router = useRouter();
     const handleLogin = () => router.replace("/login");
     return (
