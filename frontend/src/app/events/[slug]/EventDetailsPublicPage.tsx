@@ -11,6 +11,8 @@ import {
 import type { Event } from "@/types/Event";
 import BackButton from "@/components/navigation/BackButton";
 import { useUser } from "@/context/UserContext";
+import Button from "@/components/buttons/Button";
+import { useRouter } from "next/navigation";
 
 interface EventDetailsPublicPageProps {
     event: Event;
@@ -26,6 +28,7 @@ export default function EventDetailsPublicPage({
     onCheckUpload,
 }: EventDetailsPublicPageProps) {
     const { user, isInitialized } = useUser();
+    const router = useRouter();
 
     return (
         <main className="min-h-screen bg-cuscream selection:bg-custeal selection:text-white pb-20">
@@ -132,19 +135,32 @@ export default function EventDetailsPublicPage({
                             </button>
                         ) : (
                             <div
-                                className={`p-4 rounded-2xl flex items-start gap-3 text-left animate-in fade-in slide-in-from-bottom-2 ${
+                                className={`p-4 rounded-2xl flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 ${
                                     gateResult.success
                                         ? "bg-green-500/20 border border-green-500/30"
                                         : "bg-red-500/20 border border-red-500/30"
                                 }`}>
-                                {gateResult.success ? (
-                                    <ShieldCheck className="w-5 h-5 shrink-0" />
-                                ) : (
-                                    <Lock className="w-5 h-5 shrink-0" />
-                                )}
-                                <p className="text-sm font-medium leading-tight">
-                                    {gateResult.msg}
-                                </p>
+                                <div className="flex items-start gap-3 text-left">
+                                    {gateResult.success ? (
+                                        <ShieldCheck className="w-5 h-5 shrink-0" />
+                                    ) : (
+                                        <Lock className="w-5 h-5 shrink-0" />
+                                    )}
+                                    <p className="text-sm font-medium leading-tight">
+                                        {gateResult.msg}
+                                    </p>
+                                </div>
+
+                                {/* New Gallery Button */}
+                                <Button
+                                    className="bg-cuscream! text-cusblue! p-2 rounded-lg font-bold transition-opacity"
+                                    handleClick={() =>
+                                        router.push(
+                                            `/events/${event.uniqueSlug}/gallery`,
+                                        )
+                                    }>
+                                    Go to Gallery
+                                </Button>
                             </div>
                         )}
                     </div>
