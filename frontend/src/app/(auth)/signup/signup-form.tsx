@@ -1,9 +1,11 @@
 "use client";
-import LandingButton from "@/components/buttons/LandingButton";
-import { backend_url } from "@/config/backend";
-import { useRouter } from "next/navigation";
+
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import Button from "@/components/buttons/Button";
+import { backend_url } from "@/config/backend";
+import { UserPlus } from "lucide-react";
 
 export default function SignupForm() {
     const router = useRouter();
@@ -12,10 +14,13 @@ export default function SignupForm() {
     const [userName, setUserName] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSignup = async () => {
+        if (isSubmitting) return;
+
         // Null checks
-        if (!email || !userName || !password) {
+        if (!email || !userName || !password || !confirmPassword) {
             toast.error("All fields are required");
             return;
         }
@@ -33,6 +38,8 @@ export default function SignupForm() {
             return;
         }
 
+        setIsSubmitting(true);
+
         try {
             const res = await fetch(`${backend_url}/users/signup`, {
                 method: "POST",
@@ -47,30 +54,34 @@ export default function SignupForm() {
             });
 
             const data = await res.json();
-            console.log("Signup response:", data);
 
             if (!res.ok) {
                 toast.error(data.error || "Signup failed");
+                setIsSubmitting(false);
                 return;
             }
 
             // Successful Signup
-            toast.success("Signup successful!");
+            toast.success("Account created successfully!");
             setTimeout(() => {
                 router.push("/login");
-            }, 800);
+            }, 1000);
         } catch (err) {
             console.error(err);
             toast.error("Something went wrong");
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="form">
-            <div className="form-section">
-                <span className="label">Email</span>
+        <div className="form space-y-4">
+            {/* Email Field */}
+            <div className="form-section flex flex-col gap-1.5">
+                <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                    Email Address
+                </span>
                 <input
-                    className="form-input"
+                    className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
                     placeholder="johndoe@gmail.com"
                     type="email"
                     value={email}
@@ -78,10 +89,13 @@ export default function SignupForm() {
                 />
             </div>
 
-            <div className="form-section">
-                <span className="label">Username</span>
+            {/* Username Field */}
+            <div className="form-section flex flex-col gap-1.5">
+                <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                    Username
+                </span>
                 <input
-                    className="form-input"
+                    className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
                     placeholder="johndoe_25"
                     type="text"
                     value={userName}
@@ -89,34 +103,44 @@ export default function SignupForm() {
                 />
             </div>
 
-            <div className="form-section">
-                <span className="label">Password</span>
-                <input
-                    className="form-input"
-                    placeholder="*********"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
+            {/* Password Fields Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="form-section flex flex-col gap-1.5">
+                    <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                        Password
+                    </span>
+                    <input
+                        className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
+                        placeholder="*********"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                </div>
+                <div className="form-section flex flex-col gap-1.5">
+                    <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                        Confirm
+                    </span>
+                    <input
+                        className="form-input w-full p-3 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-none transition-all placeholder:text-gray-400"
+                        placeholder="*********"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                </div>
             </div>
 
-            <div className="form-section">
-                <span className="label">Confirm Password</span>
-                <input
-                    className="form-input"
-                    placeholder="*********"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-            </div>
-
-            <div className="form-section pt-4">
-                <LandingButton
+            {/* Submit Button */}
+            <div className="form-section pt-6">
+                <Button
                     handleClick={handleSignup}
-                    className="bg-cusblue text-cuscream p-2 rounded-lg font-bold hover:bg-cusviolet hover:cursor-pointer h-12">
-                    Sign up
-                </LandingButton>
+                    loading={isSubmitting}
+                    disabled={isSubmitting}
+                    className="w-full h-14 text-lg shadow-xl shadow-cusblue/10">
+                    <UserPlus className="w-5 h-5" />
+                    Create Account
+                </Button>
             </div>
         </div>
     );
