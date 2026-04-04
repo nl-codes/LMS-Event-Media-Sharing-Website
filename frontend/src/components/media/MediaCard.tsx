@@ -3,8 +3,10 @@
 import React from "react";
 import type { Media } from "@/types/Media";
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Download, Heart } from "lucide-react";
 import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButton";
+import { downloadSingleMedia } from "@/utils/HelperFunctions";
+import toast from "react-hot-toast";
 
 interface MediaCardProps {
     media: Media;
@@ -34,6 +36,23 @@ const MediaCard: React.FC<MediaCardProps> = ({
     const isLiked = media.likedBy?.includes(currentUserId);
     const displayName =
         media.uploaderId?.userName || media.guestId?.userName || "Guest";
+
+    const handleDownload = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+
+        const extension = media.mediaType === "video" ? "mp4" : "jpg";
+        const baseFilename = (media.label || `media-${media._id}`)
+            .trim()
+            .replace(/[^a-zA-Z0-9._-]+/g, "-");
+
+        try {
+            await downloadSingleMedia(media.mediaUrl, `${baseFilename}.${extension}`);
+        } catch (err) {
+            const errorMessage =
+                err instanceof Error ? err.message : "Download failed";
+            toast.error(errorMessage);
+        }
+    };
 
     const handleCardClick = () => {
         if (!isSelectMode) return;
@@ -115,25 +134,36 @@ const MediaCard: React.FC<MediaCardProps> = ({
                     </span>
                 </div>
 
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onLike?.(media._id);
-                    }}
-                    disabled={disableLike || isSelectMode}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all duration-300 active:scale-90 ${
-                        isLiked
-                            ? "bg-rose-50 text-rose-500 shadow-inner"
-                            : "bg-slate-50 text-slate-400 hover:bg-slate-100"
-                    } ${isSelectMode ? "opacity-60 cursor-not-allowed" : ""}`}>
-                    <Heart
-                        className={`h-5 w-5 transition-transform duration-300 ${isLiked ? "fill-current scale-110" : ""}`}
-                        strokeWidth={2.5}
-                    />
-                    <span className="text-xs font-black">
-                        {media.likesCount || 0}
-                    </span>
-                </button>
+                <div className="flex items-center gap-2">
+                    {!isSelectMode && (
+                        <button
+                            onClick={handleDownload}
+                            className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-slate-500 transition-all duration-300 hover:bg-slate-100 active:scale-90"
+                            aria-label="Download media">
+                            <Download className="h-4 w-4" strokeWidth={2.5} />
+                        </button>
+                    )}
+
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onLike?.(media._id);
+                        }}
+                        disabled={disableLike || isSelectMode}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all duration-300 active:scale-90 ${
+                            isLiked
+                                ? "bg-rose-50 text-rose-500 shadow-inner"
+                                : "bg-slate-50 text-slate-400 hover:bg-slate-100"
+                        } ${isSelectMode ? "opacity-60 cursor-not-allowed" : ""}`}>
+                        <Heart
+                            className={`h-5 w-5 transition-transform duration-300 ${isLiked ? "fill-current scale-110" : ""}`}
+                            strokeWidth={2.5}
+                        />
+                        <span className="text-xs font-black">
+                            {media.likesCount || 0}
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     );
