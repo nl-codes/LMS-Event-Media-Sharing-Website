@@ -16,6 +16,7 @@ import ChatContainer from "@/components/chat/ChatContainer";
 import type { Media } from "@/types/Media";
 import type { Event } from "@/types/Event";
 import BackButton from "@/components/navigation/BackButton";
+import { downloadAsZip } from "@/utils/HelperFunctions";
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -222,6 +223,18 @@ export default function EventPublicGallery() {
                                     void fetchGallery(eventId);
                                 }}
                             />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    void downloadAsZip(
+                                        gallery,
+                                        `${event?.eventName || "event-gallery"}-all-media`,
+                                    );
+                                }}
+                                disabled={!gallery.length}
+                                className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-md transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+                                Download All
+                            </button>
                             <p className="mt-2 text-xs text-cusviolet/70">
                                 Uploading as {uploaderDisplayName}
                             </p>

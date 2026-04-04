@@ -20,6 +20,7 @@ import { useUser } from "@/context/UserContext";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
+import { downloadAsZip } from "@/utils/HelperFunctions";
 
 const MAX_BULK_DELETE_ITEMS = 20;
 
@@ -190,6 +191,20 @@ const GalleryPage = () => {
         });
     };
 
+    const handleDownloadMedia = () => {
+        const mediaToDownload = isSelectMode
+            ? gallery.filter((media) => selectedIds.includes(media._id))
+            : gallery;
+
+        if (!mediaToDownload.length) return;
+
+        const zipName = isSelectMode
+            ? `${event?.eventName || "event-gallery"}-selected-media`
+            : `${event?.eventName || "event-gallery"}-all-media`;
+
+        void downloadAsZip(mediaToDownload, zipName);
+    };
+
     const handleLike = async (mediaId: string) => {
         const previousGallery = gallery;
 
@@ -258,6 +273,18 @@ const GalleryPage = () => {
                                         void fetchGallery();
                                     }}
                                 />
+
+                                <button
+                                    type="button"
+                                    onClick={handleDownloadMedia}
+                                    disabled={
+                                        isSelectMode && !selectedIds.length
+                                    }
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-md transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+                                    {isSelectMode
+                                        ? `Download Selected (${selectedIds.length})`
+                                        : "Download All"}
+                                </button>
 
                                 {isHost && !isSelectMode && (
                                     <button
