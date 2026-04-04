@@ -153,7 +153,7 @@ export default function EventDetailsPublicPage({
 
                                 {/* New Gallery Button */}
                                 <Button
-                                    className="bg-cuscream! text-cusblue! p-2 rounded-lg font-bold transition-opacity"
+                                    className="text-cuscream! p-2 rounded-lg font-bold transition-opacity"
                                     handleClick={() =>
                                         router.push(
                                             `/events/${event.uniqueSlug}/gallery`,
