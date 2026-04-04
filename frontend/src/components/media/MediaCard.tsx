@@ -46,7 +46,10 @@ const MediaCard: React.FC<MediaCardProps> = ({
             .replace(/[^a-zA-Z0-9._-]+/g, "-");
 
         try {
-            await downloadSingleMedia(media.mediaUrl, `${baseFilename}.${extension}`);
+            await downloadSingleMedia(
+                media.mediaUrl,
+                `${baseFilename}.${extension}`,
+            );
         } catch (err) {
             const errorMessage =
                 err instanceof Error ? err.message : "Download failed";
