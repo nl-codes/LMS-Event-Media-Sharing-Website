@@ -1,7 +1,17 @@
 "use client";
 
 import clsx from "clsx";
-import { ButtonProps } from "./buttonDefinition";
+import { Loader2 } from "lucide-react";
+
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+    type?: "button" | "submit";
+    loading?: boolean;
+    children?: ReactNode;
+    className?: string;
+    handleClick?: () => void;
+}
 
 export default function Button({
     children,
@@ -18,13 +28,26 @@ export default function Button({
             onClick={handleClick}
             disabled={loading || disabled}
             className={clsx(
-                "flex justify-center items-center gap-4 bg-cusblue text-cuscream p-2 rounded-lg font-bold transition-opacity",
-                "hover:bg-cusviolet",
-                (loading || disabled) && "opacity-50 cursor-not-allowed",
+                "relative flex justify-center items-center gap-2 overflow-hidden",
+                "bg-linear-to-r from-cusblue to-cusviolet text-cuscream",
+                "px-6 py-3 rounded-2xl font-bold text-sm tracking-wide",
+
+                "transition-all duration-300 active:scale-[0.97] hover:brightness-110 hover:shadow-lg hover:shadow-cusblue/20 hover:cursor-pointer",
+
+                // States
+                (loading || disabled) &&
+                    "opacity-70 cursor-not-allowed grayscale-[0.2]",
                 className,
             )}
             {...props}>
-            {loading ? "Loading..." : children}
+            {loading ? (
+                <>
+                    <Loader2 className="h-4 w-4 animate-spin text-white/80" />
+                    <span className="opacity-80">Loading...</span>
+                </>
+            ) : (
+                children
+            )}
         </button>
     );
 }

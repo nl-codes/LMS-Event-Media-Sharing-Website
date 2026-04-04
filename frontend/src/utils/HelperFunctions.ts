@@ -1,5 +1,6 @@
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { User, userJWTToken } from "@/types/User";
+import toast from "react-hot-toast";
 
 export const isTokenExpired = (token: string): boolean => {
     try {
@@ -37,4 +38,13 @@ export const formatToLocalDatetime = (dateString: string) => {
         .toISOString()
         .slice(0, 16);
     return localISOTime;
+};
+
+export const handleCopyText = async (textToCopy: string) => {
+    try {
+        await navigator.clipboard.writeText(textToCopy);
+        toast.success("Link copied to clipboard!");
+    } catch {
+        toast.error("Failed to copy link");
+    }
 };

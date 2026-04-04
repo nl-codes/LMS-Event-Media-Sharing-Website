@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { QrCode, Download, X } from "lucide-react";
+import { QrCode, Download, X, Copy } from "lucide-react";
+import { handleCopyText } from "@/utils/HelperFunctions";
 
 type QRModalProps = {
     slug: string;
@@ -98,9 +99,13 @@ export default function QRModal({ slug, eventName, onClose }: QRModalProps) {
                 </div>
 
                 {/* URL pill */}
-                <p className="text-xs font-mono text-cusviolet/70 bg-cuscream px-4 py-2 rounded-full text-center break-all">
-                    {qrUrl}
-                </p>
+                <button
+                    onClick={() => handleCopyText(qrUrl)}
+                    title="Click to copy"
+                    className="group flex items-center gap-2 text-xs font-mono text-cusviolet/70 bg-cuscream px-4 py-2.5 rounded-full text-center break-all border border-transparent hover:border-cusblue/20 transition-all active:scale-95">
+                    <span className="truncate max-w-[220px]">{qrUrl}</span>
+                    <Copy className="w-3 h-3 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </button>
 
                 {/* Download */}
                 <button
