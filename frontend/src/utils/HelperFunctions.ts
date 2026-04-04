@@ -60,3 +60,21 @@ export const triggerBrowserDownload = (blob: Blob, filename: string) => {
     document.body.removeChild(anchor);
     URL.revokeObjectURL(objectUrl);
 };
+
+const sanitizeFilename = (value: string) =>
+    value
+        .trim()
+        .replace(/[^a-zA-Z0-9._-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+
+export const downloadSingleMedia = async (url: string, filename: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error("Failed to download media");
+    }
+
+    const blob = await response.blob();
+    const safeFilename = sanitizeFilename(filename) || `media-${Date.now()}`;
+    triggerBrowserDownload(blob, safeFilename);
+};
