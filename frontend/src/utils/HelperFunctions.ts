@@ -4,6 +4,32 @@ import toast from "react-hot-toast";
 import type { Media } from "@/types/Media";
 import JSZip from "jszip";
 
+export const normalizeLikedByIds = (likedBy: unknown): string[] => {
+    if (!Array.isArray(likedBy)) return [];
+
+    return likedBy
+        .map((entry) => {
+            if (typeof entry === "string") return entry;
+            if (
+                entry &&
+                typeof entry === "object" &&
+                "_id" in entry &&
+                typeof entry._id === "string"
+            ) {
+                return entry._id;
+            }
+            return "";
+        })
+        .filter(Boolean);
+};
+
+export const normalizeMediaLikes = (media: Media): Media => {
+    return {
+        ...media,
+        likedBy: normalizeLikedByIds(media.likedBy),
+    };
+};
+
 export const isTokenExpired = (token: string): boolean => {
     try {
         const decoded = jwtDecode<JwtPayload>(token);
