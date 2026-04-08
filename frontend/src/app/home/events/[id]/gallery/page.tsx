@@ -21,6 +21,7 @@ import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
 import { downloadAsZip } from "@/utils/HelperFunctions";
+import { CheckSquare, Download, Trash2 } from "lucide-react";
 
 const MAX_BULK_DELETE_ITEMS = 20;
 
@@ -58,7 +59,7 @@ const GalleryPage = () => {
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
     const [isHost, setIsHost] = useState(false);
-    const [isSelectMode, setIsSelectMode] = useState(false);
+    const [isSelectionActive, setIsSelectionActive] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const currentUserId = user?._id || "";
@@ -137,14 +138,18 @@ const GalleryPage = () => {
         }
     };
 
-    const toggleSelectMode = () => {
+    const handleStartSelection = () => {
         if (!isHost) return;
-        setIsSelectMode((prev) => !prev);
+        setIsSelectionActive(true);
+    };
+
+    const handleClearSelection = () => {
         setSelectedIds([]);
+        setIsSelectionActive(false);
     };
 
     const handleSelectToggle = (mediaId: string) => {
-        if (!isSelectMode) return;
+        if (!isSelectionActive) return;
 
         setSelectedIds((prev) => {
             if (prev.includes(mediaId)) {
@@ -186,19 +191,19 @@ const GalleryPage = () => {
                     prev.filter((media) => !idsToDelete.includes(media._id)),
                 );
                 setSelectedIds([]);
-                setIsSelectMode(false);
+                setIsSelectionActive(false);
             },
         });
     };
 
     const handleDownloadMedia = () => {
-        const mediaToDownload = isSelectMode
+        const mediaToDownload = isSelectionActive
             ? gallery.filter((media) => selectedIds.includes(media._id))
             : gallery;
 
         if (!mediaToDownload.length) return;
 
-        const zipName = isSelectMode
+        const zipName = isSelectionActive
             ? `${event?.eventName || "event-gallery"}-selected-media`
             : `${event?.eventName || "event-gallery"}-all-media`;
 
@@ -277,46 +282,77 @@ const GalleryPage = () => {
                                 <button
                                     type="button"
                                     onClick={handleDownloadMedia}
-                                    disabled={
-                                        isSelectMode && !selectedIds.length
-                                    }
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-md transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
-                                    {isSelectMode
-                                        ? `Download Selected (${selectedIds.length})`
-                                        : "Download All"}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                                    Download All
                                 </button>
 
-                                {isHost && !isSelectMode && (
+                                {!isSelectionActive && (
                                     <button
                                         type="button"
-                                        onClick={toggleSelectMode}
+                                        onClick={handleStartSelection}
                                         className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                        Bulk Delete
+                                        Select Media
                                     </button>
                                 )}
 
-                                {isHost && isSelectMode && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={handleConfirmBulkDelete}
-                                            disabled={!selectedIds.length}
-                                            className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60">
-                                            Confirm Delete ({selectedIds.length}
-                                            )
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={toggleSelectMode}
-                                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                            Cancel
-                                        </button>
-                                    </>
+                                {isSelectionActive && (
+                                    <button
+                                        type="button"
+                                        onClick={handleClearSelection}
+                                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                                        Exit Selection
+                                    </button>
                                 )}
                             </div>
                         </div>
                     }
                 />
+            )}
+
+            {isSelectionActive && (
+                <div className="sticky bottom-4 z-20 mt-6">
+                    <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 rounded-2xl border border-white/70 bg-white/70 px-4 py-3 shadow-2xl shadow-slate-200/50 backdrop-blur-md md:px-6">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-xl bg-cusblue/10 p-2 text-cusblue">
+                                <CheckSquare className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-[0.16em] text-cusviolet/60">
+                                    Selection Active
+                                </p>
+                                <p className="text-sm font-semibold text-cusblue">
+                                    Selected: {selectedIds.length} /{" "}
+                                    {gallery.length}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleDownloadMedia}
+                                disabled={!selectedIds.length}
+                                className="inline-flex items-center gap-2 rounded-xl bg-cusblue px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cusblue/90 disabled:cursor-not-allowed disabled:opacity-50">
+                                <Download className="h-4 w-4" />
+                                Download Selected
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmBulkDelete}
+                                disabled={!selectedIds.length}
+                                className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50">
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleClearSelection}
+                                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             <HighlightsGrid
@@ -344,9 +380,9 @@ const GalleryPage = () => {
                             onDelete={handleDelete}
                             onLike={handleLike}
                             disableLike={!user}
-                            isSelectMode={isSelectMode}
+                            isSelectionActive={isSelectionActive}
                             isSelected={selectedIds.includes(media._id)}
-                            onSelectToggle={handleSelectToggle}
+                            onSelectionToggle={handleSelectToggle}
                         />
                     ))}
                 </div>
