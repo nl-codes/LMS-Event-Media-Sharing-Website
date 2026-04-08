@@ -6,17 +6,24 @@ import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
 import { useIdentity } from "@/context/IdentityContext";
 import { getEventBySlug } from "@/lib/eventApi";
-import { getGallery, deleteMedia, toggleLike } from "@/lib/mediaApi";
+import { getGallery, toggleLike } from "@/lib/mediaApi";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
-import MediaCard from "@/components/media/MediaCard";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
+import GalleryGrid from "@/components/events/GalleryGrid";
+import SelectionActionBar from "@/components/events/SelectionActionBar";
 import ChatContainer from "@/components/chat/ChatContainer";
 import type { Media } from "@/types/Media";
 import type { Event } from "@/types/Event";
 import BackButton from "@/components/navigation/BackButton";
-import { downloadAsZip } from "@/utils/HelperFunctions";
+import {
+    downloadAsZip,
+    normalizeLikedByIds,
+    normalizeMediaLikes,
+} from "@/utils/HelperFunctions";
+
+const MAX_SELECTION_ITEMS = 20;
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -29,6 +36,8 @@ export default function EventPublicGallery() {
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadingGallery, setLoadingGallery] = useState(false);
+    const [isSelectionActive, setIsSelectionActive] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const [hostName, setHostName] = useState("");
     const isHost = event?.hostId === eventId;
@@ -60,11 +69,14 @@ export default function EventPublicGallery() {
         eventId,
         onNewMedia: (media) => {
             setGallery((prev) =>
-                prev.find((m) => m._id === media._id) ? prev : [media, ...prev],
+                prev.find((m) => m._id === media._id)
+                    ? prev
+                    : [normalizeMediaLikes(media), ...prev],
             );
         },
         onMediaDeleted: (mediaId) => {
             setGallery((prev) => prev.filter((m) => m._id !== mediaId));
+            setSelectedIds((prev) => prev.filter((id) => id !== mediaId));
         },
         onMediaLiked: ({ mediaId, likesCount }) => {
             setGallery((prev) =>
@@ -77,7 +89,7 @@ export default function EventPublicGallery() {
         setLoadingGallery(true);
         try {
             const data = await getGallery(resolvedEventId);
-            setGallery(data);
+            setGallery(data.map(normalizeMediaLikes));
         } catch (err) {
             const errorMessage =
                 err instanceof Error ? err.message : "Failed to load gallery";
@@ -118,6 +130,8 @@ export default function EventPublicGallery() {
                     setEventId("");
                     setEvent(null);
                     setGallery([]);
+                    setSelectedIds([]);
+                    setIsSelectionActive(false);
                     const errorMessage =
                         err instanceof Error
                             ? err.message
@@ -138,17 +152,48 @@ export default function EventPublicGallery() {
         };
     }, [slug, fetchGallery]);
 
-    const handleDelete = async (mediaId: string) => {
-        if (!user) return;
+    const handleDelete = () => {
+        // Guest gallery intentionally has no destructive action.
+    };
 
-        try {
-            await deleteMedia(mediaId);
-            toast.success("Media deleted");
-        } catch (err) {
-            const errorMessage =
-                err instanceof Error ? err.message : "Delete failed";
-            toast.error(errorMessage);
-        }
+    const handleStartSelection = () => {
+        setIsSelectionActive(true);
+    };
+
+    const handleClearSelection = () => {
+        setSelectedIds([]);
+        setIsSelectionActive(false);
+    };
+
+    const handleSelectToggle = (mediaId: string) => {
+        if (!isSelectionActive) return;
+
+        setSelectedIds((prev) => {
+            if (prev.includes(mediaId)) {
+                return prev.filter((id) => id !== mediaId);
+            }
+
+            if (prev.length >= MAX_SELECTION_ITEMS) {
+                toast.error("You can select up to 20 items only");
+                return prev;
+            }
+
+            return [...prev, mediaId];
+        });
+    };
+
+    const handleDownloadMedia = () => {
+        const mediaToDownload = isSelectionActive
+            ? gallery.filter((media) => selectedIds.includes(media._id))
+            : gallery;
+
+        if (!mediaToDownload.length) return;
+
+        const zipName = isSelectionActive
+            ? `${event?.eventName || "event-gallery"}-selected-media`
+            : `${event?.eventName || "event-gallery"}-all-media`;
+
+        void downloadAsZip(mediaToDownload, zipName);
     };
 
     const handleLike = async (mediaId: string) => {
@@ -160,7 +205,7 @@ export default function EventPublicGallery() {
                 if (media._id !== mediaId) return media;
 
                 const likedBy = Array.isArray(media.likedBy)
-                    ? media.likedBy
+                    ? normalizeLikedByIds(media.likedBy)
                     : [];
                 const alreadyLiked = likedBy.includes(currentUserId);
                 const nextLikedBy = alreadyLiked
@@ -214,32 +259,6 @@ export default function EventPublicGallery() {
                     event={event}
                     subtitle="Shared Event Gallery"
                     roleBadge={`${hostName}'s Event`}
-                    actionSlot={
-                        <div className="rounded-2xl bg-white/60 p-4 shadow-sm backdrop-blur-md">
-                            <MediaUploadButton
-                                eventId={eventId}
-                                eventSlug={slug}
-                                onUploadSuccess={() => {
-                                    void fetchGallery(eventId);
-                                }}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    void downloadAsZip(
-                                        gallery,
-                                        `${event?.eventName || "event-gallery"}-all-media`,
-                                    );
-                                }}
-                                disabled={!gallery.length}
-                                className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-md transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
-                                Download All
-                            </button>
-                            <p className="mt-2 text-xs text-cusviolet/70">
-                                Uploading as {uploaderDisplayName}
-                            </p>
-                        </div>
-                    }
                 />
             )}
 
@@ -248,6 +267,56 @@ export default function EventPublicGallery() {
                 isHost={Boolean(user) ? isHost : false}
                 currentUserId={Boolean(user) ? currentUserId : ""}
             />
+
+            <div className="w-full lg:w-auto">
+                <div className="rounded-4xl border border-white/40 bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-wrap items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={
+                                    isSelectionActive
+                                        ? handleClearSelection
+                                        : handleStartSelection
+                                }
+                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50">
+                                {isSelectionActive
+                                    ? "Unselect Media"
+                                    : "Select Media"}
+                            </button>
+
+                            <MediaUploadButton
+                                eventId={eventId}
+                                eventSlug={slug}
+                                onUploadSuccess={() => {
+                                    void fetchGallery(eventId);
+                                }}
+                            />
+
+                            <button
+                                type="button"
+                                onClick={handleDownloadMedia}
+                                disabled={!gallery.length}
+                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+                                Download All
+                            </button>
+                        </div>
+
+                        {isSelectionActive && (
+                            <SelectionActionBar
+                                selectedCount={selectedIds.length}
+                                totalCount={gallery.length}
+                                onDownload={handleDownloadMedia}
+                                isHost={false}
+                            />
+                        )}
+
+                        <p className="text-xs text-cusviolet/70">
+                            Uploading as {uploaderDisplayName}
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             <h2 className="text-xl font-semibold mt-8 mb-2">All Media</h2>
 
@@ -258,19 +327,17 @@ export default function EventPublicGallery() {
                     No media uploaded yet.
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {gallery.map((media) => (
-                        <MediaCard
-                            key={media._id}
-                            media={media}
-                            isHost={Boolean(user) ? isHost : false}
-                            currentUserId={Boolean(user) ? currentUserId : ""}
-                            onDelete={handleDelete}
-                            onLike={handleLike}
-                            disableLike={!user}
-                        />
-                    ))}
-                </div>
+                <GalleryGrid
+                    mediaItems={gallery}
+                    isHost={false}
+                    currentUserId={Boolean(user) ? currentUserId : ""}
+                    isSelectionActive={isSelectionActive}
+                    selectedIds={selectedIds}
+                    onSelectionToggle={handleSelectToggle}
+                    onLike={handleLike}
+                    onDelete={handleDelete}
+                    userExists={Boolean(user)}
+                />
             )}
 
             {/* Chat Section */}

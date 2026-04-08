@@ -10,47 +10,24 @@ import {
 import { getEventById } from "@/lib/eventApi";
 import type { Media } from "@/types/Media";
 import type { Event } from "@/types/Event";
-import MediaCard from "@/components/media/MediaCard";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
+import GalleryGrid from "@/components/events/GalleryGrid";
+import SelectionActionBar from "@/components/events/SelectionActionBar";
 import BackButton from "@/components/navigation/BackButton";
 import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
 import { useUser } from "@/context/UserContext";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
-import { downloadAsZip } from "@/utils/HelperFunctions";
-import { CheckSquare, Download, Square, Trash2 } from "lucide-react";
-import clsx from "clsx";
+import {
+    downloadAsZip,
+    normalizeLikedByIds,
+    normalizeMediaLikes,
+} from "@/utils/HelperFunctions";
 
 const MAX_BULK_DELETE_ITEMS = 20;
-
-function normalizeLikedByIds(likedBy: unknown): string[] {
-    if (!Array.isArray(likedBy)) return [];
-
-    return likedBy
-        .map((entry) => {
-            if (typeof entry === "string") return entry;
-            if (
-                entry &&
-                typeof entry === "object" &&
-                "_id" in entry &&
-                typeof entry._id === "string"
-            ) {
-                return entry._id;
-            }
-            return "";
-        })
-        .filter(Boolean);
-}
-
-function normalizeMediaLikes(media: Media): Media {
-    return {
-        ...media,
-        likedBy: normalizeLikedByIds(media.likedBy),
-    };
-}
 
 const GalleryPage = () => {
     const params = useParams();
@@ -62,7 +39,6 @@ const GalleryPage = () => {
     const [isHost, setIsHost] = useState(false);
     const [isSelectionActive, setIsSelectionActive] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const selectedMediaCount = selectedIds.length;
 
     const currentUserId = user?._id || "";
 
@@ -275,93 +251,47 @@ const GalleryPage = () => {
             )}
 
             <div className="w-full lg:w-auto">
-                <div className="rounded-4xl bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md border border-white/40 overflow-hidden">
-                    <div className="flex flex-col gap-4">
-                        <div className="flex flex-wrap items-center justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={
-                                    isSelectionActive
-                                        ? handleClearSelection
-                                        : handleStartSelection
-                                }
-                                className={
-                                    "rounded-xl border px-4 py-2 text-sm font-semibold shadow-sm transition-all border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                                }>
-                                {isSelectionActive
-                                    ? "Unselect Media"
-                                    : "Select Media"}
-                            </button>
+                <div className="rounded-4xl bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md border border-white/40 overflow-hidden flex flex-col gap-4">
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={
+                                isSelectionActive
+                                    ? handleClearSelection
+                                    : handleStartSelection
+                            }
+                            className={
+                                "rounded-xl border px-4 py-2 text-sm font-semibold shadow-sm transition-all border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            }>
+                            {isSelectionActive
+                                ? "Unselect Media"
+                                : "Select Media"}
+                        </button>
 
-                            <MediaUploadButton
-                                eventId={eventId}
-                                onUploadSuccess={() => {
-                                    void fetchGallery();
-                                }}
-                            />
+                        <MediaUploadButton
+                            eventId={eventId}
+                            onUploadSuccess={() => {
+                                void fetchGallery();
+                            }}
+                        />
 
-                            <button
-                                type="button"
-                                onClick={handleDownloadMedia}
-                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                Download All
-                            </button>
-                        </div>
-
-                        {isSelectionActive && (
-                            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cusblue/10 bg-white/80 p-3 animate-in slide-in-from-top-2 duration-300">
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={clsx(
-                                            "rounded-lg p-2 text-cusblue",
-                                            {
-                                                "bg-cusblue/10":
-                                                    selectedMediaCount > 0,
-                                            },
-                                        )}>
-                                        {selectedMediaCount > 0 ? (
-                                            <CheckSquare className="h-5 w-5" />
-                                        ) : (
-                                            <Square className="h-5 w-5" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-cusviolet/50 leading-none mb-1">
-                                            Selection Mode
-                                        </p>
-                                        <p className="text-sm font-bold text-cusblue leading-none">
-                                            {selectedMediaCount} /{" "}
-                                            {gallery.length} Selected
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={handleDownloadMedia}
-                                        disabled={!selectedIds.length}
-                                        className="inline-flex items-center gap-2 rounded-xl bg-cusblue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cusblue/90 disabled:cursor-not-allowed disabled:opacity-50">
-                                        <Download className="h-4 w-4" />
-                                        <span className="hidden sm:inline">
-                                            Download Selected
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={handleConfirmBulkDelete}
-                                        disabled={!selectedIds.length}
-                                        className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50">
-                                        <Trash2 className="h-4 w-4" />
-                                        <span className="hidden sm:inline">
-                                            Delete
-                                        </span>
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                        <button
+                            type="button"
+                            onClick={handleDownloadMedia}
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                            Download All
+                        </button>
                     </div>
+
+                    {isSelectionActive && (
+                        <SelectionActionBar
+                            selectedCount={selectedIds.length}
+                            totalCount={gallery.length}
+                            onDownload={handleDownloadMedia}
+                            onDelete={handleConfirmBulkDelete}
+                            isHost={isHost}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -380,22 +310,17 @@ const GalleryPage = () => {
                     No media uploaded yet.
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {gallery.map((media) => (
-                        <MediaCard
-                            key={media._id}
-                            media={media}
-                            isHost={isHost}
-                            currentUserId={currentUserId}
-                            onDelete={handleDelete}
-                            onLike={handleLike}
-                            disableLike={!user}
-                            isSelectionActive={isSelectionActive}
-                            isSelected={selectedIds.includes(media._id)}
-                            onSelectionToggle={handleSelectToggle}
-                        />
-                    ))}
-                </div>
+                <GalleryGrid
+                    mediaItems={gallery}
+                    isHost={isHost}
+                    currentUserId={currentUserId}
+                    isSelectionActive={isSelectionActive}
+                    selectedIds={selectedIds}
+                    onSelectionToggle={handleSelectToggle}
+                    onLike={handleLike}
+                    onDelete={handleDelete}
+                    userExists={Boolean(user)}
+                />
             )}
         </div>
     );
