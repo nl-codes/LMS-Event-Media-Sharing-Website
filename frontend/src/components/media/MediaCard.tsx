@@ -66,7 +66,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
         <div
             className={`group relative flex flex-col overflow-hidden rounded-4xl bg-white border shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
                 isSelectionActive ? "cursor-pointer" : ""
-            } ${isSelected ? "border-cusblue ring-2 ring-cusblue/40" : "border-slate-100"}`}
+            } ${isSelected ? "border-2 border-orange-400 ring-2 ring-cusblue/40" : "border-slate-100"}`}
             onClick={handleCardClick}>
             {/* Media Container */}
             <div className="relative h-72 w-full overflow-hidden bg-slate-100">
