@@ -21,7 +21,8 @@ import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
 import { downloadAsZip } from "@/utils/HelperFunctions";
-import { CheckSquare, Download, Trash2 } from "lucide-react";
+import { CheckSquare, Download, Square, Trash2 } from "lucide-react";
+import clsx from "clsx";
 
 const MAX_BULK_DELETE_ITEMS = 20;
 
@@ -61,6 +62,7 @@ const GalleryPage = () => {
     const [isHost, setIsHost] = useState(false);
     const [isSelectionActive, setIsSelectionActive] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const selectedMediaCount = selectedIds.length;
 
     const currentUserId = user?._id || "";
 
@@ -309,15 +311,26 @@ const GalleryPage = () => {
                         {isSelectionActive && (
                             <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cusblue/10 bg-white/80 p-3 animate-in slide-in-from-top-2 duration-300">
                                 <div className="flex items-center gap-3">
-                                    <div className="rounded-lg bg-cusblue/10 p-2 text-cusblue">
-                                        <CheckSquare className="h-5 w-5" />
+                                    <div
+                                        className={clsx(
+                                            "rounded-lg p-2 text-cusblue",
+                                            {
+                                                "bg-cusblue/10":
+                                                    selectedMediaCount > 0,
+                                            },
+                                        )}>
+                                        {selectedMediaCount > 0 ? (
+                                            <CheckSquare className="h-5 w-5" />
+                                        ) : (
+                                            <Square className="h-5 w-5" />
+                                        )}
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-cusviolet/50 leading-none mb-1">
                                             Selection Mode
                                         </p>
                                         <p className="text-sm font-bold text-cusblue leading-none">
-                                            {selectedIds.length} /{" "}
+                                            {selectedMediaCount} /{" "}
                                             {gallery.length} Selected
                                         </p>
                                     </div>
