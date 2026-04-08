@@ -96,9 +96,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
                 {isSelectionActive && (
                     <div className="absolute top-4 right-4">
                         <span
-                            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-black transition-colors ${
+                            className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-black transition-colors ${
                                 isSelected
-                                    ? "border-cusblue bg-cusblue text-white"
+                                    ? "border-cusblue bg-orange-400 text-white"
                                     : "border-white/80 bg-black/20 text-transparent"
                             }`}>
                             ✓
