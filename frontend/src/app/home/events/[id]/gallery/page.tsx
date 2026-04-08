@@ -269,45 +269,46 @@ const GalleryPage = () => {
                     event={event}
                     subtitle={gallerySubtitle}
                     roleBadge={isHost ? "HOST" : undefined}
-                    actionSlot={
-                        <div className="rounded-2xl bg-white/60 p-4 shadow-sm backdrop-blur-md">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <MediaUploadButton
-                                    eventId={eventId}
-                                    onUploadSuccess={() => {
-                                        void fetchGallery();
-                                    }}
-                                />
-
-                                <button
-                                    type="button"
-                                    onClick={handleDownloadMedia}
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                    Download All
-                                </button>
-
-                                {!isSelectionActive && (
-                                    <button
-                                        type="button"
-                                        onClick={handleStartSelection}
-                                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                        Select Media
-                                    </button>
-                                )}
-
-                                {isSelectionActive && (
-                                    <button
-                                        type="button"
-                                        onClick={handleClearSelection}
-                                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                        Exit Selection
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    }
                 />
             )}
+
+            <div className="w-full lg:w-auto">
+                <div className="rounded-2xl bg-white/60 p-4 shadow-sm backdrop-blur-md">
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        <MediaUploadButton
+                            eventId={eventId}
+                            onUploadSuccess={() => {
+                                void fetchGallery();
+                            }}
+                        />
+
+                        <button
+                            type="button"
+                            onClick={handleDownloadMedia}
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                            Download All
+                        </button>
+
+                        {!isSelectionActive && (
+                            <button
+                                type="button"
+                                onClick={handleStartSelection}
+                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                                Select Media
+                            </button>
+                        )}
+
+                        {isSelectionActive && (
+                            <button
+                                type="button"
+                                onClick={handleClearSelection}
+                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                                Exit Selection
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             {isSelectionActive && (
                 <div className="sticky bottom-4 z-20 mt-6">
