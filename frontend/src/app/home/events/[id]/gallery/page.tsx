@@ -273,88 +273,84 @@ const GalleryPage = () => {
             )}
 
             <div className="w-full lg:w-auto">
-                <div className="rounded-2xl bg-white/60 p-4 shadow-sm backdrop-blur-md">
-                    <div className="flex flex-wrap items-center justify-end gap-3">
-                        <MediaUploadButton
-                            eventId={eventId}
-                            onUploadSuccess={() => {
-                                void fetchGallery();
-                            }}
-                        />
-
-                        <button
-                            type="button"
-                            onClick={handleDownloadMedia}
-                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                            Download All
-                        </button>
-
-                        {!isSelectionActive && (
+                <div className="rounded-4xl bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md border border-white/40 overflow-hidden">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-wrap items-center justify-end gap-3">
                             <button
                                 type="button"
-                                onClick={handleStartSelection}
-                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                Select Media
+                                onClick={
+                                    isSelectionActive
+                                        ? handleClearSelection
+                                        : handleStartSelection
+                                }
+                                className={
+                                    "rounded-xl border px-4 py-2 text-sm font-semibold shadow-sm transition-all border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                }>
+                                {isSelectionActive
+                                    ? "Unselect Media"
+                                    : "Select Media"}
                             </button>
-                        )}
+
+                            <MediaUploadButton
+                                eventId={eventId}
+                                onUploadSuccess={() => {
+                                    void fetchGallery();
+                                }}
+                            />
+
+                            <button
+                                type="button"
+                                onClick={handleDownloadMedia}
+                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                                Download All
+                            </button>
+                        </div>
 
                         {isSelectionActive && (
-                            <button
-                                type="button"
-                                onClick={handleClearSelection}
-                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                Exit Selection
-                            </button>
+                            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cusblue/10 bg-white/80 p-3 animate-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-center gap-3">
+                                    <div className="rounded-lg bg-cusblue/10 p-2 text-cusblue">
+                                        <CheckSquare className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-cusviolet/50 leading-none mb-1">
+                                            Selection Mode
+                                        </p>
+                                        <p className="text-sm font-bold text-cusblue leading-none">
+                                            {selectedIds.length} /{" "}
+                                            {gallery.length} Selected
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadMedia}
+                                        disabled={!selectedIds.length}
+                                        className="inline-flex items-center gap-2 rounded-xl bg-cusblue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cusblue/90 disabled:cursor-not-allowed disabled:opacity-50">
+                                        <Download className="h-4 w-4" />
+                                        <span className="hidden sm:inline">
+                                            Download Selected
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleConfirmBulkDelete}
+                                        disabled={!selectedIds.length}
+                                        className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50">
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="hidden sm:inline">
+                                            Delete
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>
             </div>
-
-            {isSelectionActive && (
-                <div className="sticky bottom-4 z-20 mt-6">
-                    <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 rounded-2xl border border-white/70 bg-white/70 px-4 py-3 shadow-2xl shadow-slate-200/50 backdrop-blur-md md:px-6">
-                        <div className="flex items-center gap-3">
-                            <div className="rounded-xl bg-cusblue/10 p-2 text-cusblue">
-                                <CheckSquare className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.16em] text-cusviolet/60">
-                                    Selection Active
-                                </p>
-                                <p className="text-sm font-semibold text-cusblue">
-                                    Selected: {selectedIds.length} /{" "}
-                                    {gallery.length}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={handleDownloadMedia}
-                                disabled={!selectedIds.length}
-                                className="inline-flex items-center gap-2 rounded-xl bg-cusblue px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cusblue/90 disabled:cursor-not-allowed disabled:opacity-50">
-                                <Download className="h-4 w-4" />
-                                Download Selected
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmBulkDelete}
-                                disabled={!selectedIds.length}
-                                className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50">
-                                <Trash2 className="h-4 w-4" />
-                                Delete
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleClearSelection}
-                                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <HighlightsGrid
                 eventId={eventId}
