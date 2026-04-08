@@ -3,8 +3,10 @@
 import React from "react";
 import type { Media } from "@/types/Media";
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Download, Heart } from "lucide-react";
 import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButton";
+import { downloadSingleMedia } from "@/utils/HelperFunctions";
+import toast from "react-hot-toast";
 
 interface MediaCardProps {
     media: Media;
@@ -14,8 +16,8 @@ interface MediaCardProps {
     onLike?: (mediaId: string) => void;
     disableLike?: boolean;
     isSelected?: boolean;
-    isSelectMode?: boolean;
-    onSelectToggle?: (mediaId: string) => void;
+    isSelectionActive?: boolean;
+    onSelectionToggle?: (mediaId: string) => void;
 }
 
 const MediaCard: React.FC<MediaCardProps> = ({
@@ -26,8 +28,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
     onLike,
     disableLike,
     isSelected = false,
-    isSelectMode = false,
-    onSelectToggle,
+    isSelectionActive = false,
+    onSelectionToggle,
 }) => {
     const isUploader = media.uploaderId?._id === currentUserId;
     const canDelete = isHost || isUploader;
@@ -35,16 +37,36 @@ const MediaCard: React.FC<MediaCardProps> = ({
     const displayName =
         media.uploaderId?.userName || media.guestId?.userName || "Guest";
 
+    const handleDownload = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+
+        const extension = media.mediaType === "video" ? "mp4" : "jpg";
+        const baseFilename = (media.label || `media-${media._id}`)
+            .trim()
+            .replace(/[^a-zA-Z0-9._-]+/g, "-");
+
+        try {
+            await downloadSingleMedia(
+                media.mediaUrl,
+                `${baseFilename}.${extension}`,
+            );
+        } catch (err) {
+            const errorMessage =
+                err instanceof Error ? err.message : "Download failed";
+            toast.error(errorMessage);
+        }
+    };
+
     const handleCardClick = () => {
-        if (!isSelectMode) return;
-        onSelectToggle?.(media._id);
+        if (!isSelectionActive) return;
+        onSelectionToggle?.(media._id);
     };
 
     return (
         <div
             className={`group relative flex flex-col overflow-hidden rounded-4xl bg-white border shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
-                isSelectMode ? "cursor-pointer" : ""
-            } ${isSelected ? "border-cusblue ring-2 ring-cusblue/40" : "border-slate-100"}`}
+                isSelectionActive ? "cursor-pointer" : ""
+            } ${isSelected ? "border-2 border-orange-400 ring-2 ring-cusblue/40" : "border-slate-100"}`}
             onClick={handleCardClick}>
             {/* Media Container */}
             <div className="relative h-72 w-full overflow-hidden bg-slate-100">
@@ -67,16 +89,16 @@ const MediaCard: React.FC<MediaCardProps> = ({
                     />
                 )}
 
-                {isSelectMode && (
+                {isSelectionActive && (
                     <div className="pointer-events-none absolute inset-0 bg-cusblue/10" />
                 )}
 
-                {isSelectMode && (
+                {isSelectionActive && (
                     <div className="absolute top-4 right-4">
                         <span
-                            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-black transition-colors ${
+                            className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-black transition-colors ${
                                 isSelected
-                                    ? "border-cusblue bg-cusblue text-white"
+                                    ? "border-cusblue bg-orange-400 text-white"
                                     : "border-white/80 bg-black/20 text-transparent"
                             }`}>
                             ✓
@@ -94,7 +116,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
                 )}
 
                 {/* Delete Button - Smooth fade & slide */}
-                {canDelete && !isSelectMode && (
+                {canDelete && !isSelectionActive && (
                     <div className="absolute top-4 right-4 translate-x-4 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
                         <DeleteMediaConfirmButton
                             mediaId={media._id}
@@ -115,25 +137,36 @@ const MediaCard: React.FC<MediaCardProps> = ({
                     </span>
                 </div>
 
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onLike?.(media._id);
-                    }}
-                    disabled={disableLike || isSelectMode}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all duration-300 active:scale-90 ${
-                        isLiked
-                            ? "bg-rose-50 text-rose-500 shadow-inner"
-                            : "bg-slate-50 text-slate-400 hover:bg-slate-100"
-                    } ${isSelectMode ? "opacity-60 cursor-not-allowed" : ""}`}>
-                    <Heart
-                        className={`h-5 w-5 transition-transform duration-300 ${isLiked ? "fill-current scale-110" : ""}`}
-                        strokeWidth={2.5}
-                    />
-                    <span className="text-xs font-black">
-                        {media.likesCount || 0}
-                    </span>
-                </button>
+                <div className="flex items-center gap-2">
+                    {!isSelectionActive && (
+                        <button
+                            onClick={handleDownload}
+                            className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-slate-500 transition-all duration-300 hover:bg-slate-100 active:scale-90"
+                            aria-label="Download media">
+                            <Download className="h-4 w-4" strokeWidth={2.5} />
+                        </button>
+                    )}
+
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onLike?.(media._id);
+                        }}
+                        disabled={disableLike || isSelectionActive}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all duration-300 active:scale-90 ${
+                            isLiked
+                                ? "bg-rose-50 text-rose-500 shadow-inner"
+                                : "bg-slate-50 text-slate-400 hover:bg-slate-100"
+                        } ${isSelectionActive ? "opacity-60 cursor-not-allowed" : ""}`}>
+                        <Heart
+                            className={`h-5 w-5 transition-transform duration-300 ${isLiked ? "fill-current scale-110" : ""}`}
+                            strokeWidth={2.5}
+                        />
+                        <span className="text-xs font-black">
+                            {media.likesCount || 0}
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     );

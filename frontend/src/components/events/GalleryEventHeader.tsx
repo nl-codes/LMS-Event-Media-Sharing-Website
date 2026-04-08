@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import type { Event } from "@/types/Event";
 
@@ -16,7 +16,6 @@ interface GalleryEventHeaderProps {
     >;
     subtitle?: string;
     roleBadge?: string;
-    actionSlot?: ReactNode;
 }
 
 const DESCRIPTION_TRUNCATE_LENGTH = 170;
@@ -51,7 +50,6 @@ export default function GalleryEventHeader({
     event,
     subtitle = "Shared Event Gallery",
     roleBadge,
-    actionSlot,
 }: GalleryEventHeaderProps) {
     const [now, setNow] = useState(() => Date.now());
     const [expandedDescription, setExpandedDescription] = useState(false);
@@ -123,7 +121,7 @@ export default function GalleryEventHeader({
     const shortDescription = `${description.slice(0, DESCRIPTION_TRUNCATE_LENGTH).trim()}...`;
 
     return (
-        <section className="mb-8 rounded-3xl bg-cuscream p-6 md:p-8">
+        <section className="rounded-3xl bg-cuscream p-6 md:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div className="max-w-3xl">
                     <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cusblue/5 bg-white px-4 py-1.5 shadow-sm">
@@ -164,10 +162,6 @@ export default function GalleryEventHeader({
                         </button>
                     )}
                 </div>
-
-                {actionSlot && (
-                    <div className="w-full lg:w-auto">{actionSlot}</div>
-                )}
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">

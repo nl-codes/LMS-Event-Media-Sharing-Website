@@ -10,44 +10,24 @@ import {
 import { getEventById } from "@/lib/eventApi";
 import type { Media } from "@/types/Media";
 import type { Event } from "@/types/Event";
-import MediaCard from "@/components/media/MediaCard";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
+import GalleryGrid from "@/components/events/GalleryGrid";
+import SelectionActionBar from "@/components/events/SelectionActionBar";
 import BackButton from "@/components/navigation/BackButton";
 import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
 import { useUser } from "@/context/UserContext";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
+import {
+    downloadAsZip,
+    normalizeLikedByIds,
+    normalizeMediaLikes,
+} from "@/utils/HelperFunctions";
 
 const MAX_BULK_DELETE_ITEMS = 20;
-
-function normalizeLikedByIds(likedBy: unknown): string[] {
-    if (!Array.isArray(likedBy)) return [];
-
-    return likedBy
-        .map((entry) => {
-            if (typeof entry === "string") return entry;
-            if (
-                entry &&
-                typeof entry === "object" &&
-                "_id" in entry &&
-                typeof entry._id === "string"
-            ) {
-                return entry._id;
-            }
-            return "";
-        })
-        .filter(Boolean);
-}
-
-function normalizeMediaLikes(media: Media): Media {
-    return {
-        ...media,
-        likedBy: normalizeLikedByIds(media.likedBy),
-    };
-}
 
 const GalleryPage = () => {
     const params = useParams();
@@ -57,7 +37,7 @@ const GalleryPage = () => {
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
     const [isHost, setIsHost] = useState(false);
-    const [isSelectMode, setIsSelectMode] = useState(false);
+    const [isSelectionActive, setIsSelectionActive] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const currentUserId = user?._id || "";
@@ -136,14 +116,18 @@ const GalleryPage = () => {
         }
     };
 
-    const toggleSelectMode = () => {
+    const handleStartSelection = () => {
         if (!isHost) return;
-        setIsSelectMode((prev) => !prev);
+        setIsSelectionActive(true);
+    };
+
+    const handleClearSelection = () => {
         setSelectedIds([]);
+        setIsSelectionActive(false);
     };
 
     const handleSelectToggle = (mediaId: string) => {
-        if (!isSelectMode) return;
+        if (!isSelectionActive) return;
 
         setSelectedIds((prev) => {
             if (prev.includes(mediaId)) {
@@ -185,9 +169,23 @@ const GalleryPage = () => {
                     prev.filter((media) => !idsToDelete.includes(media._id)),
                 );
                 setSelectedIds([]);
-                setIsSelectMode(false);
+                setIsSelectionActive(false);
             },
         });
+    };
+
+    const handleDownloadMedia = () => {
+        const mediaToDownload = isSelectionActive
+            ? gallery.filter((media) => selectedIds.includes(media._id))
+            : gallery;
+
+        if (!mediaToDownload.length) return;
+
+        const zipName = isSelectionActive
+            ? `${event?.eventName || "event-gallery"}-selected-media`
+            : `${event?.eventName || "event-gallery"}-all-media`;
+
+        void downloadAsZip(mediaToDownload, zipName);
     };
 
     const handleLike = async (mediaId: string) => {
@@ -249,48 +247,53 @@ const GalleryPage = () => {
                     event={event}
                     subtitle={gallerySubtitle}
                     roleBadge={isHost ? "HOST" : undefined}
-                    actionSlot={
-                        <div className="rounded-2xl bg-white/60 p-4 shadow-sm backdrop-blur-md">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <MediaUploadButton
-                                    eventId={eventId}
-                                    onUploadSuccess={() => {
-                                        void fetchGallery();
-                                    }}
-                                />
-
-                                {isHost && !isSelectMode && (
-                                    <button
-                                        type="button"
-                                        onClick={toggleSelectMode}
-                                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                        Bulk Delete
-                                    </button>
-                                )}
-
-                                {isHost && isSelectMode && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={handleConfirmBulkDelete}
-                                            disabled={!selectedIds.length}
-                                            className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60">
-                                            Confirm Delete ({selectedIds.length}
-                                            )
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={toggleSelectMode}
-                                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                                            Cancel
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    }
                 />
             )}
+
+            <div className="w-full lg:w-auto">
+                <div className="rounded-4xl bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md border border-white/40 overflow-hidden flex flex-col gap-4">
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={
+                                isSelectionActive
+                                    ? handleClearSelection
+                                    : handleStartSelection
+                            }
+                            className={
+                                "rounded-xl border px-4 py-2 text-sm font-semibold shadow-sm transition-all border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            }>
+                            {isSelectionActive
+                                ? "Unselect Media"
+                                : "Select Media"}
+                        </button>
+
+                        <MediaUploadButton
+                            eventId={eventId}
+                            onUploadSuccess={() => {
+                                void fetchGallery();
+                            }}
+                        />
+
+                        <button
+                            type="button"
+                            onClick={handleDownloadMedia}
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                            Download All
+                        </button>
+                    </div>
+
+                    {isSelectionActive && (
+                        <SelectionActionBar
+                            selectedCount={selectedIds.length}
+                            totalCount={gallery.length}
+                            onDownload={handleDownloadMedia}
+                            onDelete={handleConfirmBulkDelete}
+                            isHost={isHost}
+                        />
+                    )}
+                </div>
+            </div>
 
             <HighlightsGrid
                 eventId={eventId}
@@ -307,22 +310,17 @@ const GalleryPage = () => {
                     No media uploaded yet.
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {gallery.map((media) => (
-                        <MediaCard
-                            key={media._id}
-                            media={media}
-                            isHost={isHost}
-                            currentUserId={currentUserId}
-                            onDelete={handleDelete}
-                            onLike={handleLike}
-                            disableLike={!user}
-                            isSelectMode={isSelectMode}
-                            isSelected={selectedIds.includes(media._id)}
-                            onSelectToggle={handleSelectToggle}
-                        />
-                    ))}
-                </div>
+                <GalleryGrid
+                    mediaItems={gallery}
+                    isHost={isHost}
+                    currentUserId={currentUserId}
+                    isSelectionActive={isSelectionActive}
+                    selectedIds={selectedIds}
+                    onSelectionToggle={handleSelectToggle}
+                    onLike={handleLike}
+                    onDelete={handleDelete}
+                    userExists={Boolean(user)}
+                />
             )}
         </div>
     );

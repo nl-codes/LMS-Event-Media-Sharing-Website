@@ -1,6 +1,34 @@
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { User, userJWTToken } from "@/types/User";
 import toast from "react-hot-toast";
+import type { Media } from "@/types/Media";
+import JSZip from "jszip";
+
+export const normalizeLikedByIds = (likedBy: unknown): string[] => {
+    if (!Array.isArray(likedBy)) return [];
+
+    return likedBy
+        .map((entry) => {
+            if (typeof entry === "string") return entry;
+            if (
+                entry &&
+                typeof entry === "object" &&
+                "_id" in entry &&
+                typeof entry._id === "string"
+            ) {
+                return entry._id;
+            }
+            return "";
+        })
+        .filter(Boolean);
+};
+
+export const normalizeMediaLikes = (media: Media): Media => {
+    return {
+        ...media,
+        likedBy: normalizeLikedByIds(media.likedBy),
+    };
+};
 
 export const isTokenExpired = (token: string): boolean => {
     try {
@@ -46,5 +74,99 @@ export const handleCopyText = async (textToCopy: string) => {
         toast.success("Link copied to clipboard!");
     } catch {
         toast.error("Failed to copy link");
+    }
+};
+
+export const triggerBrowserDownload = (blob: Blob, filename: string) => {
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(objectUrl);
+};
+
+const sanitizeFilename = (value: string) =>
+    value
+        .trim()
+        .replace(/[^a-zA-Z0-9._-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+
+const inferExtension = (url: string, contentType?: string) => {
+    if (contentType?.includes("image/")) {
+        return contentType.split("image/")[1] || "jpg";
+    }
+
+    if (contentType?.includes("video/")) {
+        return contentType.split("video/")[1] || "mp4";
+    }
+
+    const urlPath = url.split("?")[0];
+    const rawExtension = urlPath.split(".").pop()?.toLowerCase();
+    if (!rawExtension) return "bin";
+
+    return rawExtension;
+};
+
+export const downloadSingleMedia = async (url: string, filename: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error("Failed to download media");
+    }
+
+    const blob = await response.blob();
+    const safeFilename = sanitizeFilename(filename) || `media-${Date.now()}`;
+    triggerBrowserDownload(blob, safeFilename);
+};
+
+export const downloadAsZip = async (mediaArray: Media[], zipName: string) => {
+    if (!mediaArray.length) {
+        toast.error("No media available for download");
+        return;
+    }
+
+    const toastId = toast.loading("Preparing download zip...");
+
+    try {
+        const zip = new JSZip();
+        const mediaFolder = zip.folder("media");
+
+        if (!mediaFolder) {
+            throw new Error("Failed to initialize zip folder");
+        }
+
+        await Promise.all(
+            mediaArray.map(async (media, index) => {
+                const response = await fetch(media.mediaUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch media ${index + 1}`);
+                }
+
+                const blob = await response.blob();
+                const extension = inferExtension(
+                    media.mediaUrl,
+                    response.headers.get("content-type") || undefined,
+                );
+                const baseName =
+                    sanitizeFilename(media.label || `media-${index + 1}`) ||
+                    `media-${index + 1}`;
+
+                mediaFolder.file(`${baseName}-${media._id}.${extension}`, blob);
+            }),
+        );
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const safeZipName = sanitizeFilename(zipName) || "gallery";
+        triggerBrowserDownload(zipBlob, `${safeZipName}.zip`);
+        toast.success("Zip download started", { id: toastId });
+    } catch (err) {
+        const errorMessage =
+            err instanceof Error ? err.message : "Failed to generate zip";
+        toast.error(errorMessage, { id: toastId });
+        throw err;
     }
 };
