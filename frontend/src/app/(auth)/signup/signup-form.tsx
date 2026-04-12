@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Button from "@/components/buttons/Button";
 import { backend_url } from "@/config/backend";
-import { Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus, AlertCircle } from "lucide-react";
 import { showPopUp } from "@/utils/Popup";
 
 export default function SignupForm() {
@@ -15,29 +15,43 @@ export default function SignupForm() {
     const [userName, setUserName] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [errorMsg, setErrorMsg] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleSignup = async () => {
         if (isSubmitting) return;
-
+        setErrorMsg("");
         // Validations
         if (!email || !userName || !password || !confirmPassword) {
-            toast.error("All fields are required");
+            setErrorMsg("Please fill in all fields to create your account.");
             return;
         }
 
-        // Email Vvalidation
+        // Email Validation
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
-            toast.error("Please enter a valid email address");
+            setErrorMsg("Please enter a valid email address e.g. abc@abc.abc");
             return;
         }
 
-        // Passwords match
+        // Password Validation
+        // Requirement: 8 chars, 1 Upper, 1 Lower, 1 Number, 1 Symbol
+        const passwordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            setErrorMsg(
+                "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special characters.",
+            );
+            return;
+        }
+
+        // Confirm Password Match
         if (password !== confirmPassword) {
-            toast.error("Passwords do not match");
+            setErrorMsg(
+                "The passwords you entered do not match. Please try again.",
+            );
             return;
         }
 
@@ -53,7 +67,7 @@ export default function SignupForm() {
             const data = await res.json();
 
             if (!res.ok) {
-                toast.error(data.error || "Signup failed");
+                setErrorMsg(data.error || "Signup failed. Please try again.");
                 setIsSubmitting(false);
                 return;
             }
@@ -70,7 +84,9 @@ export default function SignupForm() {
             });
         } catch (err) {
             console.error(err);
-            toast.error("Something went wrong");
+            setErrorMsg(
+                "Something went wrong on our end. Please try again later.",
+            );
             setIsSubmitting(false);
         }
     };
@@ -90,6 +106,7 @@ export default function SignupForm() {
                     onChange={(e) => setEmail(e.target.value)}
                 />
             </div>
+
             {/* Username Field */}
             <div className="form-section flex flex-col gap-1.5">
                 <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
@@ -103,7 +120,8 @@ export default function SignupForm() {
                     onChange={(e) => setUserName(e.target.value)}
                 />
             </div>
-            {/* Password Field */}
+
+            {/* Password Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="form-section flex flex-col gap-1.5 relative">
                     <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
@@ -159,8 +177,16 @@ export default function SignupForm() {
                 </div>
             </div>
 
+            {/* Error Message Display */}
+            {errorMsg && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{errorMsg}</span>
+                </div>
+            )}
+
             {/* Submit Button */}
-            <div className="form-section pt-6">
+            <div className="form-section pt-2">
                 <Button
                     handleClick={handleSignup}
                     loading={isSubmitting}
