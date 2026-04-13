@@ -7,6 +7,7 @@ import Button from "@/components/buttons/Button";
 import { backend_url } from "@/config/backend";
 import { Eye, EyeOff, UserPlus, AlertCircle } from "lucide-react";
 import { showPopUp } from "@/utils/Popup";
+import { emailRegex } from "@/utils/validators";
 
 export default function SignupForm() {
     const router = useRouter();
@@ -30,7 +31,6 @@ export default function SignupForm() {
         }
 
         // Email Validation
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
             setErrorMsg(
                 "Please enter a valid email address (e.g., abc@example.com).",
