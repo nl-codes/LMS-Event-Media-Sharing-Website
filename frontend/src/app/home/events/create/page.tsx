@@ -50,7 +50,15 @@ export default function CreateEventPage() {
             }
 
             // Pass formData to your API call
-            const event = await createEvent(formData);
+            const event = await createEvent({
+                eventName: form.eventName,
+                description: form.description,
+                location: form.location,
+                startTime: new Date(form.startTime).toISOString(),
+                endTime: new Date(form.endTime).toISOString(),
+                isPremium: form.isPremium,
+                thumbnail: form.thumbnail,
+            });
 
             toast.success("Event created successfully!");
             router.push(`/home/events/${event._id}`);
