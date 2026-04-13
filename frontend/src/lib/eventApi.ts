@@ -10,11 +10,12 @@ type ApiResponse<T> = {
 };
 
 async function request<T>(path: string, options: RequestInit = {}) {
+    const hasFormDataBody = options.body instanceof FormData;
     const res = await fetch(`${API_BASE}${path}`, {
         credentials: "include",
         headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
+            ...(hasFormDataBody ? {} : { "Content-Type": "application/json" }),
+            ...((options.headers || {}) as Record<string, string>),
         },
         ...options,
     });
@@ -50,10 +51,22 @@ export async function createEvent(payload: {
     startTime: string;
     endTime: string;
     isPremium?: boolean;
+    thumbnail?: File | null;
 }) {
+    const formData = new FormData();
+    formData.append("eventName", payload.eventName);
+    formData.append("description", payload.description || "");
+    formData.append("location", payload.location);
+    formData.append("startTime", payload.startTime);
+    formData.append("endTime", payload.endTime);
+    formData.append("isPremium", String(Boolean(payload.isPremium)));
+    if (payload.thumbnail) {
+        formData.append("thumbnail", payload.thumbnail);
+    }
+
     const json = await request<Event>("/events", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: formData,
     });
     return json.data as Event;
 }
@@ -67,11 +80,36 @@ export async function updateEvent(
         startTime: string;
         endTime: string;
         isPremium: boolean;
+        thumbnail: File | null;
     }>,
 ) {
+    const formData = new FormData();
+
+    if (typeof payload.eventName !== "undefined") {
+        formData.append("eventName", payload.eventName);
+    }
+    if (typeof payload.description !== "undefined") {
+        formData.append("description", payload.description);
+    }
+    if (typeof payload.location !== "undefined") {
+        formData.append("location", payload.location);
+    }
+    if (typeof payload.startTime !== "undefined") {
+        formData.append("startTime", payload.startTime);
+    }
+    if (typeof payload.endTime !== "undefined") {
+        formData.append("endTime", payload.endTime);
+    }
+    if (typeof payload.isPremium !== "undefined") {
+        formData.append("isPremium", String(payload.isPremium));
+    }
+    if (payload.thumbnail instanceof File) {
+        formData.append("thumbnail", payload.thumbnail);
+    }
+
     const json = await request<Event>(`/events/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
+        method: "PUT",
+        body: formData,
     });
     return json.data as Event;
 }
