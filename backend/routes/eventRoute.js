@@ -14,12 +14,14 @@ import {
     verifyEventAccess,
     joinAsGuest,
 } from "../controllers/eventController.js";
+import { attachEventId } from "../middleware/utilsMiddleware.js";
 
 const router = express.Router();
 // Protected routes (require authentication)
 router.post(
     "/",
     requireAuth,
+    attachEventId,
     uploadEventThumbnail.single("thumbnail"),
     registerEvent,
 );
