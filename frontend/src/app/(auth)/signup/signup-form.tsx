@@ -94,7 +94,7 @@ export default function SignupForm() {
     };
 
     return (
-        <div className="form space-y-4">
+        <div className="form">
             {/* Email Field */}
             <div className="form-section flex flex-col gap-1.5">
                 <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
