@@ -10,6 +10,19 @@ const profileStorage = new CloudinaryStorage({
     },
 });
 
-const uploadUserProfile = multer({ storage: profileStorage });
+const eventStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req) => {
+        const eventId = req.params?.id || req.body?.eventId;
 
-export { uploadUserProfile };
+        return {
+            folder: `events/${eventId}/thumbnail`,
+            allowed_formats: ["jpg", "png", "jpeg", "webp"],
+        };
+    },
+});
+
+const uploadUserProfile = multer({ storage: profileStorage });
+const uploadEventThumbnail = multer({ storage: eventStorage });
+
+export { uploadUserProfile, uploadEventThumbnail };
