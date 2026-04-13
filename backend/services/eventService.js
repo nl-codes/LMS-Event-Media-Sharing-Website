@@ -1,21 +1,13 @@
 import { Event } from "../models/eventModel.js";
-import { User } from "../models/userModel.js";
+import cloudinary from "../config/cloudinaryConfig.js";
 
 export const createEvent = async (eventData) => {
     try {
         if (new Date(eventData.startTime) >= new Date(eventData.endTime)) {
             throw new Error("Start time must be before end time");
         }
-        const user = await User.findOne({ email: eventData.hostEmail }).select(
-            "_id",
-        );
 
-        const finalEventData = {
-            ...eventData,
-            hostId: user._id,
-        };
-
-        const event = new Event(finalEventData);
+        const event = new Event(eventData);
         await event.save();
 
         // Populate host information
@@ -101,6 +93,19 @@ export const updateEvent = async (eventId, updateData, requesterId) => {
             }
         }
 
+        // Handle Image Update
+        if (updateData.thumbnail && event.thumbnail) {
+            // Extract publicId: "events/id/thumbnail/filename"
+            const publicId = event.thumbnail
+                .split("/")
+                .slice(-3)
+                .join("/")
+                .split(".")[0];
+
+            await cloudinary.uploader.destroy(publicId);
+        }
+
+        // Update and save the event
         const updatedEvent = await Event.findByIdAndUpdate(
             eventId,
             updateData,
