@@ -33,13 +33,15 @@ export const registerEvent = async (req, res) => {
             });
         }
         const eventData = {
-            hostEmail: req.user.email,
+            _id: req.generatedEventId,
+            hostId: req.user.id,
             eventName,
             description,
             location,
             startTime,
             endTime,
             isPremium: isPremium || false,
+            thumbnail: thumbnail,
         };
 
         const event = await createEvent(eventData);
