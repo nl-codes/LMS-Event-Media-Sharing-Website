@@ -10,6 +10,7 @@ import { toast } from "react-hot-toast";
 import { Settings2, Loader2 } from "lucide-react";
 import { ChevronDown } from "lucide-react";
 import { formatToLocalDatetime } from "@/utils/HelperFunctions";
+import Image from "next/image";
 
 export default function EditEventPage() {
     const router = useRouter();
@@ -24,7 +25,10 @@ export default function EditEventPage() {
         endTime: "",
         isPremium: false,
         status: "Active" as EventStatus,
+        thumbnail: null as File | null,
     });
+    const [currentThumbnail, setCurrentThumbnail] = useState("");
+    const [thumbnailPreview, setThumbnailPreview] = useState("");
 
     const params = useParams();
     const eventId = typeof params?.id === "string" ? params.id : "";
@@ -41,7 +45,9 @@ export default function EditEventPage() {
                     endTime: formatToLocalDatetime(event.endTime),
                     isPremium: !!event.isPremium,
                     status: event.status,
+                    thumbnail: null,
                 });
+                setCurrentThumbnail(event.thumbnail || "");
             } catch {
                 toast.error("Failed to load event data");
             } finally {
@@ -50,6 +56,14 @@ export default function EditEventPage() {
         };
         void run();
     }, [eventId]);
+
+    useEffect(() => {
+        return () => {
+            if (thumbnailPreview) {
+                URL.revokeObjectURL(thumbnailPreview);
+            }
+        };
+    }, [thumbnailPreview]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,6 +77,7 @@ export default function EditEventPage() {
                 startTime: new Date(form.startTime).toISOString(),
                 endTime: new Date(form.endTime).toISOString(),
                 isPremium: form.isPremium,
+                thumbnail: form.thumbnail,
             });
 
             await updateEventStatus(eventId, form.status);
@@ -99,6 +114,55 @@ export default function EditEventPage() {
                 </div>
 
                 <form onSubmit={onSubmit} className="form">
+                    <div className="form-section">
+                        <label className="label">Event Thumbnail</label>
+                        <div className="rounded-2xl border border-cusblue/15 p-3 bg-white/70">
+                            <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/jpg,image/webp"
+                                className="form-input w-full border-none px-0 py-0 shadow-none"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    setForm({ ...form, thumbnail: file });
+
+                                    if (thumbnailPreview) {
+                                        URL.revokeObjectURL(thumbnailPreview);
+                                    }
+
+                                    if (file) {
+                                        setThumbnailPreview(
+                                            URL.createObjectURL(file),
+                                        );
+                                        return;
+                                    }
+
+                                    setThumbnailPreview("");
+                                }}
+                            />
+
+                            <div className="mt-3 rounded-2xl overflow-hidden border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
+                                <div className="relative h-44 w-full bg-cuscream rounded-2xl overflow-hidden">
+                                    {thumbnailPreview || currentThumbnail ? (
+                                        <Image
+                                            src={
+                                                thumbnailPreview ||
+                                                currentThumbnail
+                                            }
+                                            alt="Selected event thumbnail preview"
+                                            fill
+                                            className="object-cover"
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10 flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-cusblue/70">
+                                            Thumbnail Preview
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="form-section">
                         <label className="label">Event Name</label>
                         <input

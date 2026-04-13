@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image"; // Added Image import
 import { getEventById } from "@/lib/eventApi";
 import { confirmStripeCheckoutSession } from "@/lib/stripe";
 import type { Event } from "@/types/Event";
@@ -170,6 +171,25 @@ export default function EventDetailsPage() {
                     {/* Main Content Card */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-xl border border-white">
+                            <div className="mb-6 rounded-3xl border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px shadow-sm">
+                                <div className="relative h-64 w-full rounded-[calc(1.5rem-1px)] overflow-hidden bg-cuscream">
+                                    {event.thumbnail ? (
+                                        <Image
+                                            src={event.thumbnail}
+                                            alt={`${event.eventName} thumbnail`}
+                                            fill
+                                            priority
+                                            className="object-cover"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw"
+                                        />
+                                    ) : (
+                                        <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10 flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-cusblue/70">
+                                            Event Thumbnail
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="flex items-center gap-3 mb-4">
                                 <span
                                     className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${

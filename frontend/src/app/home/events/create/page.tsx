@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEvent } from "@/lib/eventApi";
 import LandingButton from "@/components/buttons/LandingButton";
 import BackButton from "@/components/navigation/BackButton";
 import { toast } from "react-hot-toast";
+import Image from "next/image";
 
 export default function CreateEventPage() {
     const router = useRouter();
@@ -18,13 +19,39 @@ export default function CreateEventPage() {
         startTime: "",
         endTime: "",
         isPremium: false,
+        thumbnail: null as File | null,
     });
+    const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
+
+    useEffect(() => {
+        return () => {
+            if (thumbnailPreview) {
+                URL.revokeObjectURL(thumbnailPreview);
+            }
+        };
+    }, [thumbnailPreview]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             setSubmitting(true);
-            const event = await createEvent(form);
+
+            // IMPORTANT: Use FormData for file uploads
+            const formData = new FormData();
+            formData.append("eventName", form.eventName);
+            formData.append("description", form.description);
+            formData.append("location", form.location);
+            formData.append("startTime", form.startTime);
+            formData.append("endTime", form.endTime);
+            formData.append("isPremium", String(form.isPremium));
+
+            if (form.thumbnail) {
+                formData.append("thumbnail", form.thumbnail);
+            }
+
+            // Pass formData to your API call
+            const event = await createEvent(formData);
+
             toast.success("Event created successfully!");
             router.push(`/home/events/${event._id}`);
         } catch (err) {
@@ -50,8 +77,53 @@ export default function CreateEventPage() {
                 <p className="text-center text-cusviolet mb-6">
                     Fill in the details for your new event
                 </p>
-                {/* Event Name */}
+
+                {/* Thumbnail Section */}
                 <div className="form-section">
+                    <label className="label">Event Thumbnail</label>
+                    <div className="rounded-2xl border border-cusblue/15 p-3 bg-white/70">
+                        <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            className="form-input w-full border-none px-0 py-0 shadow-none cursor-pointer"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setForm({ ...form, thumbnail: file });
+
+                                if (thumbnailPreview)
+                                    URL.revokeObjectURL(thumbnailPreview);
+                                if (file) {
+                                    setThumbnailPreview(
+                                        URL.createObjectURL(file),
+                                    );
+                                } else {
+                                    setThumbnailPreview("");
+                                }
+                            }}
+                        />
+
+                        <div className="mt-3 rounded-2xl overflow-hidden border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
+                            <div className="relative h-44 w-full bg-cuscream rounded-2xl overflow-hidden">
+                                {thumbnailPreview ? (
+                                    <Image
+                                        src={thumbnailPreview}
+                                        alt="Selected event thumbnail preview"
+                                        fill
+                                        className="object-cover"
+                                        unoptimized
+                                    />
+                                ) : (
+                                    <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10 flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-cusblue/70 text-center px-4">
+                                        Thumbnail Preview
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Event Name */}
+                <div className="form-section mt-4">
                     <label className="label">Event Name</label>
                     <input
                         className="form-input w-full"
@@ -63,10 +135,11 @@ export default function CreateEventPage() {
                         required
                     />
                 </div>
+
                 <div className="form-section">
                     <label className="label">Description</label>
                     <textarea
-                        className="form-input h-48 min-h-[100px] resize-none text-justify"
+                        className="form-input h-32 min-h-[100px] resize-none"
                         placeholder="Tell us about the event..."
                         value={form.description}
                         onChange={(e) =>
@@ -74,7 +147,7 @@ export default function CreateEventPage() {
                         }
                     />
                 </div>
-                {/* Location */}
+
                 <div className="form-section">
                     <label className="label">Location</label>
                     <input
@@ -87,13 +160,13 @@ export default function CreateEventPage() {
                         required
                     />
                 </div>
-                {/* Date Grid */}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div className="form-section">
-                        <label className="label text-sm!">Start Time</label>
+                        <label className="label text-sm">Start Time</label>
                         <input
                             type="datetime-local"
-                            className="form-input w-full!"
+                            className="form-input w-full"
                             value={form.startTime}
                             onChange={(e) =>
                                 setForm({ ...form, startTime: e.target.value })
@@ -102,10 +175,10 @@ export default function CreateEventPage() {
                         />
                     </div>
                     <div className="form-section">
-                        <label className="label text-sm!">End Time</label>
+                        <label className="label text-sm">End Time</label>
                         <input
                             type="datetime-local"
-                            className="form-input w-full!"
+                            className="form-input w-full"
                             value={form.endTime}
                             onChange={(e) =>
                                 setForm({ ...form, endTime: e.target.value })
@@ -114,24 +187,8 @@ export default function CreateEventPage() {
                         />
                     </div>
                 </div>
-                {/* Premium Toggle
-                <div className="flex items-center gap-3 px-4 py-2">
-                    <input
-                        type="checkbox"
-                        id="isPremium"
-                        className="w-5 h-5 accent-cusviolet cursor-pointer"
-                        checked={form.isPremium}
-                        onChange={(e) =>
-                            setForm({ ...form, isPremium: e.target.checked })
-                        }
-                    />
-                    <label
-                        htmlFor="isPremium"
-                        className="text-cusblue font-medium cursor-pointer">
-                        This is a Premium Event
-                    </label>
-                </div> */}
-                <div className="mt-4">
+
+                <div className="mt-6">
                     <LandingButton
                         type="submit"
                         loading={submitting}

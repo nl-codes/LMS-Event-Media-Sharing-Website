@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import type { Event } from "@/types/Event";
+import clsx from "clsx";
+import Image from "next/image";
 
 interface GalleryEventHeaderProps {
     event: Pick<
@@ -13,6 +15,7 @@ interface GalleryEventHeaderProps {
         | "startTime"
         | "endTime"
         | "isLive"
+        | "thumbnail"
     >;
     subtitle?: string;
     roleBadge?: string;
@@ -126,7 +129,10 @@ export default function GalleryEventHeader({
                 <div className="max-w-3xl">
                     <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cusblue/5 bg-white px-4 py-1.5 shadow-sm">
                         <span
-                            className={`h-2 w-2 rounded-full ${timeline.statusClass}`}
+                            className={clsx(
+                                "h-2 w-2 rounded-full",
+                                timeline.statusClass,
+                            )}
                         />
                         <span className="text-xs font-bold uppercase tracking-widest text-cusblue">
                             {timeline.statusText}
@@ -161,6 +167,24 @@ export default function GalleryEventHeader({
                             {expandedDescription ? "Read less" : "Read more"}
                         </button>
                     )}
+                </div>
+
+                <div className="w-full max-w-[220px] rounded-2xl border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
+                    <div className="rounded-2xl bg-white/75 p-2 backdrop-blur-sm">
+                        <div className="relative h-28 w-full overflow-hidden rounded-xl bg-cuscream">
+                            {event.thumbnail ? (
+                                <Image
+                                    src={event.thumbnail}
+                                    alt={`${event.eventName} thumbnail`}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10" />
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 

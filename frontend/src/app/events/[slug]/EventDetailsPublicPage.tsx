@@ -13,6 +13,7 @@ import BackButton from "@/components/navigation/BackButton";
 import { useUser } from "@/context/UserContext";
 import Button from "@/components/buttons/Button";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface EventDetailsPublicPageProps {
     event: Event;
@@ -40,6 +41,22 @@ export default function EventDetailsPublicPage({
 
             {/* Minimal Public Header */}
             <div className="max-w-4xl mx-auto px-6 pt-12 text-center profile-card-animate">
+                <div className="mb-8 rounded-3xl border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px shadow-xl shadow-cusblue/10">
+                    <div className="relative h-72 w-full rounded-3xl overflow-hidden bg-cuscream">
+                        {event.thumbnail ? (
+                            <Image
+                                src={event.thumbnail}
+                                alt={`${event.eventName} thumbnail`}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="object-cover"
+                            />
+                        ) : (
+                            <div className="h-full w-full bg-linear-to-r from-cusblue/15 to-cusviolet/15" />
+                        )}
+                    </div>
+                </div>
+
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white shadow-sm border border-cusblue/5 mb-6">
                     <span
                         className={`w-2 h-2 rounded-full ${event.isLive ? "bg-green-500 animate-pulse" : "bg-gray-400"}`}
