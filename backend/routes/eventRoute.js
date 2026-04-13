@@ -1,6 +1,7 @@
 import express from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { identifyUser } from "../middleware/identifyUser.js";
+import { uploadEventThumbnail } from "../middleware/uploadMiddleware.js";
 import {
     registerEvent,
     getEventById,
@@ -16,10 +17,26 @@ import {
 
 const router = express.Router();
 // Protected routes (require authentication)
-router.post("/", requireAuth, registerEvent);
+router.post(
+    "/",
+    requireAuth,
+    uploadEventThumbnail.single("thumbnail"),
+    registerEvent,
+);
 router.get("/details/:id", requireAuth, getEventById);
 router.get("/host-events", requireAuth, getHostEvents);
-router.patch("/:id", requireAuth, editEvent);
+router.patch(
+    "/:id",
+    requireAuth,
+    uploadEventThumbnail.single("thumbnail"),
+    editEvent,
+);
+router.put(
+    "/:id",
+    requireAuth,
+    uploadEventThumbnail.single("thumbnail"),
+    editEvent,
+);
 router.patch("/:id/status", requireAuth, editEventStatus);
 router.delete("/:id", requireAuth, deleteEvent);
 
