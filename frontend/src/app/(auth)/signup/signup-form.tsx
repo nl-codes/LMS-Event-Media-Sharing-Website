@@ -32,7 +32,9 @@ export default function SignupForm() {
         // Email Validation
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
-            setErrorMsg("Please enter a valid email address e.g. abc@abc.abc");
+            setErrorMsg(
+                "Please enter a valid email address (e.g., abc@example.com).",
+            );
             return;
         }
 
@@ -42,7 +44,7 @@ export default function SignupForm() {
             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         if (!passwordRegex.test(password)) {
             setErrorMsg(
-                "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special characters.",
+                "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.",
             );
             return;
         }
@@ -121,59 +123,59 @@ export default function SignupForm() {
                 />
             </div>
 
-            {/* Password Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="form-section flex flex-col gap-1.5 relative">
-                    <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
-                        Password
-                    </span>
-                    <div className="relative">
-                        <input
-                            className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-cusviolet/20 transition-all placeholder:text-gray-400"
-                            placeholder="*********"
-                            type={showPassword ? "text" : "password"}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
-                            tabIndex={-1}>
-                            {showPassword ? (
-                                <EyeOff size={18} />
-                            ) : (
-                                <Eye size={18} />
-                            )}
-                        </button>
-                    </div>
+            {/* Password Field */}
+            <div className="form-section flex flex-col gap-1.5">
+                <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                    Password
+                </span>
+                <div className="relative group">
+                    <input
+                        className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-cusviolet/20 transition-all placeholder:text-gray-400"
+                        placeholder="*********"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/60 hover:text-cusviolet transition-colors p-1.5 rounded-lg hover:bg-cusviolet/5"
+                        tabIndex={-1}>
+                        {showPassword ? (
+                            <EyeOff size={24} />
+                        ) : (
+                            <Eye size={24} />
+                        )}
+                    </button>
                 </div>
-                <div className="form-section flex flex-col gap-1.5 relative">
-                    <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
-                        Confirm
-                    </span>
-                    <div className="relative">
-                        <input
-                            className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-cusviolet/20 transition-all placeholder:text-gray-400"
-                            placeholder="*********"
-                            type={showConfirmPassword ? "text" : "password"}
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                        />
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
-                            tabIndex={-1}>
-                            {showConfirmPassword ? (
-                                <EyeOff size={18} />
-                            ) : (
-                                <Eye size={18} />
-                            )}
-                        </button>
-                    </div>
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="form-section flex flex-col gap-1.5">
+                <span className="text-xs font-black uppercase tracking-widest text-cusviolet ml-1">
+                    Confirm Password
+                </span>
+                <div className="relative group">
+                    <input
+                        className="form-input w-full p-3 pr-12 rounded-xl border border-cusblue/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-cusblue/20 outline-cusviolet/20 transition-all placeholder:text-gray-400"
+                        placeholder="*********"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/60 hover:text-cusviolet transition-colors p-1.5 rounded-lg hover:bg-cusviolet/5"
+                        tabIndex={-1}>
+                        {showConfirmPassword ? (
+                            <EyeOff size={24} />
+                        ) : (
+                            <Eye size={24} />
+                        )}
+                    </button>
                 </div>
             </div>
 
