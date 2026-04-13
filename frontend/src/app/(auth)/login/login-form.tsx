@@ -6,22 +6,32 @@ import toast from "react-hot-toast";
 import Button from "@/components/buttons/Button";
 import { backend_url } from "@/config/backend";
 import { useUser } from "@/context/UserContext";
-import { LogIn, Eye, EyeOff } from "lucide-react";
+import { LogIn, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { emailRegex } from "@/utils/validators";
 
 export default function LoginForm() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { setUser } = useUser();
 
     const handleLogin = async () => {
         if (isSubmitting) return;
+        setErrorMsg("");
 
+        // Empty Field Validation
         if (!email || !password) {
-            toast.error("Both fields are required");
+            setErrorMsg("Please enter both your email and password.");
+            return;
+        }
+
+        // 2. Email Format Validation
+        if (!emailRegex.test(email)) {
+            setErrorMsg("Please enter a valid email address.");
             return;
         }
 
@@ -40,7 +50,7 @@ export default function LoginForm() {
             const data = await res.json();
 
             if (!res.ok) {
-                toast.error(data.error || "Login failed");
+                setErrorMsg(data.error || "Invalid email or password.");
                 setIsSubmitting(false);
                 return;
             }
@@ -50,18 +60,18 @@ export default function LoginForm() {
             });
 
             if (!meRes.ok) {
-                toast.error("Session Expired. Login Again");
+                setErrorMsg("Session Expired. Please login again.");
                 setIsSubmitting(false);
                 return;
             }
 
             const user = await meRes.json();
             setUser(user);
-            toast.success("Login successful!");
+            toast.success("Welcome back! 🙂");
             router.push("/home");
         } catch (err) {
             console.error(err);
-            toast.error("Something went wrong");
+            setErrorMsg("Something went wrong. Please try again later.");
             setIsSubmitting(false);
         }
     };
@@ -101,22 +111,30 @@ export default function LoginForm() {
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-cusblue/40 hover:text-cusblue transition-colors p-1"
                         tabIndex={-1}>
                         {showPassword ? (
-                            <EyeOff className="w-5 h-5" />
+                            <EyeOff size={24} />
                         ) : (
-                            <Eye className="w-5 h-5" />
+                            <Eye size={24} />
                         )}
                     </button>
                 </div>
             </div>
 
+            {/* Error Message Display */}
+            {errorMsg && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{errorMsg}</span>
+                </div>
+            )}
+
             {/* Sign In Button */}
-            <div className="form-section pt-4">
+            <div className="form-section pt-2">
                 <Button
                     handleClick={handleLogin}
                     loading={isSubmitting}
                     disabled={isSubmitting}
                     className="w-full h-14 text-lg shadow-xl shadow-cusblue/10">
-                    <LogIn className="w-5 h-5" />
+                    <LogIn size={24} />
                     Sign In
                 </Button>
             </div>
