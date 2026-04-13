@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image"; // Added Image import
+import Image from "next/image";
 import { getEventById } from "@/lib/eventApi";
 import { confirmStripeCheckoutSession } from "@/lib/stripe";
 import type { Event } from "@/types/Event";
@@ -178,7 +178,7 @@ export default function EventDetailsPage() {
                                             src={event.thumbnail}
                                             alt={`${event.eventName} thumbnail`}
                                             fill
-                                            priority
+                                            priority={true}
                                             className="object-cover"
                                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw"
                                         />
