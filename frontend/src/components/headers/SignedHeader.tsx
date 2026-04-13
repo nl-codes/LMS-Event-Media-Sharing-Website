@@ -14,13 +14,14 @@ export default function SignedHeader({ userName }: { userName: string }) {
 
     const handleProfileClick = () => router.push("/home/profile");
 
-    const logout = async () => {
+    const handleLogOut = async () => {
         try {
             await fetch(`${backend_url}/users/logout`, {
                 method: "POST",
                 credentials: "include",
             });
-        } catch {
+        } catch (err) {
+            console.error(err);
             // Even if the request fails, clear local state
         }
         setUser(null);
@@ -49,7 +50,7 @@ export default function SignedHeader({ userName }: { userName: string }) {
 
                     <Button
                         className="flex items-center gap-2"
-                        handleClick={logout}>
+                        handleClick={handleLogOut}>
                         Logout <FiLogOut />
                     </Button>
                 </div>
