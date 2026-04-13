@@ -41,7 +41,7 @@ export default function SignupForm() {
         // Password Validation
         // Requirement: 8 chars, 1 Upper, 1 Lower, 1 Number, 1 Symbol
         const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
         if (!passwordRegex.test(password)) {
             setErrorMsg(
                 "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.",
