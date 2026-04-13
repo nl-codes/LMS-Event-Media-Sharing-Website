@@ -13,7 +13,7 @@ const profileStorage = new CloudinaryStorage({
 const eventStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: async (req) => {
-        const eventId = req.params?.id || req.body?.eventId;
+        const eventId = req.generatedEventId;
 
         return {
             folder: `events/${eventId}/thumbnail`,
