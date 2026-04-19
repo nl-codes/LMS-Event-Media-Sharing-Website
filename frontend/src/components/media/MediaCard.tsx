@@ -35,7 +35,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
     const canDelete = isHost || isUploader;
     const isLiked = media.likedBy?.includes(currentUserId);
     const displayName =
-        media.uploaderId?.userName || media.guestId?.userName || "Guest";
+        media.uploaderId?.userName || media.guestId?.userName || "Unknown";
+    const uploadedBy = media.uploaderId?.userName ? "User" : "Guest";
 
     const handleDownload = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -130,7 +131,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
             <div className="flex items-center justify-between p-5 bg-linear-to-b from-transparent to-white">
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                        Contributor
+                        {uploadedBy}
                     </span>
                     <span className="text-sm font-extrabold text-slate-800 tracking-tight">
                         {displayName}
