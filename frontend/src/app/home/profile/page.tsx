@@ -12,7 +12,7 @@ export default function ProfileViewPage() {
         <main className="min-h-[60vh] bg-cuscream px-4 py-8">
             <section className="max-w-xl w-full mx-auto">
                 <div className="mb-6 flex flex-row items-center gap-4">
-                    <BackButton label="Back to dashboard" />
+                    <BackButton label="Back" />
                 </div>
                 <ProfileCard />
             </section>
