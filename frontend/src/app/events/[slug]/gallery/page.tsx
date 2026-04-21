@@ -6,7 +6,12 @@ import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
 import { useIdentity } from "@/context/IdentityContext";
 import { getEventBySlug } from "@/lib/eventApi";
-import { deleteMedia, getGallery, toggleLike } from "@/lib/mediaApi";
+import {
+    deleteMedia,
+    deleteMultipleMedia,
+    getGallery,
+    toggleLike,
+} from "@/lib/mediaApi";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
@@ -22,8 +27,9 @@ import {
     normalizeLikedByIds,
     normalizeMediaLikes,
 } from "@/utils/HelperFunctions";
+import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
 
-const MAX_SELECTION_ITEMS = 20;
+const MAX_BULK_DELETE_ITEMS = 20;
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -163,6 +169,64 @@ export default function EventPublicGallery() {
         }
     };
 
+    // Inside EventPublicGallery component
+
+    const handleBulkDelete = async () => {
+        if (!selectedIds.length) return;
+
+        const selectedMedia = gallery.filter((m) =>
+            selectedIds.includes(m._id),
+        );
+
+        if (!isHost) {
+            const hasUnauthorizedMedia = selectedMedia.some(
+                (m) => m.uploaderId?._id !== currentUserId,
+            );
+
+            if (hasUnauthorizedMedia) {
+                toast.error("User can only delete media they have uploaded");
+                return;
+            }
+        }
+
+        const selectedCount = selectedIds.length;
+
+        if (selectedCount > MAX_BULK_DELETE_ITEMS) {
+            toast.error("You can only delete 20 items at a time");
+            return;
+        }
+        const idsToDelete = [...selectedIds];
+
+        try {
+            openConfirmationDialog({
+                title: "Delete selected media?",
+                message: `This will permanently delete ${selectedCount} media item${selectedCount > 1 ? "s" : ""}. This action cannot be undone.`,
+                confirmText: "Delete",
+                cancelText: "Cancel",
+                isDanger: true,
+                onConfirm: async () => {
+                    await toast.promise(deleteMultipleMedia(idsToDelete), {
+                        loading: "Deleting selected media...",
+                        success: `Deleted ${selectedCount} item${selectedCount > 1 ? "s" : ""}`,
+                        error: (err) =>
+                            err instanceof Error
+                                ? err.message
+                                : "Bulk delete failed",
+                    });
+
+                    setGallery((prev) =>
+                        prev.filter(
+                            (media) => !idsToDelete.includes(media._id),
+                        ),
+                    );
+                    handleClearSelection();
+                },
+            });
+        } catch {
+            toast.error("Failed to delete selected media");
+        }
+    };
+
     const handleStartSelection = () => {
         setIsSelectionActive(true);
     };
@@ -178,11 +242,6 @@ export default function EventPublicGallery() {
         setSelectedIds((prev) => {
             if (prev.includes(mediaId)) {
                 return prev.filter((id) => id !== mediaId);
-            }
-
-            if (prev.length >= MAX_SELECTION_ITEMS) {
-                toast.error("You can select up to 20 items only");
-                return prev;
             }
 
             return [...prev, mediaId];
@@ -314,7 +373,8 @@ export default function EventPublicGallery() {
                                 selectedCount={selectedIds.length}
                                 totalCount={gallery.length}
                                 onDownload={handleDownloadMedia}
-                                isUser={false}
+                                onDelete={handleBulkDelete}
+                                isUser={isHost || Boolean(user)}
                             />
                         )}
 
