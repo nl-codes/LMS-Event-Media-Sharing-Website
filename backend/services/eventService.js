@@ -1,5 +1,6 @@
 import { Event } from "../models/eventModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
+import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 
 export const createEvent = async (eventData) => {
     try {
@@ -95,13 +96,7 @@ export const updateEvent = async (eventId, updateData, requesterId) => {
 
         // Handle Image Update
         if (updateData.thumbnail && event.thumbnail) {
-            // Extract publicId: "events/id/thumbnail/filename"
-            const publicId = event.thumbnail
-                .split("/")
-                .slice(-3)
-                .join("/")
-                .split(".")[0];
-
+            const publicId = extractPublicIdFromUrl(event.thumbnail);
             await cloudinary.uploader.destroy(publicId);
         }
 
