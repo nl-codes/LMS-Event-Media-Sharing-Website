@@ -162,7 +162,7 @@ export const downloadAsZip = async (mediaArray: Media[], zipName: string) => {
         const zipBlob = await zip.generateAsync({ type: "blob" });
         const safeZipName = sanitizeFilename(zipName) || "gallery";
         triggerBrowserDownload(zipBlob, `${safeZipName}.zip`);
-        toast.success("Zip download started", { id: toastId });
+        toast.success("Zip ready to download!", { id: toastId });
     } catch (err) {
         const errorMessage =
             err instanceof Error ? err.message : "Failed to generate zip";
