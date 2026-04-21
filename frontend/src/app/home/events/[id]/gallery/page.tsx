@@ -289,7 +289,7 @@ const GalleryPage = () => {
                             totalCount={gallery.length}
                             onDownload={handleDownloadMedia}
                             onDelete={handleConfirmBulkDelete}
-                            isHost={isHost}
+                            isUser={isHost}
                         />
                     )}
                 </div>

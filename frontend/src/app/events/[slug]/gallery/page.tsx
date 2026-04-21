@@ -307,7 +307,7 @@ export default function EventPublicGallery() {
                                 selectedCount={selectedIds.length}
                                 totalCount={gallery.length}
                                 onDownload={handleDownloadMedia}
-                                isHost={false}
+                                isUser={false}
                             />
                         )}
 
