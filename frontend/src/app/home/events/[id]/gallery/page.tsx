@@ -134,11 +134,6 @@ const GalleryPage = () => {
                 return prev.filter((id) => id !== mediaId);
             }
 
-            if (prev.length >= MAX_BULK_DELETE_ITEMS) {
-                toast.error("You can select up to 20 items only");
-                return prev;
-            }
-
             return [...prev, mediaId];
         });
     };
@@ -147,6 +142,11 @@ const GalleryPage = () => {
         if (!selectedIds.length) return;
 
         const selectedCount = selectedIds.length;
+
+        if (selectedCount >= MAX_BULK_DELETE_ITEMS) {
+            toast.error("You can only delete 20 items at a time");
+            return;
+        }
         const idsToDelete = [...selectedIds];
 
         openConfirmationDialog({
