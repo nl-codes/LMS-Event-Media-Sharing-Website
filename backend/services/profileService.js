@@ -63,14 +63,11 @@ export const deleteProfile = async (userId) => {
 
     // Delete profile picture from Cloudinary if it exists
     if (profile.profilePicture) {
-        // image stored in lms/profiles/uniqueId
-        const publicId = profile.profilePicture
-            .split("/")
-            .slice(-3)
-            .join("/")
-            .split(".")[0];
-        await cloudinary.uploader.destroy(publicId);
-    }
+        const publicId = extractPublicIdFromUrl(profile.profilePicture);
 
+        if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+        }
+    }
     await Profile.findOneAndDelete({ user: userId });
 };
