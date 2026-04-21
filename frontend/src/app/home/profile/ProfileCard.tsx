@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { backend_url } from "@/config/backend";
-import LandingButton from "@/components/buttons/LandingButton";
+import Button from "@/components/buttons/Button";
 import { useRouter } from "next/navigation";
 import ProfileForm from "./ProfileForm";
 import { Profile } from "@/types/Profile";
@@ -70,10 +70,9 @@ export default function ProfileCard() {
                 <p className="mb-4 font-semibold text-cusblue">
                     Profile not created
                 </p>
-                <LandingButton
-                    handleClick={() => router.push("/home/profile/create")}>
+                <Button handleClick={() => router.push("/home/profile/create")}>
                     Create Profile
-                </LandingButton>
+                </Button>
             </div>
         );
 
@@ -81,10 +80,9 @@ export default function ProfileCard() {
         return (
             <div className="text-center p-10 bg-cuscream rounded-xl">
                 <p className="mb-4">No profile found.</p>
-                <LandingButton
-                    handleClick={() => router.push("/home/profile/create")}>
+                <Button handleClick={() => router.push("/home/profile/create")}>
                     Create Profile
-                </LandingButton>
+                </Button>
             </div>
         );
 
@@ -108,17 +106,17 @@ export default function ProfileCard() {
             <ProfileForm initialData={profile} isReadOnly={true} />
 
             <div className="flex gap-4 mt-8 justify-center">
-                <LandingButton
+                <Button
                     handleClick={() => router.push("/home/profile/edit")}
                     className="bg-cusblue text-white px-6 py-2 rounded-lg font-bold">
                     Edit Profile
-                </LandingButton>
+                </Button>
 
-                <LandingButton
+                <Button
                     handleClick={handleDelete}
                     className="bg-red-500 text-white px-6 py-2 rounded-lg font-bold">
                     Delete Profile
-                </LandingButton>
+                </Button>
             </div>
         </div>
     );

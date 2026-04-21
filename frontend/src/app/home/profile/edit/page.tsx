@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { backend_url } from "@/config/backend";
 import ProfileForm, { ProfileFormData } from "../ProfileForm";
-import LandingButton from "@/components/buttons/LandingButton";
+import Button from "@/components/buttons/Button";
 import BackButton from "@/components/navigation/BackButton";
 import { Profile } from "@/types/Profile";
 
@@ -119,13 +119,14 @@ export default function ProfileEditPage() {
                         onChange={handleChange}
                     />
                     <div className="mt-8">
-                        <LandingButton
+                        <Button
                             type="submit"
+                            loading={loading}
                             className="w-full bg-cusblue text-white py-3 rounded-lg font-bold">
                             {profileExists
                                 ? "Update Profile"
                                 : "Create Profile"}
-                        </LandingButton>
+                        </Button>
                     </div>
                 </form>
             </div>
