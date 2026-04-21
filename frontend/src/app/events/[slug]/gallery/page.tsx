@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
 import { useIdentity } from "@/context/IdentityContext";
 import { getEventBySlug } from "@/lib/eventApi";
-import { getGallery, toggleLike } from "@/lib/mediaApi";
+import { deleteMedia, getGallery, toggleLike } from "@/lib/mediaApi";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
@@ -152,8 +152,15 @@ export default function EventPublicGallery() {
         };
     }, [slug, fetchGallery]);
 
-    const handleDelete = () => {
-        // Guest gallery intentionally has no destructive action.
+    const handleDelete = async (mediaId: string) => {
+        try {
+            await deleteMedia(mediaId);
+            toast.success("Media deleted");
+        } catch (err) {
+            const errorMessage =
+                err instanceof Error ? err.message : "Delete failed";
+            toast.error(errorMessage);
+        }
     };
 
     const handleStartSelection = () => {
