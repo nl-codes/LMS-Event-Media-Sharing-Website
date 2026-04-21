@@ -30,12 +30,7 @@ router.get("/host-events", requireAuth, getHostEvents);
 router.patch(
     "/:id",
     requireAuth,
-    uploadEventThumbnail.single("thumbnail"),
-    editEvent,
-);
-router.put(
-    "/:id",
-    requireAuth,
+    attachEventId,
     uploadEventThumbnail.single("thumbnail"),
     editEvent,
 );

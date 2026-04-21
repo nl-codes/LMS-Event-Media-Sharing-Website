@@ -108,7 +108,7 @@ export async function updateEvent(
     }
 
     const json = await request<Event>(`/events/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         body: formData,
     });
     return json.data as Event;
