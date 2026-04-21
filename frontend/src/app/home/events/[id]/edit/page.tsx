@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Event, EventStatus } from "@/types/Event";
 import { getEventById, updateEvent, updateEventStatus } from "@/lib/eventApi";
-import LandingButton from "@/components/buttons/LandingButton";
 import BackButton from "@/components/navigation/BackButton";
 import { toast } from "react-hot-toast";
 import { Settings2, Loader2 } from "lucide-react";
 import { ChevronDown } from "lucide-react";
 import { formatToLocalDatetime } from "@/utils/HelperFunctions";
 import Image from "next/image";
+import Button from "@/components/buttons/Button";
 
 export default function EditEventPage() {
     const router = useRouter();
@@ -269,12 +269,12 @@ export default function EditEventPage() {
                         </label>
                     </div> */}
                     <div className="pt-6">
-                        <LandingButton
+                        <Button
                             type="submit"
                             loading={saving}
                             className="w-full py-4 rounded-xl text-lg shadow-md">
                             {saving ? "Saving..." : "Save Changes"}
-                        </LandingButton>
+                        </Button>
                     </div>
                 </form>
             </div>
