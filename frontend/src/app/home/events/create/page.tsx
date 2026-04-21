@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEvent } from "@/lib/eventApi";
-import LandingButton from "@/components/buttons/LandingButton";
 import BackButton from "@/components/navigation/BackButton";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
+import Button from "@/components/buttons/Button";
 
 export default function CreateEventPage() {
     const router = useRouter();
@@ -197,12 +197,12 @@ export default function CreateEventPage() {
                 </div>
 
                 <div className="mt-6">
-                    <LandingButton
+                    <Button
                         type="submit"
                         loading={submitting}
                         className="w-full py-4 rounded-xl text-lg shadow-md">
                         {submitting ? "Creating..." : "Create Event"}
-                    </LandingButton>
+                    </Button>
                 </div>
             </form>
         </main>
