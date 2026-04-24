@@ -6,14 +6,12 @@ import Button from "@/components/buttons/Button";
 import { useRouter } from "next/navigation";
 import ProfileForm from "./ProfileForm";
 import { Profile } from "@/types/Profile";
-import { useUser } from "@/context/UserContext";
 
 export default function ProfileCard() {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
     const [notCreated, setNotCreated] = useState(false);
     const router = useRouter();
-    const { user } = useUser();
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -40,7 +38,7 @@ export default function ProfileCard() {
             }
         };
         fetchProfile();
-    }, [user]);
+    }, []);
 
     const handleDelete = async () => {
         if (!window.confirm("Are you sure you want to delete your profile?"))
