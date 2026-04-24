@@ -9,6 +9,7 @@ import BackButton from "@/components/navigation/BackButton";
 import { deleteEvent, getHostEvents } from "@/lib/eventApi";
 import { Plus, CalendarDays, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
 
 export default function EventsPage() {
     const [events, setEvents] = useState<Event[]>([]);
@@ -34,16 +35,25 @@ export default function EventsPage() {
     }, []);
 
     const onDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this event?")) return;
-
-        const loadingToast = toast.loading("Deleting event...");
-        try {
-            await deleteEvent(id);
-            setEvents((prev) => prev.filter((e) => e._id !== id));
-            toast.success("Event deleted", { id: loadingToast });
-        } catch (e) {
-            toast.error((e as Error).message, { id: loadingToast });
-        }
+        openConfirmationDialog({
+            title: "Delete Event?",
+            message:
+                "Are you sure you want to delete this event? Once deleted it cannot be restored.",
+            confirmText: "Delete Event",
+            cancelText: "Keep Event",
+            isDanger: true,
+            onConfirm: async () => {
+                const loadingToast = toast.loading("Deleting event...");
+                try {
+                    await deleteEvent(id);
+                    setEvents((prev) => prev.filter((e) => e._id !== id));
+                    toast.success("Event deleted", { id: loadingToast });
+                } catch (e) {
+                    toast.error((e as Error).message, { id: loadingToast });
+                    throw e;
+                }
+            },
+        });
     };
 
     return (
