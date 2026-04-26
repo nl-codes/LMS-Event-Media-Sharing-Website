@@ -6,7 +6,7 @@ const profileStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: "lms/profiles",
-        allowed_formats: ["jpg", "png", "jpeg"],
+        allowed_formats: ["jpg", "png", "jpeg", "webp"],
     },
 });
 
