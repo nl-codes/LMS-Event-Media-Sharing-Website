@@ -1,21 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Event, EventStatus } from "@/types/Event";
 import { getEventById, updateEvent, updateEventStatus } from "@/lib/eventApi";
 import BackButton from "@/components/navigation/BackButton";
 import { toast } from "react-hot-toast";
-import { Settings2, Loader2 } from "lucide-react";
-import { ChevronDown } from "lucide-react";
-import { formatToLocalDatetime } from "@/utils/HelperFunctions";
 import Image from "next/image";
 import Button from "@/components/buttons/Button";
+import { formatToLocalDatetime } from "@/utils/HelperFunctions";
+import {
+    MapPin,
+    Type,
+    AlignLeft,
+    Image as ImageIcon,
+    Sparkles,
+    Clock,
+    Loader2,
+    Settings2,
+    ChevronDown,
+    Save,
+} from "lucide-react";
 
 export default function EditEventPage() {
     const router = useRouter();
+    const params = useParams();
+    const eventId = typeof params?.id === "string" ? params.id : "";
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [form, setForm] = useState({
         eventName: "",
@@ -27,14 +41,12 @@ export default function EditEventPage() {
         status: "Active" as EventStatus,
         thumbnail: null as File | null,
     });
+
     const [currentThumbnail, setCurrentThumbnail] = useState("");
     const [thumbnailPreview, setThumbnailPreview] = useState("");
 
-    const params = useParams();
-    const eventId = typeof params?.id === "string" ? params.id : "";
-
     useEffect(() => {
-        const run = async () => {
+        const fetchEvent = async () => {
             try {
                 const event: Event = await getEventById(eventId);
                 setForm({
@@ -54,20 +66,18 @@ export default function EditEventPage() {
                 setLoading(false);
             }
         };
-        void run();
+        if (eventId) void fetchEvent();
     }, [eventId]);
 
     useEffect(() => {
         return () => {
-            if (thumbnailPreview) {
-                URL.revokeObjectURL(thumbnailPreview);
-            }
+            if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
         };
     }, [thumbnailPreview]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const loadingToast = toast.loading("Saving changes...");
+        const loadingToast = toast.loading("Updating event...");
         try {
             setSaving(true);
             await updateEvent(eventId, {
@@ -83,8 +93,8 @@ export default function EditEventPage() {
             await updateEventStatus(eventId, form.status);
             toast.success("Event updated successfully", { id: loadingToast });
             router.replace(`/home/events/${eventId}`);
-        } catch (e) {
-            toast.error((e as Error).message, { id: loadingToast });
+        } catch (err) {
+            toast.error((err as Error).message, { id: loadingToast });
         } finally {
             setSaving(false);
         }
@@ -97,186 +107,246 @@ export default function EditEventPage() {
             </div>
         );
     }
-    return (
-        <main className="max-w-3xl mx-auto px-6 py-10 profile-card-animate">
-            <div className="mb-6 flex flex-row items-center gap-4">
-                <BackButton label="Cancel and go back" />
-            </div>
 
-            <div className="bg-white/50 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="bg-cusblue/10 p-2 rounded-lg text-cusblue">
-                        <Settings2 className="w-6 h-6" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-cusblue">
-                        Edit Event
-                    </h1>
+    return (
+        <main className="min-h-screen py-12 px-4 sm:px-6">
+            <div className="max-w-5xl mx-auto">
+                <div className="mb-8">
+                    <BackButton label="Cancel and go back" />
                 </div>
 
-                <form onSubmit={onSubmit} className="form">
-                    <div className="form-section">
-                        <label className="label">Event Thumbnail</label>
-                        <div className="rounded-2xl border border-cusblue/15 p-3 bg-white/70">
-                            <input
-                                type="file"
-                                accept="image/png,image/jpeg,image/jpg,image/webp"
-                                className="form-input w-full border-none px-0 py-0 shadow-none"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    setForm({ ...form, thumbnail: file });
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5 overflow-hidden profile-card-animate">
+                    {/* Header Banner */}
+                    <div className="bg-cusblue h-28 flex items-center justify-center relative">
+                        <Settings2 className="absolute top-4 right-6 text-white/20 w-12 h-12" />
+                        <div className="text-center">
+                            <h2 className="text-3xl font-black text-white tracking-tight">
+                                Edit Event
+                            </h2>
+                            <p className="text-white/70 text-sm font-medium">
+                                Update the details for your event
+                            </p>
+                        </div>
+                    </div>
 
-                                    if (thumbnailPreview) {
-                                        URL.revokeObjectURL(thumbnailPreview);
+                    <form onSubmit={onSubmit} className="p-8 lg:p-10">
+                        <div className="flex flex-col lg:flex-row gap-10">
+                            {/* Thumbnail */}
+                            <div className="w-full lg:w-2/5 space-y-4">
+                                <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                    <ImageIcon size={16} />
+                                    Cover Image
+                                </label>
+
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file =
+                                            e.target.files?.[0] || null;
+                                        setForm({ ...form, thumbnail: file });
+                                        if (thumbnailPreview)
+                                            URL.revokeObjectURL(
+                                                thumbnailPreview,
+                                            );
+                                        if (file)
+                                            setThumbnailPreview(
+                                                URL.createObjectURL(file),
+                                            );
+                                    }}
+                                />
+
+                                <div
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
                                     }
-
-                                    if (file) {
-                                        setThumbnailPreview(
-                                            URL.createObjectURL(file),
-                                        );
-                                        return;
-                                    }
-
-                                    setThumbnailPreview("");
-                                }}
-                            />
-
-                            <div className="mt-3 rounded-2xl overflow-hidden border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
-                                <div className="relative h-44 w-full bg-cuscream rounded-2xl overflow-hidden">
+                                    className="group relative h-64 lg:h-[420px] w-full rounded-4xl border-2 border-dashed border-cusblue/20 bg-cusblue/5 overflow-hidden cursor-pointer hover:border-cusblue/40 transition-all shadow-inner">
                                     {thumbnailPreview || currentThumbnail ? (
-                                        <Image
-                                            src={
-                                                thumbnailPreview ||
-                                                currentThumbnail
-                                            }
-                                            alt="Selected event thumbnail preview"
-                                            fill
-                                            className="object-cover"
-                                            unoptimized
-                                        />
+                                        <>
+                                            <Image
+                                                src={
+                                                    thumbnailPreview ||
+                                                    currentThumbnail
+                                                }
+                                                alt="Preview"
+                                                fill
+                                                className="object-cover transition duration-500 group-hover:scale-105"
+                                                unoptimized
+                                            />
+                                            <div className="absolute inset-0 bg-cusblue/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <div className="bg-white px-4 py-2 rounded-xl text-cusblue text-xs font-bold shadow-lg">
+                                                    Change Photo
+                                                </div>
+                                            </div>
+                                        </>
                                     ) : (
-                                        <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10 flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-cusblue/70">
-                                            Thumbnail Preview
+                                        <div className="flex flex-col items-center justify-center h-full gap-3 text-cusblue/40 px-6 text-center">
+                                            <div className="p-4 bg-white rounded-2xl shadow-sm">
+                                                <ImageIcon className="w-6 h-6 text-cusblue" />
+                                            </div>
+                                            <span className="text-xs font-bold uppercase tracking-wider">
+                                                Click to upload thumbnail
+                                            </span>
                                         </div>
                                     )}
                                 </div>
+                                <p className="text-[10px] text-cusviolet/50 text-center uppercase font-bold tracking-tighter">
+                                    Recommended: 16:9 Aspect Ratio
+                                </p>
+                            </div>
+
+                            {/* Details */}
+                            <div className="w-full lg:w-3/5 space-y-6">
+                                {/* Event Title */}
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                        <Type size={16} />
+                                        Event Title
+                                    </label>
+                                    <input
+                                        className="w-full bg-white/50 border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all"
+                                        placeholder="Event name"
+                                        value={form.eventName}
+                                        onChange={(e) =>
+                                            setForm({
+                                                ...form,
+                                                eventName: e.target.value,
+                                            })
+                                        }
+                                        required
+                                    />
+                                </div>
+
+                                {/* Description */}
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                        <AlignLeft size={16} />
+                                        Description
+                                    </label>
+                                    <textarea
+                                        className="w-full bg-white/50 border border-slate-200 rounded-2xl px-5 py-4 h-32 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all resize-none"
+                                        placeholder="Event description"
+                                        value={form.description}
+                                        onChange={(e) =>
+                                            setForm({
+                                                ...form,
+                                                description: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </div>
+
+                                {/* Status & Location Container */}
+                                <div className="grid grid-cols-1 gap-6 p-6 bg-cusblue/5 rounded-4xl border border-cusblue/10">
+                                    {/* Status Dropdown */}
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                            <Sparkles size={16} />
+                                            Event Status
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all appearance-none cursor-pointer"
+                                                value={form.status}
+                                                onChange={(e) =>
+                                                    setForm({
+                                                        ...form,
+                                                        status: e.target
+                                                            .value as EventStatus,
+                                                    })
+                                                }>
+                                                <option value="Active">
+                                                    Active
+                                                </option>
+                                                <option value="Completed">
+                                                    Completed
+                                                </option>
+                                                <option value="Cancelled">
+                                                    Cancelled
+                                                </option>
+                                            </select>
+                                            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-cusblue pointer-events-none opacity-50" />
+                                        </div>
+                                    </div>
+
+                                    {/* Location */}
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                            <MapPin size={16} />
+                                            Location
+                                        </label>
+                                        <input
+                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all"
+                                            placeholder="Venue or Link"
+                                            value={form.location}
+                                            onChange={(e) =>
+                                                setForm({
+                                                    ...form,
+                                                    location: e.target.value,
+                                                })
+                                            }
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Timing Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2 group">
+                                            <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                                <Clock size={16} /> Starts
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all text-sm"
+                                                value={form.startTime}
+                                                onChange={(e) =>
+                                                    setForm({
+                                                        ...form,
+                                                        startTime:
+                                                            e.target.value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2 group">
+                                            <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                                <Clock size={16} /> Ends
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all text-sm"
+                                                value={form.endTime}
+                                                onChange={(e) =>
+                                                    setForm({
+                                                        ...form,
+                                                        endTime: e.target.value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Submit Button */}
+                                <div className="pt-4">
+                                    <Button
+                                        type="submit"
+                                        loading={saving}
+                                        className="bg-cusblue hover:bg-cusblue/90 text-white w-full py-5 rounded-3xl text-lg font-bold shadow-xl shadow-cusblue/20">
+                                        <Save className="w-5 h-5" />
+                                        {saving
+                                            ? "Saving Changes..."
+                                            : "Save Changes"}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="form-section">
-                        <label className="label">Event Name</label>
-                        <input
-                            className="form-input"
-                            value={form.eventName}
-                            onChange={(e) =>
-                                setForm({ ...form, eventName: e.target.value })
-                            }
-                            required
-                        />
-                    </div>
-                    <div className="form-section">
-                        <label className="label">Description</label>
-                        <textarea
-                            className="form-input h-48 min-h-[100px] resize-none text-justify"
-                            value={form.description}
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    description: e.target.value,
-                                })
-                            }
-                        />
-                    </div>
-                    <div className="form-section">
-                        <label className="label">Location</label>
-                        <input
-                            className="form-input"
-                            value={form.location}
-                            onChange={(e) =>
-                                setForm({ ...form, location: e.target.value })
-                            }
-                            required
-                        />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="form-section">
-                            <label className="label text-sm!">Start Time</label>
-                            <input
-                                type="datetime-local"
-                                className="form-input w-full!"
-                                value={form.startTime}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        startTime: e.target.value,
-                                    })
-                                }
-                                required
-                            />
-                        </div>
-                        <div className="form-section">
-                            <label className="label text-sm!">End Time</label>
-                            <input
-                                type="datetime-local"
-                                className="form-input w-full!"
-                                value={form.endTime}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        endTime: e.target.value,
-                                    })
-                                }
-                                required
-                            />
-                        </div>
-                    </div>
-                    <div className="form-section">
-                        <label className="label">Event Status</label>
-                        <div className="relative">
-                            <select
-                                className="form-input appearance-none w-full pr-10 cursor-pointer h-auto py-3" // Added h-auto and py-3
-                                value={form.status}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        status: e.target.value as EventStatus,
-                                    })
-                                }>
-                                <option value="Active">Active</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cusblue pointer-events-none" />
-                        </div>
-                    </div>
-                    {/* <div className="flex items-center gap-3 px-4 py-2">
-                        <input
-                            type="checkbox"
-                            id="isPremium"
-                            className="w-5 h-5 accent-cusviolet cursor-pointer"
-                            checked={form.isPremium}
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    isPremium: e.target.checked,
-                                })
-                            }
-                        />
-                        <label
-                            htmlFor="isPremium"
-                            className="text-cusblue font-medium cursor-pointer">
-                            Premium Event Status
-                        </label>
-                    </div> */}
-                    <div className="pt-6">
-                        <Button
-                            type="submit"
-                            loading={saving}
-                            className="w-full py-4 rounded-xl text-lg shadow-md">
-                            {saving ? "Saving..." : "Save Changes"}
-                        </Button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </main>
     );
