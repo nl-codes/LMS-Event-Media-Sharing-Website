@@ -7,11 +7,13 @@ import ProfileForm, { ProfileFormData } from "../ProfileForm";
 import Button from "@/components/buttons/Button";
 import BackButton from "@/components/navigation/BackButton";
 import { Profile } from "@/types/Profile";
+import { Save, UserPlus } from "lucide-react";
 
 export default function ProfileEditPage() {
     const router = useRouter();
     const [formData, setFormData] = useState<ProfileFormData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const [profileExists, setProfileExists] = useState(false);
 
     const handleChange = (
@@ -24,6 +26,7 @@ export default function ProfileEditPage() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!formData) return;
+        setSubmitting(true);
 
         const data = new FormData();
         data.append("firstName", formData.firstName);
@@ -42,19 +45,14 @@ export default function ProfileEditPage() {
                 credentials: "include",
             });
 
-            if (!res.ok)
-                throw new Error(
-                    `${profileExists ? "Update" : "Create"} failed`,
-                );
-
-            toast.success(
-                `Profile ${profileExists ? "updated" : "created"} successfully!`,
-            );
-            router.replace("/home/profile");
+            if (!res.ok) throw new Error();
+            toast.success(`Profile ${profileExists ? "updated" : "created"}!`);
+            router.push("/home/profile");
+            router.refresh();
         } catch {
-            toast.error(
-                `Failed to ${profileExists ? "update" : "create"} profile`,
-            );
+            toast.error("Something went wrong.");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -64,19 +62,17 @@ export default function ProfileEditPage() {
                 const res = await fetch(`${backend_url}/users/profile`, {
                     credentials: "include",
                 });
-
                 if (res.ok) {
                     const data = await res.json();
-                    const profile: Profile = data.profile;
+                    const p: Profile = data.profile;
                     setFormData({
-                        firstName: profile.firstName,
-                        lastName: profile.lastName,
-                        bio: profile.bio,
-                        profilePicture: profile.profilePicture,
+                        firstName: p.firstName,
+                        lastName: p.lastName,
+                        bio: p.bio,
+                        profilePicture: p.profilePicture,
                     });
                     setProfileExists(true);
-                } else if (res.status === 404) {
-                    // Profile doesn't exist, set empty form for creation
+                } else {
                     setFormData({
                         firstName: "",
                         lastName: "",
@@ -84,49 +80,74 @@ export default function ProfileEditPage() {
                         profilePicture: null,
                     });
                     setProfileExists(false);
-                } else {
-                    throw new Error("Failed to fetch profile");
                 }
-            } catch (error) {
-                console.error(error);
-                toast.error("Failed to load profile data");
+            } catch (err) {
+                console.log(err);
+                toast.error("Failed to load data");
             } finally {
                 setLoading(false);
             }
         };
-
         fetchProfile();
     }, []);
 
-    if (loading) return <div className="text-center p-10">Loading...</div>;
+    if (loading)
+        return (
+            <div className="flex justify-center p-20 text-cusblue animate-pulse font-bold text-xl">
+                Loading Editor...
+            </div>
+        );
 
     return (
-        <main className="flex justify-center items-center min-h-[60vh] bg-cuscream p-4">
-            <div className="w-[450px]">
-                <div className="mb-6 flex flex-row items-center gap-4">
-                    <BackButton label="Back to Profile" />
+        <main className="min-h-screen bg-cuscream py-12 px-4">
+            <div className="max-w-xl mx-auto">
+                <div className="mb-8 flex items-center justify-between">
+                    <BackButton label="Cancel" />
+                    <div className="text-right">
+                        <h1 className="text-2xl font-black text-gray-800 tracking-tight">
+                            Settings
+                        </h1>
+                        <p className="text-sm text-gray-500 font-medium">
+                            {profileExists
+                                ? "Update your personal info"
+                                : "Set up your public identity"}
+                        </p>
+                    </div>
                 </div>
 
                 <form
                     onSubmit={handleSubmit}
-                    className="shadow-xl bg-white rounded-xl p-8">
-                    <h2 className="text-2xl font-bold text-cusblue mb-6 text-center">
-                        {profileExists ? "Edit Profile" : "Create Profile"}
-                    </h2>
+                    className="relative bg-white shadow-2xl rounded-[2.5rem] p-10 pt-16 overflow-visible border border-white">
+                    <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-r from-cusblue to-cusviolet rounded-t-[2.5rem]" />
+
                     <ProfileForm
                         initialData={formData}
-                        isReadOnly={false}
                         onChange={handleChange}
                     />
-                    <div className="mt-8">
+
+                    <div className="mt-10">
                         <Button
+                            disabled={submitting}
                             type="submit"
-                            loading={loading}
-                            className="w-full bg-cusblue text-white py-3 rounded-lg font-bold">
-                            {profileExists
-                                ? "Update Profile"
-                                : "Create Profile"}
+                            className="w-full bg-cusblue hover:bg-blue-700 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] shadow-lg shadow-cusblue/20 disabled:opacity-70">
+                            {submitting ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    {profileExists ? (
+                                        <Save size={20} />
+                                    ) : (
+                                        <UserPlus size={20} />
+                                    )}
+                                    {profileExists
+                                        ? "Save Changes"
+                                        : "Create Profile"}
+                                </>
+                            )}
                         </Button>
+                        <p className="text-center text-[11px] text-gray-400 mt-4 font-medium uppercase tracking-widest">
+                            All fields are visible to other users
+                        </p>
                     </div>
                 </form>
             </div>
