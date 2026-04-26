@@ -227,28 +227,30 @@ export default function EventDetailsPage() {
                             </p>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8 border-t border-cusblue/5">
+                                {/* Location */}
                                 <div className="flex gap-4">
                                     <div className="bg-cuscream p-3 rounded-2xl h-fit">
                                         <MapPin className="w-6 h-6 text-cusblue" />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-xs font-bold text-cusviolet uppercase tracking-tight">
                                             Location
                                         </p>
-                                        <p className="text-cusblue font-medium">
+                                        <p className="text-cusblue font-medium wrap-break-word whitespace-normal">
                                             {event.location}
                                         </p>
                                     </div>
                                 </div>
+                                {/* Public URL */}
                                 <div className="flex gap-4">
                                     <div className="bg-cuscream p-3 rounded-2xl h-fit">
                                         <Globe className="w-6 h-6 text-cusblue" />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-xs font-bold text-cusviolet uppercase tracking-tight">
                                             Public URL
                                         </p>
-                                        <p className="text-cusblue font-mono text-sm">
+                                        <p className="text-cusblue font-mono text-sm break-all">
                                             {event.uniqueSlug}
                                         </p>
                                     </div>
