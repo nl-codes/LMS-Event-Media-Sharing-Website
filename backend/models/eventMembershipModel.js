@@ -16,6 +16,11 @@ const EventMembershipSchema = new mongoose.Schema(
             type: Date,
             default: Date.now,
         },
+
+        lastSeenChatAt: {
+            type: Date,
+            default: null,
+        },
         lastAccessedAt: {
             type: Date,
             default: Date.now,
