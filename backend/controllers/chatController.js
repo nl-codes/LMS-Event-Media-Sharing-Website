@@ -120,3 +120,22 @@ export const markAsReadController = async (req, res) => {
         return res.status(400).json({ success: false, message: error.message });
     }
 };
+
+export const getUnreadCountController = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const userId = req.user && req.user.id;
+
+        if (!eventId || !userId) {
+            return res
+                .status(400)
+                .json({ success: false, message: "eventId and user required" });
+        }
+
+        const unreadCount = await getUnreadCount(eventId, userId);
+        return res.status(200).json({ success: true, data: { unreadCount } });
+    } catch (error) {
+        console.error("❌ Error getting unread count:", error);
+        return res.status(400).json({ success: false, message: error.message });
+    }
+};
