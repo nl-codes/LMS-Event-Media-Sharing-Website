@@ -1,4 +1,9 @@
-import { getChatHistory, getRecentMessages } from "../services/chatService.js";
+import {
+    getChatHistory,
+    getRecentMessages,
+    getUnreadCount,
+} from "../services/chatService.js";
+import { markChatAsRead } from "../services/eventMembershipService.js";
 
 /**
  * GET /chats/:eventId
@@ -72,9 +77,19 @@ export const getRecentMessagesController = async (req, res) => {
 
         const messages = await getRecentMessages(eventId, parseInt(limit));
 
+        // Compute unread count for this user
+        let unreadCount = 0;
+        try {
+            unreadCount = await getUnreadCount(eventId, req.user.id);
+        } catch (err) {
+            // ignore and default to 0
+            unreadCount = 0;
+        }
+
         return res.status(200).json({
             success: true,
             total: messages.length,
+            unreadCount,
             data: messages,
         });
     } catch (error) {
