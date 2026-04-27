@@ -100,3 +100,23 @@ export const getRecentMessagesController = async (req, res) => {
         });
     }
 };
+
+export const markAsReadController = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const userId = req.user && req.user.id;
+
+        if (!eventId || !userId) {
+            return res
+                .status(400)
+                .json({ success: false, message: "eventId and user required" });
+        }
+
+        await markChatAsRead(eventId, userId, new Date());
+
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        console.error("❌ Error marking chat as read:", error);
+        return res.status(400).json({ success: false, message: error.message });
+    }
+};
