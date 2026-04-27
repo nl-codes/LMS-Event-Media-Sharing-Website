@@ -208,16 +208,6 @@ export default function EventDetailsPublicPage({
                                             {gateResult.msg}
                                         </p>
                                     </div>
-                                    <button
-                                        onClick={() =>
-                                            router.push(
-                                                `/events/${event.uniqueSlug}/gallery`,
-                                            )
-                                        }
-                                        className="bg-white text-cusblue px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-sm hover:bg-slate-50 transition-colors">
-                                        <ImageIcon className="w-4 h-4 inline mr-2" />
-                                        Public Gallery
-                                    </button>
                                 </div>
                             )}
                         </div>
