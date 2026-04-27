@@ -2,7 +2,12 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { getSocket } from "@/config/socket";
-import { getChatMessages, getRecentChatMessages, getUnreadCount, markChatAsRead } from "../lib/chatApi";
+import {
+    getChatMessages,
+    getRecentChatMessages,
+    getUnreadCount,
+    markChatAsRead,
+} from "../lib/chatApi";
 import type { ChatMessage } from "@/types/Chat";
 
 interface UseChatSocketOptions {
@@ -62,7 +67,7 @@ export const useChatSocket = ({
                         const serverUnread = await getUnreadCount(eventId);
                         setUnreadCount(serverUnread || 0);
                     } catch (err) {
-                        // ignore unread fetch errors
+                        console.log(err);
                     }
                 }
             } catch (err) {
@@ -98,7 +103,7 @@ export const useChatSocket = ({
                 // Mark as read via API
                 await markChatAsRead(eventId);
             } catch (err) {
-                // ignore
+                console.log(err);
             }
 
             try {
