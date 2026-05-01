@@ -1,4 +1,4 @@
-function makeError(statusCode, message) {
+export function makeError(statusCode, message) {
     const error = new Error(message);
     error.statusCode = statusCode;
     return error;
