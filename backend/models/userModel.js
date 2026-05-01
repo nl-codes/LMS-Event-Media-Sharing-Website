@@ -60,4 +60,35 @@ const userSchema = new Schema(
     { timestamps: true },
 );
 
+// Prevent multiple SuperAdmins - only one superadmin allowed
+userSchema.pre("save", async function (next) {
+    // Only validate when creating or updating role to superadmin
+    if (this.role === "superadmin") {
+        // Check if this is a new document (create)
+        if (this.isNew) {
+            const existingSuperAdmin = await User.findOne({
+                role: "superadmin",
+            });
+            if (existingSuperAdmin) {
+                throw new Error(
+                    "A SuperAdmin already exists. Only one SuperAdmin is allowed. Use password rotation to change SuperAdmin password.",
+                );
+            }
+        } else if (this.isModified("role")) {
+            // Prevent changing a user's role to superadmin if one already exists
+            const existingSuperAdmin = await User.findOne({
+                role: "superadmin",
+                _id: { $ne: this._id }, // Exclude current user
+            });
+            if (existingSuperAdmin) {
+                throw new Error(
+                    "A SuperAdmin already exists. Only one SuperAdmin is allowed.",
+                );
+            }
+        }
+    }
+
+    next();
+});
+
 export const User = model("User", userSchema);
