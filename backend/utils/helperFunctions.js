@@ -24,3 +24,18 @@ export const extractPublicIdFromUrl = (url) => {
         return null;
     }
 };
+
+export const safeUserForAdmin = (user) => {
+    if (!user) return null;
+
+    return {
+        _id: user._id,
+        userName: user.userName,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        suspensionCount: user.suspensionCount || 0,
+        adminRequestStatus: user.adminRequestStatus,
+        createdAt: user.createdAt,
+    };
+};
