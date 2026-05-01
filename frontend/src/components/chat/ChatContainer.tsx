@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import MessageInput from "@/components/chat/MessageInput";
 import { useUser } from "@/context/UserContext";
@@ -38,11 +38,20 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         loadOlderMessages,
         clearError,
         messageEndRef,
+        unreadCount,
+        resetUnreadCount,
     } = useChatSocket({
         eventId,
         userId: user?._id || "",
         enabled: !!user?._id,
+        isChatOpen: viewMode !== "minimized",
     });
+
+    useEffect(() => {
+        if (viewMode !== "minimized") {
+            resetUnreadCount();
+        }
+    }, [viewMode, resetUnreadCount]);
 
     const displayMessages = useMemo(() => {
         return [...messages].sort(
@@ -234,7 +243,6 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                 </div>
             </div>
 
-            {/* --- FLOATING TRIGGER BUTTON --- */}
             {viewMode !== "full" && (
                 <div className="fixed bottom-6 right-6 z-110">
                     <button
@@ -245,9 +253,14 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                                     : "minimized",
                             )
                         }
-                        className={`group relative h-16 w-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 active:scale-90
-                            ${viewMode === "minimized" ? "bg-cusblue text-white" : "bg-white text-cusblue border border-slate-100 rotate-90"}
-                        `}>
+                        className={`group relative h-16 w-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 active:scale-90 bg-cusblue text-cuscream`}>
+                        {/* --- UNREAD BADGE --- */}
+                        {viewMode === "minimized" && unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-cuscream ring-4 ring-cuscream animate-in zoom-in duration-300">
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                        )}
+
                         {viewMode === "minimized" ? (
                             <MessageSquare
                                 size={28}

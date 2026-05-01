@@ -1,6 +1,7 @@
 import { User } from "../models/userModel.js";
 import { Profile } from "../models/profileModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
+import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 
 export const createProfile = async (userId, profileData) => {
     const user = await User.findById(userId);
@@ -43,14 +44,12 @@ export const updateProfile = async (userId, updateData, newImageUrl) => {
     if (bio !== undefined) profile.bio = bio;
 
     if (newImageUrl) {
-        // Delete old image from Cloudinary if it exists
         if (profile.profilePicture) {
-            const publicId = profile.profilePicture
-                .split("/")
-                .slice(-2)
-                .join("/")
-                .split(".")[0];
-            await cloudinary.uploader.destroy(publicId);
+            const publicId = extractPublicIdFromUrl(profile.profilePicture);
+
+            if (publicId) {
+                await cloudinary.uploader.destroy(publicId);
+            }
         }
         profile.profilePicture = newImageUrl;
     }
@@ -64,14 +63,11 @@ export const deleteProfile = async (userId) => {
 
     // Delete profile picture from Cloudinary if it exists
     if (profile.profilePicture) {
-        // image stored in lms/profiles/uniqueId
-        const publicId = profile.profilePicture
-            .split("/")
-            .slice(-3)
-            .join("/")
-            .split(".")[0];
-        await cloudinary.uploader.destroy(publicId);
-    }
+        const publicId = extractPublicIdFromUrl(profile.profilePicture);
 
+        if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+        }
+    }
     await Profile.findOneAndDelete({ user: userId });
 };

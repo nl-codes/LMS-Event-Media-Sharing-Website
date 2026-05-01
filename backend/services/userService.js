@@ -2,6 +2,7 @@ import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { generateGeneralToken } from "../utils/generateToken.js";
+import { passwordRegex } from "../utils/validators.js";
 
 export const addUsers = async ({ userName, email, password }) => {
     if (!userName || !email || !password) {
@@ -13,6 +14,12 @@ export const addUsers = async ({ userName, email, password }) => {
 
     if (existingUser) {
         throw new Error("User email already exists");
+    }
+
+    if (!passwordRegex.test(password)) {
+        throw new Error(
+            "Password must contain at least: 1 uppercase, 1 lowercase, 1 number and 1 special character",
+        );
     }
     const randomSalt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, randomSalt);
@@ -38,7 +45,7 @@ export const verifyUser = async ({ email, password }) => {
 
     const isPasswordCorrect = await bcrypt.compare(
         password,
-        existingUser.password
+        existingUser.password,
     );
 
     if (!isPasswordCorrect) {
@@ -92,7 +99,7 @@ export const resendActivationToken = async (email) => {
 
         if (isSameDay && user.activationResendCount >= 3) {
             throw new Error(
-                "You have reached the daily limit (3 activation emails). Try again tomorrow."
+                "You have reached the daily limit (3 activation emails). Try again tomorrow.",
             );
         }
     }

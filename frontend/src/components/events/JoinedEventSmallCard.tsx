@@ -1,19 +1,35 @@
 "use client";
+import { useUser } from "@/context/UserContext";
 import type { Event } from "@/types/Event";
 import { MapPin, Calendar } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function JoinedEventSmallCard({ event }: { event: Event }) {
+    const { user } = useUser();
+    console.log(user?._id);
+    console.log(event.hostId);
+    const targetHref =
+        event.hostId == user?._id
+            ? `/home/events/${event._id}`
+            : `/events/${event.uniqueSlug}`;
+
     return (
-        <Link href={`/home/events/${event._id}`}>
+        <Link href={targetHref}>
             <div className="group flex items-center gap-4 p-3 rounded-2xl bg-white border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-md hover:border-cusblue/20 hover:-translate-y-1 active:scale-[0.98]">
                 {/* Small Thumbnail */}
-                <div className="relative h-16 w-16 hrink-0 overflow-hidden rounded-xl bg-slate-100">
-                    {/* <img
-                        src={event.imageUrl || "/placeholder-event.jpg"}
-                        alt={event.title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    /> */}
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                    {event.thumbnail ? (
+                        <Image
+                            src={event.thumbnail}
+                            alt={`${event.eventName} thumbnail`}
+                            fill
+                            sizes="64px"
+                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                    ) : (
+                        <div className="h-full w-full bg-linear-to-r from-cusblue/15 to-cusviolet/15" />
+                    )}
                 </div>
 
                 {/* Event Info */}

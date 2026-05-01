@@ -60,6 +60,10 @@ const EventSchema = new mongoose.Schema(
             type: Number,
             default: 100,
         },
+        thumbnail: {
+            type: String,
+            default: "",
+        },
 
         participantCount: {
             type: Number,

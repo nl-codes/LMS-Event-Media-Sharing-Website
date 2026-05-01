@@ -1,5 +1,6 @@
 import { ChatMessage } from "../models/chatMessageModel.js";
 import { Event } from "../models/eventModel.js";
+import { EventMembership } from "../models/eventMembershipModel.js";
 
 /**
  * Save a chat message to the database
@@ -77,6 +78,30 @@ export const getRecentMessages = async (eventId, limit = 20) => {
 
     // Return in chronological order (oldest first)
     return messages.reverse();
+};
+
+/**
+ * Get unread message count for a user in an event (based on EventMembership.lastSeenChatAt)
+ */
+export const getUnreadCount = async (eventId, userId) => {
+    if (!eventId || !userId) {
+        throw new Error("eventId and userId are required");
+    }
+
+    const membership = await EventMembership.findOne({
+        eventId,
+        userId,
+    }).lean();
+
+    if (!membership || !membership.lastSeenChatAt) {
+        // User has no last-seen timestamp -> consider all messages unread
+        return await ChatMessage.countDocuments({ eventId });
+    }
+
+    return await ChatMessage.countDocuments({
+        eventId,
+        createdAt: { $gt: membership.lastSeenChatAt },
+    });
 };
 
 /**

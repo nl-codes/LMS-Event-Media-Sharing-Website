@@ -3,14 +3,35 @@
 import Link from "next/link";
 import type { Event } from "@/types/Event";
 import { Calendar, MapPin, Globe, Eye, LogIn } from "lucide-react";
+import Image from "next/image";
 
 type JoinedEventCardProps = {
     event: Event;
 };
 
 export default function JoinedEventCard({ event }: JoinedEventCardProps) {
+    const hasThumbnail = Boolean(event.thumbnail);
+
     return (
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-cusblue/5 flex flex-col transition-all hover:scale-[1.02] profile-card-animate">
+            <div className="mb-5 rounded-2xl overflow-hidden border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
+                <div className="relative h-44 w-full rounded-2xl overflow-hidden bg-cuscream">
+                    {hasThumbnail ? (
+                        <Image
+                            src={event.thumbnail}
+                            alt={`${event.eventName} thumbnail`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="object-cover"
+                        />
+                    ) : (
+                        <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10 flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-cusblue/70">
+                            No Thumbnail
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Event Name */}
             <h3 className="text-lg font-bold text-cusblue leading-tight mb-4">
                 {event.eventName}

@@ -6,29 +6,41 @@ import JoinedEventCard from "@/components/events/JoinedEventCard";
 import { getJoinedEvents } from "@/lib/membershipApi";
 import { CalendarDays, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useUser } from "@/context/UserContext";
 
 export default function JoinedEventsList() {
+    const { user } = useUser();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const load = async () => {
-        try {
-            setLoading(true);
-            const data = await getJoinedEvents();
-            setEvents(data);
-            setError("");
-        } catch (e) {
-            setError((e as Error).message);
-            toast.error("Failed to load joined events");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
+        const load = async () => {
+            if (!user?._id) {
+                setEvents([]);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const data = await getJoinedEvents();
+
+                const excludingHostOwnedEvents = data.filter(
+                    (event) => event.hostId !== user._id,
+                );
+
+                setEvents(excludingHostOwnedEvents);
+                setError("");
+            } catch (e) {
+                setError((e as Error).message);
+                toast.error("Failed to load joined events");
+            } finally {
+                setLoading(false);
+            }
+        };
+
         void load();
-    }, []);
+    }, [user?._id]);
 
     if (loading) {
         return (

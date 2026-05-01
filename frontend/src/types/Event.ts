@@ -4,6 +4,7 @@ export interface Event {
     _id: string;
     hostId: string | { _id: string; userName?: string; email?: string };
     eventName: string;
+    thumbnail: string;
     description?: string;
     location: string;
     startTime: string;

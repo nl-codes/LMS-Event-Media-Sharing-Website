@@ -16,6 +16,7 @@ import webhookRoutes from "./routes/webhookRoutes.js";
 
 import { setIO } from "./config/socketConfig.js";
 import { saveChatMessage } from "./services/chatService.js";
+import { markChatAsRead } from "./services/eventMembershipService.js";
 
 dotenv.config();
 
@@ -137,6 +138,21 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         // Cleanup if needed
+    });
+
+    // Mark chat as read via socket (client may emit when user opens the chat)
+    socket.on("mark_as_read", async (data) => {
+        try {
+            const { eventId, userId, time } = data || {};
+            if (!eventId || !userId) return;
+            await markChatAsRead(
+                eventId,
+                userId,
+                time ? new Date(time) : new Date(),
+            );
+        } catch (err) {
+            console.error("❌ Error marking chat as read via socket:", err);
+        }
     });
 });
 

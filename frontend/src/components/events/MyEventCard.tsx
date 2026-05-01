@@ -13,6 +13,7 @@ import {
     Eye,
     QrCode,
 } from "lucide-react";
+import Image from "next/image";
 
 type MyEventCardProps = {
     event: Event;
@@ -21,6 +22,7 @@ type MyEventCardProps = {
 
 export default function MyEventCard({ event, onDelete }: MyEventCardProps) {
     const [showQR, setShowQR] = useState(false);
+    const hasThumbnail = Boolean(event.thumbnail);
 
     return (
         <>
@@ -33,6 +35,24 @@ export default function MyEventCard({ event, onDelete }: MyEventCardProps) {
             )}
 
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-cusblue/5 flex flex-col transition-all hover:scale-[1.02] profile-card-animate">
+                <div className="mb-5 rounded-2xl overflow-hidden border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
+                    <div className="relative h-44 w-full rounded-2xl overflow-hidden bg-cuscream">
+                        {hasThumbnail ? (
+                            <Image
+                                src={event.thumbnail}
+                                alt={`${event.eventName} thumbnail`}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="object-cover"
+                            />
+                        ) : (
+                            <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10 flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-cusblue/70">
+                                No Thumbnail
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* Header: Title & Premium Badge */}
                 <div className="flex justify-between items-start mb-3">
                     <h3 className="text-xl font-bold text-cusblue leading-tight">

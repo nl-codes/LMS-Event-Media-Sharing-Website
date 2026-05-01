@@ -8,7 +8,7 @@ interface SelectionActionBarProps {
     totalCount: number;
     onDownload: () => void;
     onDelete?: () => void;
-    isHost: boolean;
+    isUser: boolean;
 }
 
 export default function SelectionActionBar({
@@ -16,7 +16,7 @@ export default function SelectionActionBar({
     totalCount,
     onDownload,
     onDelete,
-    isHost,
+    isUser,
 }: SelectionActionBarProps) {
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cusblue/10 bg-white/80 p-3 animate-in slide-in-from-top-2 duration-300">
@@ -51,7 +51,7 @@ export default function SelectionActionBar({
                     <span className="hidden sm:inline">Download Selected</span>
                 </button>
 
-                {isHost && onDelete && (
+                {isUser && onDelete && (
                     <button
                         type="button"
                         onClick={onDelete}

@@ -22,6 +22,7 @@ export const registerEvent = async (req, res) => {
             endTime,
             isPremium,
         } = req.body;
+        const thumbnail = req.file?.path || "";
 
         // Validation
         if (!eventName || !location || !startTime || !endTime) {
@@ -32,13 +33,15 @@ export const registerEvent = async (req, res) => {
             });
         }
         const eventData = {
-            hostEmail: req.user.email,
+            _id: req.generatedEventId,
+            hostId: req.user.id,
             eventName,
             description,
             location,
             startTime,
             endTime,
             isPremium: isPremium || false,
+            thumbnail: thumbnail,
         };
 
         const event = await createEvent(eventData);
@@ -110,7 +113,10 @@ export const getEventBySlug = async (req, res) => {
 export const editEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const updateData = req.body;
+        const updateData = {
+            ...req.body,
+            ...(req.file?.path ? { thumbnail: req.file.path } : {}),
+        };
 
         const updatedEvent = await updateEvent(id, updateData, req.user.id);
 

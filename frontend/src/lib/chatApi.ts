@@ -34,6 +34,20 @@ export async function getRecentChatMessages(eventId: string, limit = 50) {
     return json.data || [];
 }
 
+export async function getUnreadCount(eventId: string) {
+    const json = await request<{ unreadCount: number }>(
+        `/chats/${eventId}/unread`,
+    );
+    return json.data?.unreadCount || 0;
+}
+
+export async function markChatAsRead(eventId: string) {
+    const json = await request<void>(`/chats/${eventId}/mark-as-read`, {
+        method: "POST",
+    });
+    return json;
+}
+
 export async function getChatMessages(eventId: string, limit = 20, skip = 0) {
     const json = await request<ChatMessage[]>(
         `/chats/${eventId}?limit=${limit}&skip=${skip}`,

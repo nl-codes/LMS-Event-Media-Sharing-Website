@@ -2,13 +2,19 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { getSocket } from "@/config/socket";
-import { getChatMessages, getRecentChatMessages } from "../lib/chatApi";
+import {
+    getChatMessages,
+    getRecentChatMessages,
+    getUnreadCount,
+    markChatAsRead,
+} from "../lib/chatApi";
 import type { ChatMessage } from "@/types/Chat";
 
 interface UseChatSocketOptions {
     eventId: string;
     userId?: string;
     enabled?: boolean;
+    isChatOpen?: boolean;
 }
 
 /**
@@ -19,6 +25,7 @@ export const useChatSocket = ({
     eventId,
     userId,
     enabled = true,
+    isChatOpen = false,
 }: UseChatSocketOptions) => {
     const PAGE_SIZE = 20;
 
@@ -30,6 +37,12 @@ export const useChatSocket = ({
     const [error, setError] = useState<string | null>(null);
     const socketRef = useRef<ReturnType<typeof getSocket> | null>(null);
     const messageEndRef = useRef<HTMLDivElement>(null);
+
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const resetUnreadCount = useCallback(() => {
+        setUnreadCount(0);
+    }, []);
 
     useEffect(() => {
         if (!enabled || !eventId || !userId) {
@@ -49,6 +62,13 @@ export const useChatSocket = ({
                 if (isMounted) {
                     setMessages(recentMessages);
                     setHasMore(recentMessages.length === PAGE_SIZE);
+                    // Fetch server-side unread count for this user/event
+                    try {
+                        const serverUnread = await getUnreadCount(eventId);
+                        setUnreadCount(serverUnread || 0);
+                    } catch (err) {
+                        console.log(err);
+                    }
                 }
             } catch (err) {
                 if (isMounted) {
@@ -71,6 +91,47 @@ export const useChatSocket = ({
             isMounted = false;
         };
     }, [enabled, eventId, userId]);
+
+    // When chat becomes open, mark messages as read on server and reset local count
+    useEffect(() => {
+        if (!isChatOpen || !eventId || !userId) return;
+
+        let cancelled = false;
+
+        (async () => {
+            try {
+                // Mark as read via API
+                await markChatAsRead(eventId);
+            } catch (err) {
+                console.log(err);
+            }
+
+            try {
+                // Also emit via socket for real-time sync
+                socketRef.current?.emit("mark_as_read", {
+                    eventId,
+                    userId,
+                    time: new Date().toISOString(),
+                });
+            } catch {
+                // ignore
+            }
+
+            if (!cancelled) {
+                resetUnreadCount();
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isChatOpen, eventId, userId, resetUnreadCount]);
+
+    // Keep a ref of chat-open state to avoid stale closures inside socket handlers
+    const isChatOpenRef = useRef<boolean>(!!isChatOpen);
+    useEffect(() => {
+        isChatOpenRef.current = !!isChatOpen;
+    }, [isChatOpen]);
 
     const loadOlderMessages = useCallback(async () => {
         if (!enabled || !eventId || !userId || isLoadingOlder || !hasMore) {
@@ -143,6 +204,12 @@ export const useChatSocket = ({
          */
         const handleReceiveMessage = (message: ChatMessage) => {
             console.log("📨 Message received:", message);
+
+            const senderId =
+                typeof message.senderId === "string"
+                    ? message.senderId
+                    : message.senderId?._id;
+
             setMessages((prev) => {
                 if (prev.some((existing) => existing._id === message._id)) {
                     return prev;
@@ -150,6 +217,18 @@ export const useChatSocket = ({
 
                 return [...prev, message];
             });
+
+            // Don't increment for messages sent by the current user
+            if (!senderId || senderId === userId) {
+                return;
+            }
+
+            // If chat is open/visible, do not increment unread count
+            if (isChatOpenRef.current) {
+                return;
+            }
+
+            setUnreadCount((c) => c + 1);
         };
 
         /**
@@ -177,6 +256,7 @@ export const useChatSocket = ({
             socket.off("receive_message", handleReceiveMessage);
             socket.off("message_error", handleMessageError);
             socket.emit("leave_chat_room", eventId);
+            socketRef.current = null;
         };
     }, [enabled, eventId, userId]);
 
@@ -241,5 +321,7 @@ export const useChatSocket = ({
         clearMessages,
         clearError,
         messageEndRef,
+        unreadCount,
+        resetUnreadCount,
     };
 };

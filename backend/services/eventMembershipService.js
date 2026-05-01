@@ -28,7 +28,30 @@ export const getUserMemberships = async (userId) => {
     return await EventMembership.find({ userId })
         .populate(
             "eventId",
-            "eventName startTime uniqueSlug location description",
+            "eventName startTime uniqueSlug location description thumbnail hostId",
         )
         .sort({ lastAccessedAt: -1 });
+};
+
+/**
+ * Mark chat as read for a user in an event by updating lastSeenChatAt
+ */
+export const markChatAsRead = async (eventId, userId, time = new Date()) => {
+    if (!eventId || !userId) {
+        throw new Error("eventId and userId are required");
+    }
+
+    return await EventMembership.findOneAndUpdate(
+        { eventId, userId },
+        {
+            $set: {
+                lastSeenChatAt: time,
+            },
+        },
+        {
+            upsert: true,
+            new: true,
+            setDefaultsOnInsert: true,
+        },
+    );
 };

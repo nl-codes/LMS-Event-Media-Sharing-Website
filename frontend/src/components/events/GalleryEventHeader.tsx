@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import type { Event } from "@/types/Event";
+import clsx from "clsx";
+import Image from "next/image";
 
 interface GalleryEventHeaderProps {
     event: Pick<
@@ -13,6 +15,7 @@ interface GalleryEventHeaderProps {
         | "startTime"
         | "endTime"
         | "isLive"
+        | "thumbnail"
     >;
     subtitle?: string;
     roleBadge?: string;
@@ -126,7 +129,10 @@ export default function GalleryEventHeader({
                 <div className="max-w-3xl">
                     <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cusblue/5 bg-white px-4 py-1.5 shadow-sm">
                         <span
-                            className={`h-2 w-2 rounded-full ${timeline.statusClass}`}
+                            className={clsx(
+                                "h-2 w-2 rounded-full",
+                                timeline.statusClass,
+                            )}
                         />
                         <span className="text-xs font-bold uppercase tracking-widest text-cusblue">
                             {timeline.statusText}
@@ -162,25 +168,45 @@ export default function GalleryEventHeader({
                         </button>
                     )}
                 </div>
+
+                <div className="w-full max-w-[220px] rounded-2xl border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
+                    <div className="rounded-2xl bg-white/75 p-2 backdrop-blur-sm">
+                        <div className="relative h-28 w-full overflow-hidden rounded-xl bg-cuscream">
+                            {event.thumbnail ? (
+                                <Image
+                                    src={event.thumbnail}
+                                    alt={`${event.eventName} thumbnail`}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10" />
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="flex items-center gap-4 rounded-2xl border border-white bg-white/60 p-5 shadow-sm backdrop-blur-md">
-                    <div className="rounded-xl bg-cusblue/5 p-3 text-cusblue">
+                {/* Location Card */}
+                <div className="flex items-center gap-4 rounded-2xl border border-white bg-white/60 p-5 shadow-sm backdrop-blur-md min-w-0">
+                    <div className="shrink-0 rounded-xl bg-cusblue/5 p-3 text-cusblue">
                         <MapPin className="h-5 w-5" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-cusviolet/60">
                             Where
                         </p>
-                        <p className="font-semibold text-cusblue">
+                        <p className="font-semibold text-cusblue wrap-break-word line-clamp-2 leading-tight">
                             {event.location || "Location TBD"}
                         </p>
                     </div>
                 </div>
 
+                {/* Starts Card */}
                 <div className="flex items-center gap-4 rounded-2xl border border-white bg-white/60 p-5 shadow-sm backdrop-blur-md">
-                    <div className="rounded-xl bg-cusblue/5 p-3 text-cusblue">
+                    <div className="shrink-0 rounded-xl bg-cusblue/5 p-3 text-cusblue">
                         <Calendar className="h-5 w-5" />
                     </div>
                     <div>
@@ -193,15 +219,16 @@ export default function GalleryEventHeader({
                     </div>
                 </div>
 
+                {/* Status Card */}
                 <div className="flex items-center gap-4 rounded-2xl border border-white bg-white/60 p-5 shadow-sm backdrop-blur-md">
-                    <div className="rounded-xl bg-cusblue/5 p-3 text-cusblue">
+                    <div className="shrink-0 rounded-xl bg-cusblue/5 p-3 text-cusblue">
                         <Clock className="h-5 w-5" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-cusviolet/60">
                             {timeline.countdownLabel || "Status"}
                         </p>
-                        <p className="font-semibold text-cusblue">
+                        <p className="font-semibold text-cusblue wrap-break-word">
                             {timeline.countdownText}
                         </p>
                     </div>

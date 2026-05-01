@@ -151,7 +151,7 @@ export const deleteMedia = async (mediaId, requesterId) => {
     }
 };
 
-// Delete multiple media items (host only)
+// Delete multiple media items (Host Or Uploader)
 export const deleteMultipleMedia = async (mediaIds, requesterId) => {
     if (!requesterId) throw new Error("Authentication required");
 
@@ -166,7 +166,7 @@ export const deleteMultipleMedia = async (mediaIds, requesterId) => {
     const uniqueMediaIds = [...new Set(mediaIds.map(String))];
 
     const mediaDocs = await Media.find({ _id: { $in: uniqueMediaIds } }).select(
-        "_id eventId publicId mediaType",
+        "_id eventId publicId mediaType uploaderId",
     );
 
     if (mediaDocs.length !== uniqueMediaIds.length) {
@@ -176,6 +176,7 @@ export const deleteMultipleMedia = async (mediaIds, requesterId) => {
     const uniqueEventIds = [
         ...new Set(mediaDocs.map((m) => String(m.eventId))),
     ];
+
     const events = await Event.find({ _id: { $in: uniqueEventIds } }).select(
         "_id hostId",
     );
@@ -185,27 +186,42 @@ export const deleteMultipleMedia = async (mediaIds, requesterId) => {
     }
 
     const eventHostMap = new Map(
-        events.map((event) => [String(event._id), event]),
+        events.map((event) => [String(event._id), String(event.hostId)]),
     );
 
     for (const media of mediaDocs) {
-        const event = eventHostMap.get(String(media.eventId));
-        if (!event || String(event.hostId) !== String(requesterId)) {
+        const hostId = eventHostMap.get(String(media.eventId));
+        const uploaderId = media.uploaderId ? String(media.uploaderId) : null;
+        const reqId = String(requesterId);
+
+        const isHost = hostId === reqId;
+        const isOwner = uploaderId === reqId;
+
+        if (!isHost && !isOwner) {
             throw new Error("Not authorized to delete one or more media items");
         }
     }
 
     for (const media of mediaDocs) {
-        await cloudinary.uploader.destroy(media.publicId, {
-            resource_type: media.mediaType === "video" ? "video" : "image",
-        });
+        try {
+            await cloudinary.uploader.destroy(media.publicId, {
+                resource_type: media.mediaType === "video" ? "video" : "image",
+            });
+        } catch (cloudErr) {
+            console.error(
+                `Failed to delete Cloudinary asset: ${media.publicId}`,
+                cloudErr,
+            );
+            // Optionally continue to delete from DB even if Cloudinary fails
+        }
     }
 
+    // 4. Database Cleanup
     await Media.deleteMany({ _id: { $in: uniqueMediaIds } });
 
     return {
         success: true,
-        message: "Media deleted",
+        message: `Successfully deleted ${mediaDocs.length} items`,
         deletedMedia: mediaDocs.map((media) => ({
             mediaId: String(media._id),
             eventId: String(media.eventId),
