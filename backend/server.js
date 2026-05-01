@@ -14,6 +14,7 @@ import chatRoutes from "./routes/chatRoute.js";
 import paymentRoutes from "./routes/paymentRoute.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 import adminRoutes from "./routes/adminRoute.js";
+import superAdminRoutes from "./routes/superAdminRoute.js";
 
 import { setIO } from "./config/socketConfig.js";
 import { saveChatMessage } from "./services/chatService.js";
@@ -173,3 +174,4 @@ app.use("/event-memberships", eventMembershipRoutes);
 app.use("/chats", chatRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/admins", adminRoutes);
+app.use("/superadmins", superAdminRoutes);
