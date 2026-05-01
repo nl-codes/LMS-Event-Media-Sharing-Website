@@ -31,17 +31,22 @@ export const extractPublicIdFromUrl = (url) => {
     }
 };
 
-export const safeUserForAdmin = (user) => {
+export const safeUserForAdmin = (user, requesterRole) => {
     if (!user) return null;
 
-    return {
+    const userData = {
         _id: user._id,
         userName: user.userName,
         email: user.email,
         role: user.role,
         status: user.status,
-        suspensionCount: user.suspensionCount || 0,
-        adminRequestStatus: user.adminRequestStatus,
         createdAt: user.createdAt,
     };
+
+    if (requesterRole === "superadmin") {
+        userData.suspensionCount = user.suspensionCount || 0;
+        userData.adminRequestStatus = user.adminRequestStatus;
+    }
+
+    return userData;
 };
