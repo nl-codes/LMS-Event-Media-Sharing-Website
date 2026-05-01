@@ -1,3 +1,9 @@
+function makeError(statusCode, message) {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    return error;
+}
+
 export const extractPublicIdFromUrl = (url) => {
     if (!url || typeof url !== "string") return null;
 

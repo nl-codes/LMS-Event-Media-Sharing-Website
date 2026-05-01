@@ -2,12 +2,6 @@ import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import { safeUserForAdmin } from "../utils/helperFunctions.js";
 
-function makeError(statusCode, message) {
-    const error = new Error(message);
-    error.statusCode = statusCode;
-    return error;
-}
-
 export async function registerAdmin({ userName, email, password }) {
     if (!userName || !email || !password) {
         throw makeError(400, "userName, email, and password are required");
