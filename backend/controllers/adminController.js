@@ -1,4 +1,5 @@
 import {
+    getUsersList,
     registerAdmin,
     verifyAdminCredentials,
 } from "../services/adminService.js";
@@ -87,6 +88,21 @@ export async function loginAdminController(req, res) {
     } catch (err) {
         const status = err.statusCode || 500;
         return res.status(status).json({
+            success: false,
+            message: err.message,
+        });
+    }
+}
+
+export async function getUsersListController(req, res) {
+    try {
+        const search = String(req.query.search || "").trim();
+        const users = await getUsersList(search);
+        return res
+            .status(200)
+            .json({ success: true, count: users.length, data: users });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message,
         });

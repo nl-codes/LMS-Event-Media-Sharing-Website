@@ -82,3 +82,21 @@ export async function verifyAdminCredentials({ email, password, otp }) {
 
     return { mfaRequired: false, user };
 }
+
+export async function getUsersList(searchTerm) {
+    const q = { role: "user" };
+    const normalizedSearch = searchTerm.trim();
+    if (normalizedSearch) {
+        q.$or = [
+            { email: { $regex: normalizedSearch, $options: "i" } },
+            { userName: { $regex: normalizedSearch, $options: "i" } },
+        ];
+    }
+
+    return await User.find(q)
+        .sort({ createdAt: -1 })
+        .limit(500)
+        .select(
+            "userName email role status suspensionCount adminActionReason updatedAt",
+        );
+}

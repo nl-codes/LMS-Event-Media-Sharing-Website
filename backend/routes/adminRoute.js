@@ -1,5 +1,7 @@
 import express from "express";
+import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 import {
+    getUsersListController,
     loginAdminController,
     registerAdminController,
 } from "../controllers/adminController.js";
@@ -9,5 +11,12 @@ const router = express.Router();
 // Public routes (no auth required)
 router.post("/signup", registerAdminController);
 router.post("/login", loginAdminController);
+
+router.get(
+    "/list-users",
+    requireAuth,
+    requireRole("admin"),
+    getUsersListController,
+);
 
 export default router;
