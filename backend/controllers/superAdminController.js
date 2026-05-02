@@ -1,4 +1,7 @@
-import { approveAdminUser } from "../services/superAdminService.js";
+import {
+    approveAdminUser,
+    getAdminsList,
+} from "../services/superAdminService.js";
 
 export async function superAdminApproveAdminController(req, res) {
     try {
@@ -24,5 +27,15 @@ export async function superAdminApproveAdminController(req, res) {
             success: false,
             message: err.message,
         });
+    }
+}
+
+export async function superAdminListAdminsController(req, res) {
+    const search = String(req.query.search || "").trim();
+    try {
+        const adminsList = await getAdminsList(search);
+        return res.status(200).json({ success: true, data: adminsList });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
 }
