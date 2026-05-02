@@ -4,6 +4,7 @@ import {
     superAdminApproveAdminController,
     superAdminListAdminsController,
     superAdminSuspendAdmin,
+    superAdminUnsuspendAdmin,
 } from "../controllers/superAdminController.js";
 
 const router = express.Router();
@@ -27,6 +28,13 @@ router.post(
     requireAuth,
     requireRole("superadmin"),
     superAdminSuspendAdmin,
+);
+
+router.post(
+    "/unsuspend-admin",
+    requireAuth,
+    requireRole("superadmin"),
+    superAdminUnsuspendAdmin,
 );
 
 export default router;

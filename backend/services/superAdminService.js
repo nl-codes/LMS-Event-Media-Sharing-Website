@@ -30,7 +30,9 @@ export const getAdminsList = async (searchTerm) => {
     const filteredAdmin = await User.find(q)
         .sort({ createdAt: -1 })
         .limit(500)
-        .select("_id userName email role status createdAt");
+        .select(
+            "_id userName email role status  adminRequestStatus adminActionReason createdAt",
+        );
     return filteredAdmin;
 };
 
@@ -60,6 +62,40 @@ export const suspendAdmin = async (adminId, suspensionReason) => {
     target.status = "suspended";
     target.adminRequestStatus = "suspended";
     target.adminActionReason = suspensionReason.trim();
+
+    await target.save();
+
+    return await User.findById(adminId).select(
+        "_id userName email role status adminRequestStatus adminActionReason updatedAt",
+    );
+};
+
+export const unsuspendAdmin = async (adminId, upliftReason) => {
+    const target = await User.findById(adminId);
+
+    if (!target) {
+        throw makeError(404, "Admin not found");
+    }
+
+    if (target.role !== "admin") {
+        throw makeError(400, "Target must be an admin");
+    }
+
+    if (!upliftReason || !upliftReason.trim()) {
+        throw makeError(400, "Uplift reason is required");
+    }
+
+    if (target.status === "pending") {
+        throw makeError(400, "Admin yet to be approved.");
+    }
+
+    if (target.status !== "suspended") {
+        throw makeError(400, "Admin is not suspended.");
+    }
+
+    target.status = "active";
+    target.adminRequestStatus = "approved";
+    target.adminActionReason = upliftReason.trim();
 
     await target.save();
 
