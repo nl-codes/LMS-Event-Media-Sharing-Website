@@ -35,17 +35,30 @@ export async function loginAdminController(req, res) {
         });
 
         // Scenario 1: OTP is required and was just generated
+        let SuccessMessage;
         if (result.mfaRequired) {
-            await sendEmail(
-                result.user.email,
-                "Your Admin Login OTP",
-                `Your OTP is: ${result.otpCode}`,
-                `<p>Your OTP is <b>${result.otpCode}</b>. It expires in 10 minutes.</p>`,
-            );
+            if (process.env.NODE_ENV === "development") {
+                SuccessMessage =
+                    "Development Mode: Check Backend Console for OTP.";
+                console.log(
+                    "Printing OTP in console just for development mode.",
+                );
+                console.log(
+                    `OTP for login of ${result.user.email} is:  ${result.otpCode}`,
+                );
+            } else {
+                SuccessMessage = "OTP sent to email";
+                await sendEmail(
+                    result.user.email,
+                    "Your Admin Login OTP",
+                    `Your OTP is: ${result.otpCode}`,
+                    `<p>Your OTP is <b>${result.otpCode}</b>. It expires in 10 minutes.</p>`,
+                );
+            }
 
             return res.status(200).json({
                 success: true,
-                message: "OTP sent to email",
+                message: SuccessMessage,
                 mfaRequired: true,
             });
         }
