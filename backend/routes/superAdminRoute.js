@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 import {
     superAdminApproveAdminController,
     superAdminListAdminsController,
+    superAdminSuspendAdmin,
 } from "../controllers/superAdminController.js";
 
 const router = express.Router();
@@ -19,6 +20,13 @@ router.get(
     requireAuth,
     requireRole("superadmin"),
     superAdminListAdminsController,
+);
+
+router.post(
+    "/suspend-admin",
+    requireAuth,
+    requireRole("superadmin"),
+    superAdminSuspendAdmin,
 );
 
 export default router;
