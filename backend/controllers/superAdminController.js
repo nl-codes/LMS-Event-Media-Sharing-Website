@@ -1,6 +1,7 @@
 import {
     approveAdminUser,
     getAdminsList,
+    suspendAdmin,
 } from "../services/superAdminService.js";
 
 export async function superAdminApproveAdminController(req, res) {
@@ -37,5 +38,31 @@ export async function superAdminListAdminsController(req, res) {
         return res.status(200).json({ success: true, data: adminsList });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message });
+    }
+}
+
+export async function superAdminSuspendAdmin(req, res) {
+    try {
+        const { adminId, reason } = req.body || {};
+        if (!adminId || !adminId.trim() || !reason || !reason.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "adminId and reason are required",
+            });
+        }
+
+        const updated = await suspendAdmin(adminId, reason);
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin suspended",
+            data: updated,
+        });
+    } catch (err) {
+        const status = err.statusCode || 500;
+        return res.status(status).json({
+            success: false,
+            message: err.message,
+        });
     }
 }
