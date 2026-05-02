@@ -2,6 +2,7 @@ import {
     getUsersList,
     registerAdmin,
     suspendUser,
+    UnsuspendUser,
     verifyAdminCredentials,
 } from "../services/adminService.js";
 import { setAuthCookie } from "../utils/auth/cookieAuth.js";
@@ -124,7 +125,32 @@ export async function suspendUserController(req, res) {
 
         return res.status(200).json({
             success: true,
-            message: "User updated",
+            message: "User suspended",
+            data: updated,
+        });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message,
+        });
+    }
+}
+
+export async function unsuspendUserController(req, res) {
+    try {
+        const { userId, reason } = req.body || {};
+        if (!userId || !userId.trim() || !reason || !reason.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "userId and reason are required",
+            });
+        }
+
+        const updated = await UnsuspendUser(userId, reason);
+
+        return res.status(200).json({
+            success: true,
+            message: "User un-suspended",
             data: updated,
         });
     } catch (err) {
