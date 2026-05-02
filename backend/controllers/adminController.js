@@ -1,6 +1,7 @@
 import {
     getUsersList,
     registerAdmin,
+    suspendUser,
     verifyAdminCredentials,
 } from "../services/adminService.js";
 import { setAuthCookie } from "../utils/auth/cookieAuth.js";
@@ -101,6 +102,31 @@ export async function getUsersListController(req, res) {
         return res
             .status(200)
             .json({ success: true, count: users.length, data: users });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message,
+        });
+    }
+}
+
+export async function suspendUserController(req, res) {
+    try {
+        const { userId, reason } = req.body || {};
+        if (!userId || !userId.trim() || !reason || !reason.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "userId and reason are required",
+            });
+        }
+
+        const updated = await suspendUser(userId, reason);
+
+        return res.status(200).json({
+            success: true,
+            message: "User updated",
+            data: updated,
+        });
     } catch (err) {
         return res.status(err.statusCode || 500).json({
             success: false,

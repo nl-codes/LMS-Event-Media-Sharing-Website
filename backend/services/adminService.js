@@ -100,3 +100,22 @@ export async function getUsersList(searchTerm) {
             "userName email role status suspensionCount adminActionReason updatedAt",
         );
 }
+
+export async function suspendUser(userId, reason) {
+    const target = await User.findById(userId);
+    if (!target) throw makeError(404, "User not found");
+    if (target.role !== "user") throw makeError(400, "Target must be a user");
+    if (target.status === "pending")
+        throw makeError(400, "User has not been verified");
+    if (target.status === "suspended")
+        throw makeError(400, "User is already suspended");
+
+    target.status = "suspended";
+    target.suspensionCount += 1;
+    target.adminActionReason = reason;
+
+    await target.save();
+    return await User.findById(userId).select(
+        "_id userName email role status adminActionReason updatedAt",
+    );
+}

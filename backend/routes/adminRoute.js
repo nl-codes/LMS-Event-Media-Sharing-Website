@@ -4,6 +4,7 @@ import {
     getUsersListController,
     loginAdminController,
     registerAdminController,
+    suspendUserController,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -17,6 +18,13 @@ router.get(
     requireAuth,
     requireRole("admin"),
     getUsersListController,
+);
+
+router.post(
+    "/suspend-user",
+    requireAuth,
+    requireRole("admin"),
+    suspendUserController,
 );
 
 export default router;
