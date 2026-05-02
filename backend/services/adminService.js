@@ -101,40 +101,62 @@ export async function getUsersList(searchTerm) {
         );
 }
 
-export async function suspendUser(userId, reason) {
-    const target = await User.findById(userId);
-    if (!target) throw makeError(404, "User not found");
-    if (target.role !== "user") throw makeError(400, "Target must be a user");
-    if (target.status === "pending")
-        throw makeError(400, "User has not been verified");
-    if (target.status === "suspended")
-        throw makeError(400, "User is already suspended");
+const handleUserStatusUpdate = ({
+    userId,
+    reason,
+    requireSuspended = false,
+    blockIfSuspended = false,
+    newStatus,
+}) => {
+    return (async () => {
+        const target = await User.findById(userId);
 
-    target.status = "suspended";
-    target.suspensionCount += 1;
-    target.adminActionReason = reason;
+        if (!target) throw makeError(404, "User not found");
 
-    await target.save();
-    return await User.findById(userId).select(
-        "_id userName email role status adminActionReason updatedAt",
-    );
-}
+        if (target.role !== "user") {
+            throw makeError(400, "Target must be a user");
+        }
 
-export async function UnsuspendUser(userId, reason) {
-    const target = await User.findById(userId);
-    if (!target) throw makeError(404, "User not found");
+        if (target.status === "pending") {
+            throw makeError(400, "User has not been verified");
+        }
 
-    if (target.role !== "user") throw makeError(400, "Target must be a user");
-    if (target.status === "pending")
-        throw makeError(400, "User has not been verified");
-    if (target.status !== "suspended")
-        throw makeError(400, "User is not suspended");
+        if (blockIfSuspended && target.status === "suspended") {
+            throw makeError(400, "User is already suspended");
+        }
 
-    target.status = "active";
-    target.adminActionReason = reason;
+        if (requireSuspended && target.status !== "suspended") {
+            throw makeError(400, "User is not suspended");
+        }
 
-    await target.save();
-    return await User.findById(userId).select(
-        "_id userName email role status adminActionReason updatedAt",
-    );
-}
+        // apply updates
+        target.status = newStatus;
+        target.adminActionReason = reason;
+
+        if (blockIfSuspended) target.suspensionCount += 1;
+
+        await target.save();
+
+        return await User.findById(userId).select(
+            "_id userName email role status adminActionReason updatedAt",
+        );
+    })();
+};
+
+// Suspend
+export const suspendUser = (userId, reason) =>
+    handleUserStatusUpdate({
+        userId,
+        reason,
+        newStatus: "suspended",
+        blockIfSuspended: true,
+    });
+
+// Unsuspend
+export const unsuspendUser = (userId, reason) =>
+    handleUserStatusUpdate({
+        userId,
+        reason,
+        newStatus: "active",
+        requireSuspended: true,
+    });

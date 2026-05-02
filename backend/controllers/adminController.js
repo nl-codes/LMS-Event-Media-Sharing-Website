@@ -2,7 +2,7 @@ import {
     getUsersList,
     registerAdmin,
     suspendUser,
-    UnsuspendUser,
+    unsuspendUser,
     verifyAdminCredentials,
 } from "../services/adminService.js";
 import { setAuthCookie } from "../utils/auth/cookieAuth.js";
@@ -111,52 +111,41 @@ export async function getUsersListController(req, res) {
     }
 }
 
-export async function suspendUserController(req, res) {
-    try {
-        const { userId, reason } = req.body || {};
-        if (!userId || !userId.trim() || !reason || !reason.trim()) {
-            return res.status(400).json({
+// Util function used to call both suspendUser and unsuspendUser service functions
+const handleUserAction = (actionFn, successMessage) => {
+    return async (req, res) => {
+        try {
+            const { userId, reason } = req.body || {};
+
+            if (!userId || !userId.trim() || !reason || !reason.trim()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "userId and reason are required",
+                });
+            }
+
+            const updated = await actionFn(userId, reason);
+
+            return res.status(200).json({
+                success: true,
+                message: successMessage,
+                data: updated,
+            });
+        } catch (err) {
+            return res.status(err.statusCode || 500).json({
                 success: false,
-                message: "userId and reason are required",
+                message: err.message,
             });
         }
+    };
+};
 
-        const updated = await suspendUser(userId, reason);
+export const suspendUserController = handleUserAction(
+    suspendUser,
+    "User suspended",
+);
 
-        return res.status(200).json({
-            success: true,
-            message: "User suspended",
-            data: updated,
-        });
-    } catch (err) {
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message,
-        });
-    }
-}
-
-export async function unsuspendUserController(req, res) {
-    try {
-        const { userId, reason } = req.body || {};
-        if (!userId || !userId.trim() || !reason || !reason.trim()) {
-            return res.status(400).json({
-                success: false,
-                message: "userId and reason are required",
-            });
-        }
-
-        const updated = await UnsuspendUser(userId, reason);
-
-        return res.status(200).json({
-            success: true,
-            message: "User un-suspended",
-            data: updated,
-        });
-    } catch (err) {
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message,
-        });
-    }
-}
+export const unsuspendUserController = handleUserAction(
+    unsuspendUser,
+    "User un-suspended",
+);
