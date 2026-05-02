@@ -15,7 +15,7 @@ const userSchema = new Schema(
 
         status: {
             type: String,
-            enum: ["pending", "active", "suspended", "banned"],
+            enum: ["pending", "active", "suspended"],
             default: "pending",
             index: true,
         },
