@@ -1,4 +1,5 @@
 import {
+    getEventDetails,
     getEventsList,
     getUsersList,
     registerAdmin,
@@ -158,6 +159,31 @@ export async function getEventsListController(req, res) {
         return res
             .status(200)
             .json({ success: true, count: events.length, data: events });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message,
+        });
+    }
+}
+
+export async function getEventDetailsController(req, res) {
+    try {
+        const { eventId } = req.params || {};
+
+        if (!eventId || !eventId.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "eventId is required",
+            });
+        }
+
+        const data = await getEventDetails(eventId);
+
+        return res.status(200).json({
+            success: true,
+            data,
+        });
     } catch (err) {
         return res.status(err.statusCode || 500).json({
             success: false,

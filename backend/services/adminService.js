@@ -1,7 +1,13 @@
 import { User } from "../models/userModel.js";
 import { Event } from "../models/eventModel.js";
+import Media from "../models/mediaModel.js";
+import { EventMembership } from "../models/eventMemberShipModel.js";
 import bcrypt from "bcryptjs";
-import { makeError, safeUserForAdmin } from "../utils/helperFunctions.js";
+import {
+    getEventBucketUnit,
+    makeError,
+    safeUserForAdmin,
+} from "../utils/helperFunctions.js";
 import {
     createOtpRecord,
     findValidOtp,
@@ -182,4 +188,56 @@ export async function getEventsList(search = "", tier = "") {
             "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount createdAt updatedAt",
         )
         .populate("hostId", "userName email");
+}
+
+export async function getEventDetails(eventId) {
+    const event = await Event.findById(eventId)
+        .select(
+            "_id hostId eventName description location startTime endTime uniqueSlug status isPremium tier uploadLimit thumbnail participantCount",
+        )
+        .populate("hostId", "userName email");
+
+    if (!event) {
+        throw makeError(404, "Event not found");
+    }
+
+    const [uploadsTotal, participantsUnique] = await Promise.all([
+        Media.countDocuments({ eventId: event._id }),
+        EventMembership.countDocuments({ eventId: event._id }),
+    ]);
+
+    const unit = getEventBucketUnit(event);
+
+    const series = await Media.aggregate([
+        { $match: { eventId: event._id } },
+        {
+            $group: {
+                _id: {
+                    $dateTrunc: {
+                        date: "$createdAt",
+                        unit,
+                    },
+                },
+                count: { $sum: 1 },
+            },
+        },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, t: "$_id", y: "$count" } },
+    ]);
+
+    return {
+        event: {
+            _id: event._id,
+            eventName: event.eventName,
+            description: event.description,
+            startTime: event.startTime,
+            endTime: event.endTime,
+        },
+        stats: {
+            participants: participantsUnique,
+            uploads: uploadsTotal,
+        },
+        uploadsSeries: series,
+        bucketUnit: unit,
+    };
 }
