@@ -1,4 +1,5 @@
 import {
+    getEventsList,
     getUsersList,
     registerAdmin,
     suspendUser,
@@ -149,3 +150,18 @@ export const unsuspendUserController = handleUserAction(
     unsuspendUser,
     "User un-suspended",
 );
+
+export async function getEventsListController(req, res) {
+    try {
+        const events = await getEventsList(req.query.search, req.query.tier);
+
+        return res
+            .status(200)
+            .json({ success: true, count: events.length, data: events });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message,
+        });
+    }
+}

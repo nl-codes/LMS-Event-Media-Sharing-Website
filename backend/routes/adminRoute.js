@@ -1,6 +1,7 @@
 import express from "express";
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 import {
+    getEventsListController,
     getUsersListController,
     loginAdminController,
     registerAdminController,
@@ -33,6 +34,13 @@ router.post(
     requireAuth,
     requireRole("admin"),
     unsuspendUserController,
+);
+
+router.get(
+    "/list-events",
+    requireAuth,
+    requireRole("admin"),
+    getEventsListController,
 );
 
 export default router;

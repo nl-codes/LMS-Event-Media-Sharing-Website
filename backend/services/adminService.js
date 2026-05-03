@@ -1,4 +1,5 @@
 import { User } from "../models/userModel.js";
+import { Event } from "../models/eventModel.js";
 import bcrypt from "bcryptjs";
 import { makeError, safeUserForAdmin } from "../utils/helperFunctions.js";
 import {
@@ -160,3 +161,25 @@ export const unsuspendUser = (userId, reason) =>
         newStatus: "active",
         requireSuspended: true,
     });
+
+export async function getEventsList(search = "", tier = "") {
+    const q = {};
+    const normalizedSearch = String(search || "").trim();
+    const normalizedTier = String(tier || "").trim();
+
+    if (normalizedSearch) {
+        q.$or = [
+            { eventName: { $regex: normalizedSearch, $options: "i" } },
+            { description: { $regex: normalizedSearch, $options: "i" } },
+        ];
+    }
+    if (normalizedTier) q.tier = normalizedTier;
+
+    return await Event.find(q)
+        .sort({ createdAt: -1 })
+        .limit(500)
+        .select(
+            "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount createdAt updatedAt",
+        )
+        .populate("hostId", "userName email");
+}
