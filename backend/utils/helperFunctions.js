@@ -50,3 +50,15 @@ export const safeUserForAdmin = (user, requesterRole) => {
 
     return userData;
 };
+
+export const getEventBucketUnit = (event) => {
+    const start = new Date(event.startTime).getTime();
+    const end = new Date(event.endTime).getTime();
+    const range = Math.max(1, end - start);
+    const maxPoints = 10000;
+    const msPerPoint = Math.ceil(range / maxPoints);
+
+    if (msPerPoint <= 60 * 1000) return "minute";
+    if (msPerPoint <= 60 * 60 * 1000) return "hour";
+    return "day";
+};
