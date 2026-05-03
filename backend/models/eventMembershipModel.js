@@ -33,7 +33,6 @@ const EventMembershipSchema = new mongoose.Schema(
 
 EventMembershipSchema.index({ eventId: 1, userId: 1 }, { unique: true });
 
-export const EventMembership = mongoose.model(
-    "EventMembership",
-    EventMembershipSchema,
-);
+export const EventMembership =
+    mongoose.models.EventMembership ||
+    mongoose.model("EventMembership", EventMembershipSchema);
