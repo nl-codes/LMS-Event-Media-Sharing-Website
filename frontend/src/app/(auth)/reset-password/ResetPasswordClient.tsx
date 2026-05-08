@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import LandingButton from "@/components/buttons/LandingButton";
+import Button from "@/components/buttons/Button";
 
 export default function ResetPasswordClient() {
     const searchParams = useSearchParams();
@@ -37,7 +37,7 @@ export default function ResetPasswordClient() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ password }),
-                }
+                },
             );
 
             const data = await res.json();
@@ -108,12 +108,12 @@ export default function ResetPasswordClient() {
                     </div>
                 </div>
 
-                <LandingButton
+                <Button
                     type="submit"
                     loading={loading}
                     className="py-3 rounded-xl">
                     Reset Password
-                </LandingButton>
+                </Button>
             </form>
         </div>
     );
