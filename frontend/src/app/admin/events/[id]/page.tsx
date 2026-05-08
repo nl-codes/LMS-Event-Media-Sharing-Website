@@ -73,7 +73,9 @@ export default function AdminEventDetailsPage({
                 <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
                     <section className="rounded-3xl border border-cusblue/10 bg-white/60 p-6 shadow-xl shadow-cusblue/5">
                         <div className="flex flex-wrap items-center gap-3">
-                            {event.status && <StatusBadge status={event.status} />}
+                            {event.status && (
+                                <StatusBadge status={event.status} />
+                            )}
                             <span className="rounded-full bg-cusviolet/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-cusviolet">
                                 {event.tier || "free"}
                             </span>
@@ -182,9 +184,7 @@ function MetricCard({
             <p className="mt-5 text-xs font-black uppercase tracking-widest text-cusviolet/55">
                 {label}
             </p>
-            <p className="mt-2 text-4xl font-extrabold text-cusblue">
-                {value}
-            </p>
+            <p className="mt-2 text-4xl font-extrabold text-cusblue">{value}</p>
         </div>
     );
 }
