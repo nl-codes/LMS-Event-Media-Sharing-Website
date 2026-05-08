@@ -182,24 +182,13 @@ export async function getEventsList(search = "", tier = "") {
     }
     if (normalizedTier) q.tier = normalizedTier;
 
-    const events = await Event.find(q)
+    return await Event.find(q)
         .sort({ createdAt: -1 })
         .limit(500)
         .select(
-            "eventName description hostId startTime endTime location thumbnail status tier isPremium createdAt updatedAt",
+            "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount createdAt updatedAt",
         )
-        .populate("hostId", "userName email")
-        .lean();
-
-    return await Promise.all(
-        events.map(async (event) => {
-            const count = await getEventParticipationCount(event._id);
-            return {
-                ...event,
-                participantCount: count,
-            };
-        }),
-    );
+        .populate("hostId", "userName email");
 }
 
 export async function getEventDetails(eventId) {

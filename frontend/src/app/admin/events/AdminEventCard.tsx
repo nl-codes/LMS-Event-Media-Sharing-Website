@@ -38,10 +38,7 @@ export function AdminEventCard({ event, onSuspend }: AdminEventCardProps) {
 
             <div className="mt-5 grid gap-3 text-sm text-cusviolet/75 sm:grid-cols-2">
                 <Info label="Host" value={getHostLabel(event.hostId)} />
-                <Info
-                    label="Participants"
-                    value={String(event.participantCount || 0)}
-                />
+                <Info label="Location" value={String(event.location)} />
                 <Info label="Starts" value={formatDateTime(event.startTime)} />
                 <Info label="Ends" value={formatDateTime(event.endTime)} />
             </div>
