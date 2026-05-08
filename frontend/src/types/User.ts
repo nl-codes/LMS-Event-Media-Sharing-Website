@@ -2,7 +2,9 @@ export type User = {
     _id: string;
     userName: string;
     email: string;
-    role: string;
+    role: "user" | "admin" | "superadmin" | "guest";
+    status?: "pending" | "active" | "suspended";
+    adminRequestStatus?: "none" | "pending" | "approved" | "suspended";
 };
 
 export type UserContextType = {
@@ -15,7 +17,7 @@ export interface userJWTToken {
     id: string;
     email: string;
     userName: string;
-    role: "user" | "admin" | "guest";
+    role: "user" | "admin" | "superadmin" | "guest";
     iat: number;
     exp: number;
 }
