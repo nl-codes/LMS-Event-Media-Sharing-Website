@@ -1,4 +1,5 @@
 import { EventMembership } from "../models/eventMembershipModel.js";
+import { Guest } from "../models/guestModel.js";
 
 export const joinEvent = async (eventId, userId) => {
     if (!eventId || !userId) {
@@ -54,4 +55,17 @@ export const markChatAsRead = async (eventId, userId, time = new Date()) => {
             setDefaultsOnInsert: true,
         },
     );
+};
+
+export const getEventParticipationCount = async (eventId) => {
+    if (!eventId) {
+        throw new Error("eventId is required");
+    }
+
+    const [totalGuest, totalUsers] = await Promise.all([
+        Guest.countDocuments({ eventId }),
+        EventMembership.countDocuments({ eventId }),
+    ]);
+
+    return totalGuest + totalUsers;
 };

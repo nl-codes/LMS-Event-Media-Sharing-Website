@@ -14,6 +14,7 @@ import {
     generateNumericOtp,
     hashOtp,
 } from "./otpService.js";
+import { getEventParticipationCount } from "./eventMembershipService.js";
 
 export async function registerAdmin({ userName, email, password }) {
     if (!userName || !email || !password) {
@@ -181,13 +182,24 @@ export async function getEventsList(search = "", tier = "") {
     }
     if (normalizedTier) q.tier = normalizedTier;
 
-    return await Event.find(q)
+    const events = await Event.find(q)
         .sort({ createdAt: -1 })
         .limit(500)
         .select(
-            "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount createdAt updatedAt",
+            "eventName description hostId startTime endTime location thumbnail status tier isPremium createdAt updatedAt",
         )
-        .populate("hostId", "userName email");
+        .populate("hostId", "userName email")
+        .lean();
+
+    return await Promise.all(
+        events.map(async (event) => {
+            const count = await getEventParticipationCount(event._id);
+            return {
+                ...event,
+                participantCount: count,
+            };
+        }),
+    );
 }
 
 export async function getEventDetails(eventId) {
@@ -203,7 +215,7 @@ export async function getEventDetails(eventId) {
 
     const [uploadsTotal, participantsUnique] = await Promise.all([
         Media.countDocuments({ eventId: event._id }),
-        EventMembership.countDocuments({ eventId: event._id }),
+        getEventParticipationCount(eventId),
     ]);
 
     const unit = getEventBucketUnit(event);
