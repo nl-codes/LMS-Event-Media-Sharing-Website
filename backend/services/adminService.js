@@ -232,6 +232,10 @@ export async function getEventDetails(eventId) {
             description: event.description,
             startTime: event.startTime,
             endTime: event.endTime,
+            location: event.location,
+            hostId: {
+                userName: event.hostId.userName,
+            },
         },
         stats: {
             participants: participantsUnique,
