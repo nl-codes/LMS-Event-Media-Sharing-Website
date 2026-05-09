@@ -1,7 +1,6 @@
 import { User } from "../models/userModel.js";
 import { Event } from "../models/eventModel.js";
 import Media from "../models/mediaModel.js";
-import { EventMembership } from "../models/eventMemberShipModel.js";
 import bcrypt from "bcryptjs";
 import {
     getEventBucketUnit,
