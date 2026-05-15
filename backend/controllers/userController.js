@@ -26,7 +26,7 @@ export const registerUser = async (req, res) => {
 
         await registeredUser.save();
 
-        const testMode = true;
+        const testMode = process.env.NODE_ENV === "development";
         if (testMode) {
             registeredUser.status = "active";
             await registeredUser.save();

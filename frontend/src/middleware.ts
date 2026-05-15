@@ -6,6 +6,8 @@ const PUBLIC_PATHS = [
     "/",
     "/login",
     "/signup",
+    "/admin/login",
+    "/admin/signup",
     "/forgot-password",
     "/reset-password",
     "/signup/activate",
@@ -33,6 +35,12 @@ function isAuthPage(path: string) {
     return AUTH_ONLY_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 }
 
+function dashboardForRole(role: unknown) {
+    if (role === "superadmin") return "/superadmin/home";
+    if (role === "admin") return "/admin/home";
+    return "/home";
+}
+
 const secret = new TextEncoder().encode(process.env.JWT_SECRET_KEY);
 
 async function verifyToken(token: string) {
@@ -49,9 +57,29 @@ export async function middleware(request: NextRequest) {
     const token = request.cookies.get("token")?.value;
     const payload = token ? await verifyToken(token) : null;
 
+    if (pathname.startsWith("/super-admin")) {
+        return NextResponse.redirect(
+            new URL(
+                pathname.replace("/super-admin", "/superadmin"),
+                request.url,
+            ),
+        );
+    }
+
+    if (
+        payload &&
+        (pathname === "/admin/login" || pathname === "/admin/signup")
+    ) {
+        return NextResponse.redirect(
+            new URL(dashboardForRole(payload.role), request.url),
+        );
+    }
+
     // Authenticated user trying to access auth pages → redirect to /home
     if (payload && isAuthPage(pathname)) {
-        return NextResponse.redirect(new URL("/home", request.url));
+        return NextResponse.redirect(
+            new URL(dashboardForRole(payload.role), request.url),
+        );
     }
 
     // Public routes — allow access
@@ -61,11 +89,30 @@ export async function middleware(request: NextRequest) {
 
     // No valid token → redirect to login
     if (!payload) {
-        return NextResponse.redirect(new URL("/login", request.url));
+        return NextResponse.redirect(
+            new URL(
+                pathname.startsWith("/admin") ||
+                    pathname.startsWith("/superadmin")
+                    ? "/admin/login"
+                    : "/login",
+                request.url,
+            ),
+        );
     }
 
     // Role-based authorization
+    // - user-only home
     if (pathname.startsWith("/home") && payload.role !== "user") {
+        return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // - admin routes must be accessed by admin only
+    if (pathname.startsWith("/admin") && payload.role !== "admin") {
+        return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // - superadmin routes must be accessed by superadmin only
+    if (pathname.startsWith("/superadmin") && payload.role !== "superadmin") {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 

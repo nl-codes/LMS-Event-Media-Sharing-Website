@@ -1,3 +1,9 @@
+export function makeError(statusCode, message) {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    return error;
+}
+
 export const extractPublicIdFromUrl = (url) => {
     if (!url || typeof url !== "string") return null;
 
@@ -23,4 +29,36 @@ export const extractPublicIdFromUrl = (url) => {
         console.error("Error extracting Public ID:", error);
         return null;
     }
+};
+
+export const safeUserForAdmin = (user, requesterRole) => {
+    if (!user) return null;
+
+    const userData = {
+        _id: user._id,
+        userName: user.userName,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        createdAt: user.createdAt,
+    };
+
+    if (requesterRole === "superadmin") {
+        userData.suspensionCount = user.suspensionCount || 0;
+        userData.adminRequestStatus = user.adminRequestStatus;
+    }
+
+    return userData;
+};
+
+export const getEventBucketUnit = (event) => {
+    const start = new Date(event.startTime).getTime();
+    const end = new Date(event.endTime).getTime();
+    const range = Math.max(1, end - start);
+    const maxPoints = 10000;
+    const msPerPoint = Math.ceil(range / maxPoints);
+
+    if (msPerPoint <= 60 * 1000) return "minute";
+    if (msPerPoint <= 60 * 60 * 1000) return "hour";
+    return "day";
 };

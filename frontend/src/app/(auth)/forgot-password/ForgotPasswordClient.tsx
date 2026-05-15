@@ -2,8 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { toast } from "react-hot-toast";
-import LandingButton from "@/components/buttons/LandingButton";
 import BackButton from "@/components/navigation/BackButton";
+import Button from "@/components/buttons/Button";
 
 export default function ForgotPasswordClient() {
     const [email, setEmail] = useState("");
@@ -66,12 +66,12 @@ export default function ForgotPasswordClient() {
                     />
                 </div>
 
-                <LandingButton
+                <Button
                     type="submit"
                     loading={loading}
                     className="py-3 rounded-xl">
                     Send Reset Link
-                </LandingButton>
+                </Button>
             </form>
         </div>
     );

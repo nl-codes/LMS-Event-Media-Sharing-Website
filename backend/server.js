@@ -13,6 +13,9 @@ import eventMembershipRoutes from "./routes/eventMembershipRoute.js";
 import chatRoutes from "./routes/chatRoute.js";
 import paymentRoutes from "./routes/paymentRoute.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
+import adminRoutes from "./routes/adminRoute.js";
+import superAdminRoutes from "./routes/superAdminRoute.js";
+import { runStartupSync } from "./services/syncManager.js";
 
 import { setIO } from "./config/socketConfig.js";
 import { saveChatMessage } from "./services/chatService.js";
@@ -156,14 +159,6 @@ io.on("connection", (socket) => {
     });
 });
 
-const port = process.env.PORT;
-
-server.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
-
-connectDB();
-
 app.use("/users", userRoutes);
 app.use("/users/profile", profileRoutes);
 app.use("/events", eventRoutes);
@@ -171,3 +166,21 @@ app.use("/media", mediaRouter);
 app.use("/event-memberships", eventMembershipRoutes);
 app.use("/chats", chatRoutes);
 app.use("/payments", paymentRoutes);
+app.use("/admins", adminRoutes);
+app.use("/superadmins", superAdminRoutes);
+
+const port = process.env.PORT;
+
+const startServer = async () => {
+    await connectDB();
+    await runStartupSync();
+
+    server.listen(port, () => {
+        console.log(`🚀 Server is running on port ${port}`);
+    });
+};
+
+startServer().catch((error) => {
+    console.error("❌ Server startup failed:", error);
+    process.exit(1);
+});
