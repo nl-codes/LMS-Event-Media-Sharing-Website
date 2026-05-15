@@ -1,0 +1,280 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { MessageCircle, Send, X } from "lucide-react";
+import toast from "react-hot-toast";
+import { useParams, useRouter } from "next/navigation";
+import BackButton from "@/components/navigation/BackButton";
+import { useUser } from "@/context/UserContext";
+import { addComment, getComments } from "@/lib/interactionApi";
+import { getMediaById } from "@/lib/mediaApi";
+import type { Interaction } from "@/types/Interaction";
+import type { Media } from "@/types/Media";
+import Button from "@/components/buttons/Button";
+
+const formatDate = (date: string) =>
+    new Intl.DateTimeFormat("en", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(date));
+
+export default function MediaDetailPage() {
+    const params = useParams<{ id: string }>();
+    const mediaId = params.id;
+    const { user, isInitialized } = useUser();
+
+    const router = useRouter();
+
+    const [media, setMedia] = useState<Media | null>(null);
+    const [comments, setComments] = useState<Interaction[]>([]);
+    const [commentText, setCommentText] = useState("");
+    const [isMediaLoading, setIsMediaLoading] = useState(true);
+    const [areCommentsLoading, setAreCommentsLoading] = useState(true);
+    const [isPosting, setIsPosting] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const eventTitle = useMemo(() => {
+        if (!media) return "Untitled event";
+        return typeof media.eventId === "string"
+            ? "Untitled event"
+            : media.eventId.eventName;
+    }, [media]);
+
+    const uploadedBy =
+        media?.uploaderId?.userName || media?.guestId?.userName || "Unknown";
+    const canComment = isInitialized && user && user.role !== "guest";
+
+    useEffect(() => {
+        const loadMedia = async () => {
+            try {
+                const data = await getMediaById(mediaId);
+                setMedia(data);
+            } catch (error) {
+                toast.error(
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to load media",
+                );
+            } finally {
+                setIsMediaLoading(false);
+            }
+        };
+
+        if (mediaId) loadMedia();
+    }, [mediaId]);
+
+    useEffect(() => {
+        const loadComments = async () => {
+            try {
+                setAreCommentsLoading(true);
+                const data = await getComments(mediaId);
+                setComments(data);
+            } catch (error) {
+                toast.error(
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to load comments",
+                );
+            } finally {
+                setAreCommentsLoading(false);
+            }
+        };
+
+        if (mediaId) loadComments();
+    }, [mediaId]);
+
+    const handlePostComment = async () => {
+        const content = commentText.trim();
+        if (!content) {
+            toast.error("Write a comment first");
+            return;
+        }
+
+        try {
+            setIsPosting(true);
+            const savedComment = await addComment(mediaId, content);
+            setComments((prev) => [savedComment, ...prev]);
+            setCommentText("");
+            toast.success("Comment posted");
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to post comment",
+            );
+        } finally {
+            setIsPosting(false);
+        }
+    };
+
+    if (isMediaLoading) {
+        return (
+            <main className="min-h-screen bg-cuscream px-4 py-8 text-cusblue">
+                <div className="mx-auto max-w-6xl">
+                    <BackButton label="Back" />
+                    <div className="mt-8 h-[70vh] animate-pulse rounded-3xl bg-white/70" />
+                </div>
+            </main>
+        );
+    }
+
+    if (!media) {
+        return (
+            <main className="min-h-screen bg-cuscream px-4 py-8 text-cusblue">
+                <div className="mx-auto max-w-6xl">
+                    <BackButton label="Back" />
+                    <p className="mt-8 text-lg font-semibold">
+                        Media could not be found.
+                    </p>
+                </div>
+            </main>
+        );
+    }
+
+    return (
+        <main className="min-h-screen bg-cuscream px-4 py-6 text-cusblue sm:px-6 lg:px-10">
+            <div className="mx-auto max-w-6xl">
+                <BackButton label="Back" />
+
+                <section className="mt-5 overflow-hidden rounded-3xl bg-white/80 shadow-xl ring-1 ring-cusblue/10">
+                    <div className="flex min-h-[52vh] items-center justify-center bg-slate-950 sm:min-h-[68vh]">
+                        {["photo", "image"].includes(
+                            media.mediaType?.toLowerCase(),
+                        ) ? (
+                            <div className="relative h-[52vh] w-full sm:h-[68vh]">
+                                <Image
+                                    src={media.mediaUrl}
+                                    alt={media.label || ""}
+                                    fill
+                                    priority
+                                    className="object-contain"
+                                    sizes="100vw"
+                                />
+                            </div>
+                        ) : (
+                            <video
+                                src={media.mediaUrl}
+                                className="max-h-[68vh] w-full bg-slate-950 object-contain"
+                                controls
+                            />
+                        )}
+                    </div>
+
+                    <div className="space-y-5 p-5 sm:p-7">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-widest text-cusviolet">
+                                    {eventTitle}
+                                </p>
+                                <h1 className="mt-1 text-2xl font-black text-cusblue sm:text-3xl">
+                                    {media.label || "Event media"}
+                                </h1>
+                                <p className="mt-2 text-sm font-medium text-slate-600">
+                                    Uploaded by {uploadedBy} on{" "}
+                                    {formatDate(media.createdAt)}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(true)}
+                                className="inline-flex w-fit items-center gap-2 rounded-2xl border border-cusblue/10 bg-white px-4 py-3 text-sm font-extrabold text-cusblue shadow-sm transition hover:bg-cusblue hover:text-white"
+                                aria-label="Open comments">
+                                <MessageCircle className="h-5 w-5" />
+                                <span>{comments.length}</span>
+                                <span>Comments</span>
+                            </button>
+                        </div>
+
+                        <div className="border-t border-cusblue/10 pt-5">
+                            {canComment ? (
+                                <div className="flex flex-col gap-3">
+                                    <textarea
+                                        value={commentText}
+                                        onChange={(event) =>
+                                            setCommentText(event.target.value)
+                                        }
+                                        rows={3}
+                                        maxLength={600}
+                                        placeholder="Add a comment..."
+                                        className="w-full resize-none rounded-2xl border border-cusblue/15 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cusviolet focus:ring-4 focus:ring-cusviolet/10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handlePostComment}
+                                        disabled={isPosting}
+                                        className="inline-flex w-fit items-center gap-2 rounded-2xl bg-linear-to-r from-cusblue to-cusviolet px-5 py-3 text-sm font-extrabold text-white shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60">
+                                        <Send className="h-4 w-4" />
+                                        {isPosting ? "Posting..." : "Post"}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-4">
+                                    <p className="text-sm font-medium text-slate-500">
+                                        Login in to comment.
+                                    </p>
+                                    <Button
+                                        onClick={() => router.push("/login")}>
+                                        Login
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm">
+                    <div className="flex max-h-[82vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+                        <div className="flex items-center justify-between bg-linear-to-r from-cusblue to-cusviolet px-5 py-4 text-white">
+                            <div className="flex items-center gap-2">
+                                <MessageCircle className="h-5 w-5" />
+                                <h2 className="text-lg font-black">Comments</h2>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="rounded-full p-2 transition hover:bg-white/15"
+                                aria-label="Close comments">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="max-h-[62vh] overflow-y-auto p-5">
+                            {areCommentsLoading ? (
+                                <p className="text-sm font-semibold text-slate-500">
+                                    Loading comments...
+                                </p>
+                            ) : comments.length === 0 ? (
+                                <p className="text-sm font-semibold text-slate-500">
+                                    No comments yet.
+                                </p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {comments.map((comment) => (
+                                        <article
+                                            key={comment._id}
+                                            className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
+                                            <p className="text-sm font-black text-cusblue">
+                                                {comment.author?.userName ||
+                                                    "Unknown"}
+                                            </p>
+                                            <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">
+                                                {comment.content}
+                                            </p>
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </main>
+    );
+}
