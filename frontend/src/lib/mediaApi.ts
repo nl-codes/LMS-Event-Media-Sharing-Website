@@ -48,6 +48,11 @@ export async function getGallery(eventId: string) {
     return json.data || [];
 }
 
+export async function getMediaById(mediaId: string) {
+    const json = await request<Media>(`/media/item/${mediaId}`);
+    return json.data as Media;
+}
+
 export async function deleteMedia(mediaId: string) {
     const json = await request<{ success: boolean; message: string }>(
         `/media/${mediaId}`,
