@@ -126,6 +126,16 @@ export const getGallery = async (eventId) => {
         .populate("guestId", "userName guest_id");
 };
 
+export const getMediaById = async (mediaId) => {
+    const media = await Media.findById(mediaId)
+        .populate("eventId", "eventName uniqueSlug")
+        .populate("uploaderId", "userName")
+        .populate("guestId", "userName guest_id");
+
+    if (!media) throw new Error("Media not found");
+    return media;
+};
+
 // Delete a media item
 export const deleteMedia = async (mediaId, requesterId) => {
     const media = await Media.findById(mediaId);

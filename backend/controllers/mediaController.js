@@ -1,6 +1,7 @@
 import {
     uploadMultipleMedia,
     getGallery,
+    getMediaById,
     deleteMedia,
     deleteMultipleMedia,
     toggleLike,
@@ -80,6 +81,17 @@ export const getGalleryController = async (req, res) => {
         const { eventId } = req.params;
         const gallery = await getGallery(eventId);
         res.status(200).json({ success: true, data: gallery });
+    } catch (error) {
+        res.status(404).json({ success: false, message: error.message });
+    }
+};
+
+// Handles GET /media/item/:mediaId
+export const getMediaByIdController = async (req, res) => {
+    try {
+        const { mediaId } = req.params;
+        const media = await getMediaById(mediaId);
+        res.status(200).json({ success: true, data: media });
     } catch (error) {
         res.status(404).json({ success: false, message: error.message });
     }

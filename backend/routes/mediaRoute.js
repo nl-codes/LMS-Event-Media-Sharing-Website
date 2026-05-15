@@ -5,6 +5,7 @@ import multer from "multer";
 import {
     uploadMediaController,
     getGalleryController,
+    getMediaByIdController,
     deleteMediaController,
     deleteMultipleMediaController,
     toggleLikeController,
@@ -24,6 +25,9 @@ router.post(
     upload.array("files", 10),
     uploadMediaController,
 );
+
+// GET /item/:mediaId (public)
+router.get("/item/:mediaId", getMediaByIdController);
 
 // GET /:eventId (public)
 router.get("/:eventId", getGalleryController);
