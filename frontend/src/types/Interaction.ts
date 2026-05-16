@@ -5,8 +5,8 @@ export interface InteractionAuthor {
 
 export interface Interaction {
     _id: string;
-    type: "comment";
-    content: string;
+    type: "comment" | "like";
+    content?: string;
     author: InteractionAuthor;
     media: string;
     createdAt: string;
