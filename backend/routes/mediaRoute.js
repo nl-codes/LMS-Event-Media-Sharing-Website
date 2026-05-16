@@ -8,7 +8,6 @@ import {
     getMediaByIdController,
     deleteMediaController,
     deleteMultipleMediaController,
-    toggleLikeController,
     getHighlightsController,
     setMediaLabelController,
 } from "../controllers/mediaController.js";
@@ -37,9 +36,6 @@ router.delete("/", requireAuth, deleteMultipleMediaController);
 
 // DELETE /:mediaId (auth required)
 router.delete("/:mediaId", requireAuth, deleteMediaController);
-
-// POST /:mediaId/like (auth required)
-router.post("/:mediaId/like", requireAuth, toggleLikeController);
 
 // GET /:eventId/highlights (public)
 router.get("/:eventId/highlights", getHighlightsController);
