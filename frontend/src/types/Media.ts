@@ -11,7 +11,9 @@ export interface Media {
     publicId: string;
     mediaType: "photo" | "video" | "image";
     isHighlight: boolean;
+    /** Calculated by the API from like interactions. */
     likesCount: number;
+    /** Compatibility field calculated by the API from like interactions. */
     likedBy: string[];
     label?: string | null;
     createdAt: string;
