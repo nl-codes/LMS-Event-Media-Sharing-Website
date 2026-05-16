@@ -3,7 +3,9 @@ import {
     deleteComment,
     editComment,
     getCommentsByMediaId,
+    toggleLike,
 } from "../services/interactionService.js";
+import { getIO } from "../config/socketConfig.js";
 
 const getStatusCode = (error) => {
     const message = error.message.toLowerCase();
@@ -44,6 +46,40 @@ export const addCommentController = async (req, res) => {
         });
 
         res.status(201).json({ success: true, data: comment });
+    } catch (error) {
+        res.status(getStatusCode(error)).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const toggleLikeController = async (req, res) => {
+    try {
+        const authorId = req.user?.id;
+        if (!authorId) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required",
+            });
+        }
+
+        const result = await toggleLike({
+            mediaId: req.body.mediaId,
+            authorId,
+        });
+
+        const payload = {
+            mediaId: result.mediaId,
+            likesCount: result.likesCount,
+            userId: result.userId,
+            liked: result.liked,
+        };
+
+        const io = getIO();
+        io.to(result.eventId).emit("media_liked", payload);
+
+        res.status(200).json({ success: true, data: payload });
     } catch (error) {
         res.status(getStatusCode(error)).json({
             success: false,
