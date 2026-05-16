@@ -6,7 +6,10 @@ import Image from "next/image";
 import { Download, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButton";
-import { downloadSingleMedia } from "@/utils/HelperFunctions";
+import {
+    downloadSingleMedia,
+    normalizeLikedByIds,
+} from "@/utils/HelperFunctions";
 import toast from "react-hot-toast";
 
 interface MediaCardProps {
@@ -35,7 +38,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     const router = useRouter();
     const isUploader = media.uploaderId?._id === currentUserId;
     const canDelete = isHost || isUploader;
-    const isLiked = media.likedBy?.includes(currentUserId);
+    const isLiked = normalizeLikedByIds(media.likedBy).includes(currentUserId);
     const displayName =
         media.uploaderId?.userName || media.guestId?.userName || "Unknown";
     const uploadedBy = media.uploaderId?.userName ? "User" : "Guest";
