@@ -9,6 +9,13 @@ type ApiResponse<T> = {
     data?: T;
 };
 
+export type ToggleLikeResponse = {
+    mediaId: string;
+    likesCount: number;
+    userId: string;
+    liked: boolean;
+};
+
 async function request<T>(path: string, options: RequestInit = {}) {
     const res = await fetch(`${API_BASE}${path}`, {
         credentials: "include",
@@ -73,10 +80,12 @@ export async function deleteMultipleMedia(mediaIds: string[]) {
 }
 
 export async function toggleLike(mediaId: string) {
-    const json = await request<Media>(`/media/${mediaId}/like`, {
+    const json = await request<ToggleLikeResponse>(`/interactions/toggle-like`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mediaId }),
     });
-    return json.data as Media;
+    return json.data as ToggleLikeResponse;
 }
 
 export async function getHighlights(eventId: string) {
