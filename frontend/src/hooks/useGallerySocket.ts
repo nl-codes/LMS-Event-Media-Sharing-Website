@@ -6,7 +6,12 @@ interface UseGallerySocketProps {
     eventId: string;
     onNewMedia: (media: Media) => void;
     onMediaDeleted: (mediaId: string) => void;
-    onMediaLiked: (data: { mediaId: string; likesCount: number }) => void;
+    onMediaLiked: (data: {
+        mediaId: string;
+        likesCount: number;
+        userId: string;
+        liked?: boolean;
+    }) => void;
 }
 
 type IncomingSocketMedia = Media & {
