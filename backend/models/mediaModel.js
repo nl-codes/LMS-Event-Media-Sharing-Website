@@ -38,16 +38,6 @@ const mediaSchema = new Schema({
         type: Boolean,
         default: false,
     },
-    likesCount: {
-        type: Number,
-        default: 0,
-    },
-    likedBy: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: "User",
-        },
-    ],
     label: {
         type: String,
         default: null,
