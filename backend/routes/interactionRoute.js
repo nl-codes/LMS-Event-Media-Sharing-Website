@@ -5,11 +5,13 @@ import {
     deleteCommentController,
     editCommentController,
     getCommentsController,
+    toggleLikeController,
 } from "../controllers/interactionController.js";
 
 const router = express.Router();
 
 router.get("/:mediaId", getCommentsController);
+router.post("/toggle-like", requireAuth, toggleLikeController);
 router.post("/", requireAuth, addCommentController);
 router.put("/:id", requireAuth, editCommentController);
 router.delete("/:id", requireAuth, deleteCommentController);
