@@ -6,7 +6,7 @@ const InteractionSchema = new Schema(
     {
         type: {
             type: String,
-            enum: ["comment"],
+            enum: ["comment", "like"],
             required: true,
         },
         content: {
@@ -31,6 +31,14 @@ const InteractionSchema = new Schema(
 );
 
 InteractionSchema.index({ media: 1, createdAt: -1 });
+InteractionSchema.index({ media: 1, type: 1 });
+InteractionSchema.index(
+    { author: 1, media: 1, type: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { type: "like" },
+    },
+);
 
 const Interaction = mongoose.model("Interaction", InteractionSchema);
 export default Interaction;
