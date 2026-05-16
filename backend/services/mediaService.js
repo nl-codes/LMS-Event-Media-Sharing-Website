@@ -1,6 +1,55 @@
 import Media from "../models/mediaModel.js";
 import { Event } from "../models/eventModel.js";
+import Interaction from "../models/interactionModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
+
+const attachLikeMetadata = async (mediaDocs) => {
+    const docs = Array.isArray(mediaDocs) ? mediaDocs : [mediaDocs];
+    if (docs.length === 0) return mediaDocs;
+
+    const mediaIds = docs.map((media) => media._id);
+    const likeGroups = await Interaction.aggregate([
+        {
+            $match: {
+                media: { $in: mediaIds },
+                type: "like",
+            },
+        },
+        {
+            $group: {
+                _id: "$media",
+                likesCount: { $sum: 1 },
+                likedBy: { $addToSet: "$author" },
+            },
+        },
+    ]);
+
+    const likesByMediaId = new Map(
+        likeGroups.map((item) => [
+            String(item._id),
+            {
+                likesCount: item.likesCount,
+                likedBy: item.likedBy.map(String),
+            },
+        ]),
+    );
+
+    const enriched = docs.map((media) => {
+        const plain =
+            typeof media.toObject === "function" ? media.toObject() : media;
+        const likeMetadata = likesByMediaId.get(String(plain._id)) || {
+            likesCount: 0,
+            likedBy: [],
+        };
+
+        return {
+            ...plain,
+            ...likeMetadata,
+        };
+    });
+
+    return Array.isArray(mediaDocs) ? enriched : enriched[0];
+};
 
 // Upload multiple files to Cloudinary and save them to DB
 export const uploadMultipleMedia = async (
@@ -120,10 +169,12 @@ export const uploadMultipleMedia = async (
 
 // Get all media for an event
 export const getGallery = async (eventId) => {
-    return Media.find({ eventId })
+    const media = await Media.find({ eventId })
         .sort({ createdAt: -1 })
         .populate("uploaderId", "userName")
         .populate("guestId", "userName guest_id");
+
+    return attachLikeMetadata(media);
 };
 
 export const getMediaById = async (mediaId) => {
@@ -133,7 +184,7 @@ export const getMediaById = async (mediaId) => {
         .populate("guestId", "userName guest_id");
 
     if (!media) throw new Error("Media not found");
-    return media;
+    return attachLikeMetadata(media);
 };
 
 // Delete a media item
@@ -154,6 +205,7 @@ export const deleteMedia = async (mediaId, requesterId) => {
         await cloudinary.uploader.destroy(media.publicId, {
             resource_type: media.mediaType === "video" ? "video" : "image",
         });
+        await Interaction.deleteMany({ media: mediaId });
         await media.deleteOne();
         return { success: true, message: "Media deleted" };
     } else {
@@ -227,6 +279,7 @@ export const deleteMultipleMedia = async (mediaIds, requesterId) => {
     }
 
     // 4. Database Cleanup
+    await Interaction.deleteMany({ media: { $in: uniqueMediaIds } });
     await Media.deleteMany({ _id: { $in: uniqueMediaIds } });
 
     return {
@@ -239,31 +292,14 @@ export const deleteMultipleMedia = async (mediaIds, requesterId) => {
     };
 };
 
-// Toggle like/unlike
-export const toggleLike = async (mediaId, userId) => {
-    if (!userId) throw new Error("Guests cannot like media");
-    const media = await Media.findById(mediaId);
-    if (!media) throw new Error("Media not found");
-    const idx = media.likedBy.findIndex((id) => id.toString() === userId);
-    if (idx !== -1) {
-        // Unlike
-        media.likedBy.splice(idx, 1);
-        media.likesCount = Math.max(0, media.likesCount - 1);
-    } else {
-        // Like
-        media.likedBy.push(userId);
-        media.likesCount += 1;
-    }
-    await media.save();
-    return media;
-};
-
 // Get highlights for an event
 export const getHighlights = async (eventId) => {
-    return Media.find({ eventId, isHighlight: true })
+    const highlights = await Media.find({ eventId, isHighlight: true })
         .sort({ createdAt: -1 })
         .populate("uploaderId", "userName")
         .populate("guestId", "userName guest_id");
+
+    return attachLikeMetadata(highlights);
 };
 
 // Delete all media for an event (auto-deletion)
@@ -274,6 +310,9 @@ export const deleteAllMediaForEvent = async (eventId) => {
             resource_type: media.mediaType === "video" ? "video" : "image",
         });
     }
+    await Interaction.deleteMany({
+        media: { $in: mediaList.map((media) => media._id) },
+    });
     await Media.deleteMany({ eventId });
     return { success: true, message: "All media deleted for event" };
 };
