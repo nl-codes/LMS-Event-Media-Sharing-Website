@@ -32,6 +32,80 @@ export const addComment = async ({ content, authorId, mediaId }) => {
     return Interaction.findById(comment._id).populate("author", "userName");
 };
 
+const toggleLikeOperation = async ({ authorId, mediaId, session = null }) => {
+    const media = await Media.findById(mediaId)
+        .select("_id eventId")
+        .session(session);
+
+    if (!media) {
+        throw new Error("Media not found");
+    }
+
+    const existingLike = await Interaction.findOne({
+        author: authorId,
+        media: mediaId,
+        type: "like",
+    }).session(session);
+
+    let liked;
+    if (existingLike) {
+        await Interaction.deleteOne({ _id: existingLike._id }).session(session);
+        liked = false;
+    } else {
+        await Interaction.create(
+            [
+                {
+                    type: "like",
+                    author: authorId,
+                    media: mediaId,
+                },
+            ],
+            { session },
+        );
+        liked = true;
+    }
+
+    const likesCount = await Interaction.countDocuments({
+        media: mediaId,
+        type: "like",
+    }).session(session);
+
+    return {
+        mediaId: String(media._id),
+        eventId: String(media.eventId),
+        userId: String(authorId),
+        liked,
+        likesCount,
+    };
+};
+
+export const toggleLike = async ({ mediaId, authorId }) => {
+    validateObjectId(authorId, "author id");
+    validateObjectId(mediaId, "media id");
+
+    const session = await mongoose.startSession();
+
+    try {
+        let result;
+        await session.withTransaction(async () => {
+            result = await toggleLikeOperation({ authorId, mediaId, session });
+        });
+        return result;
+    } catch (error) {
+        const transactionUnsupported =
+            error.message.includes("Transaction numbers") ||
+            error.message.includes("replica set member");
+
+        if (!transactionUnsupported) {
+            throw error;
+        }
+
+        return toggleLikeOperation({ authorId, mediaId });
+    } finally {
+        await session.endSession();
+    }
+};
+
 export const getCommentsByMediaId = async (mediaId) => {
     validateObjectId(mediaId, "media id");
 
