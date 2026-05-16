@@ -55,7 +55,27 @@ const GalleryPage = () => {
             setGallery((prev) => prev.filter((m) => m._id !== mediaId));
             setSelectedIds((prev) => prev.filter((id) => id !== mediaId));
         },
-        onMediaLiked: () => {},
+        onMediaLiked: ({ mediaId, likesCount, userId, liked }) => {
+            setGallery((prev) =>
+                prev.map((media) => {
+                    if (media._id !== mediaId) return media;
+
+                    const likedBy = normalizeLikedByIds(media.likedBy);
+                    const nextLikedBy =
+                        typeof liked === "boolean" && userId
+                            ? liked
+                                ? [...new Set([...likedBy, userId])]
+                                : likedBy.filter((id) => id !== userId)
+                            : likedBy;
+
+                    return {
+                        ...media,
+                        likedBy: nextLikedBy,
+                        likesCount,
+                    };
+                }),
+            );
+        },
     });
 
     const fetchGallery = useCallback(async () => {
@@ -212,7 +232,17 @@ const GalleryPage = () => {
         );
 
         try {
-            await toggleLike(mediaId);
+            const result = await toggleLike(mediaId);
+            setGallery((prev) =>
+                prev.map((media) =>
+                    media._id === mediaId
+                        ? {
+                              ...media,
+                              likesCount: result.likesCount,
+                          }
+                        : media,
+                ),
+            );
         } catch (err) {
             setGallery(previousGallery);
             const errorMessage =
