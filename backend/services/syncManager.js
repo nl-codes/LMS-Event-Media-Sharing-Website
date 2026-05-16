@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
-import Media from "../models/mediaModel.js";
 
 const DEFAULT_FREE_EVENT_LIMIT = 100;
 
@@ -111,26 +110,6 @@ export const syncEventParticipantCounts = async () => {
     };
 };
 
-export const syncMediaLikesCounts = async () => {
-    const result = await Media.updateMany({}, [
-        {
-            $set: {
-                likesCount: {
-                    $size: {
-                        $ifNull: ["$likedBy", []],
-                    },
-                },
-            },
-        },
-    ]);
-
-    return {
-        name: "mediaLikesCounts",
-        matchedCount: result.matchedCount,
-        modifiedCount: result.modifiedCount,
-    };
-};
-
 export const runStartupSync = async () => {
     const now = new Date();
     const results = [];
@@ -138,7 +117,6 @@ export const runStartupSync = async () => {
     results.push(await syncCompletedEvents(now));
     results.push(await syncExpiredEventUpgrades(now));
     results.push(await syncEventParticipantCounts());
-    results.push(await syncMediaLikesCounts());
 
     console.table(results);
     return results;
