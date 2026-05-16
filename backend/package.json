@@ -5,6 +5,7 @@
     "main": "server.js",
     "scripts": {
         "setup:superadmin": "node scripts/create_superadmin.js",
+        "migrate:media-likes": "node scripts/migrate_media_likes_to_interactions.js",
         "dev": "nodemon server.js",
         "start": "node server.js"
     },
