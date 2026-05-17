@@ -2,6 +2,7 @@ import { backend_url } from "@/config/backend";
 import { Report, ReportTargetType } from "@/types/Report";
 import { type Notification } from "@/types/Notification";
 import { FlaggedMedia } from "@/types/Media";
+import { Appeal } from "@/types/Appeal";
 
 type ApiResponse<T> = {
     success?: boolean;
@@ -149,4 +150,33 @@ export async function submitUnsuspendAppeal(payload: {
         throw new Error(data.error || "Failed to submit appeal");
     }
     return data;
+}
+
+export async function getAppealCounts() {
+    const res = await request<{ pending: number; approved: number; rejected: number }>(
+        `/appeals/counts`,
+    );
+    return res.data || { pending: 0, approved: 0, rejected: 0 };
+}
+
+export async function listAppeals(status?: string) {
+    const query = status && status !== "all" ? `?status=${status}` : "";
+    const res = await request<Appeal[]>(`/appeals${query}`);
+    return res.data || [];
+}
+
+export async function approveAppeal(appealId: string, adminNote?: string) {
+    const res = await request<Appeal>(`/appeals/${appealId}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ adminNote: adminNote || "" }),
+    });
+    return res.data;
+}
+
+export async function rejectAppeal(appealId: string, adminNote?: string) {
+    const res = await request<Appeal>(`/appeals/${appealId}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ adminNote: adminNote || "" }),
+    });
+    return res.data;
 }
