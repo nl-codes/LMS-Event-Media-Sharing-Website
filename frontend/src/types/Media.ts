@@ -26,3 +26,12 @@ export interface Media {
         userName: string;
     };
 }
+
+export type FlaggedMedia = {
+    _id: string;
+    mediaUrl: string;
+    mediaType: string;
+    label?: string;
+    hiddenReason?: string;
+    createdAt: string;
+};
