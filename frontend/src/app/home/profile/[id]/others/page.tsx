@@ -18,6 +18,7 @@ import default_profile from "public/profile-male.png";
 import { getPublicProfile, type PublicProfile } from "@/lib/profileApi";
 import type { Event } from "@/types/Event";
 import clsx from "clsx";
+import BackButton from "@/components/navigation/BackButton";
 
 function formatMemberSince(dateStr: string) {
     return new Date(dateStr).toLocaleDateString(undefined, {
@@ -160,6 +161,9 @@ export default function OthersProfilePage() {
     return (
         <main className="min-h-screen bg-cuscream px-4 py-10">
             <div className="mx-auto max-w-5xl">
+                <div className="mb-6 flex flex-row items-center gap-4">
+                    <BackButton label="Back" />
+                </div>
                 {/* ── Top gradient banner card ── */}
                 <div className="mb-6 overflow-hidden rounded-3xl bg-white shadow-xl">
                     <div className="h-28 bg-linear-to-r from-cusblue to-cusviolet" />
