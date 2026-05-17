@@ -196,6 +196,22 @@ export default function MediaDetailPage() {
         }
     }, [activeTab, hasLoadedLikes, isModalOpen, loadLikes]);
 
+    useEffect(() => {
+        if (!isModalOpen) return;
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setIsModalOpen(false);
+            }
+        };
+
+        window.addEventListener("keydown", handleEscape);
+
+        return () => {
+            window.removeEventListener("keydown", handleEscape);
+        };
+    }, [isModalOpen]);
+
     const openModal = (tab: ModalTab) => {
         setActiveTab(tab);
         setIsModalOpen(true);
@@ -442,8 +458,15 @@ export default function MediaDetailPage() {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm">
-                    <div className="flex max-h-[82vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/60 shadow-2xl backdrop-blur-xl">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm"
+                    onClick={() => setIsModalOpen(false)}
+                    role="presentation">
+                    <div
+                        className="flex max-h-[82vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/60 shadow-2xl backdrop-blur-xl"
+                        onClick={(event) => event.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true">
                         <div className="flex items-center justify-between bg-linear-to-r from-cusblue to-cusviolet px-5 py-4 text-white">
                             <div className="flex items-center gap-2">
                                 {activeTab === "comments" ? (
