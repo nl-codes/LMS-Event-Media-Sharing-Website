@@ -11,7 +11,7 @@ export const createProfile = async (userId, profileData) => {
     if (existingProfile)
         throw new Error("Profile already exists for this user");
 
-    const { firstName, lastName, bio, profilePicture } = profileData;
+    const { firstName, lastName, bio, profilePicture, gender, country } = profileData;
 
     const newProfile = new Profile({
         user: userId,
@@ -19,6 +19,8 @@ export const createProfile = async (userId, profileData) => {
         lastName,
         bio,
         profilePicture: profilePicture || "",
+        gender: gender || "",
+        country: country || "",
     });
 
     return await newProfile.save();
@@ -37,11 +39,13 @@ export const updateProfile = async (userId, updateData, newImageUrl) => {
     const profile = await Profile.findOne({ user: userId });
     if (!profile) throw new Error("Profile not found");
 
-    const { firstName, lastName, bio } = updateData;
+    const { firstName, lastName, bio, gender, country } = updateData;
 
     if (firstName !== undefined) profile.firstName = firstName;
     if (lastName !== undefined) profile.lastName = lastName;
     if (bio !== undefined) profile.bio = bio;
+    if (gender !== undefined) profile.gender = gender;
+    if (country !== undefined) profile.country = country;
 
     if (newImageUrl) {
         if (profile.profilePicture) {
