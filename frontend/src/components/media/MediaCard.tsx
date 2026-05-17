@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Download, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButton";
+import ReportMenu from "@/components/report/ReportMenu";
 import {
     downloadSingleMedia,
     normalizeLikedByIds,
@@ -75,7 +76,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
     return (
         <div
             className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-4xl bg-white border shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
-                isSelected ? "border-2 border-orange-400 ring-2 ring-cusblue/40" : "border-slate-100"
+                isSelected
+                    ? "border-2 border-orange-400 ring-2 ring-cusblue/40"
+                    : "border-slate-100"
             }`}
             onClick={handleCardClick}>
             {/* Media Container */}
@@ -133,6 +136,19 @@ const MediaCard: React.FC<MediaCardProps> = ({
                         <DeleteMediaConfirmButton
                             mediaId={media._id}
                             onConfirm={onDelete}
+                        />
+                    </div>
+                )}
+
+                {/* Report Menu (visible to viewers who aren't the owner/host) */}
+                {!canDelete && !isSelectionActive && currentUserId && (
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute top-4 right-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <ReportMenu
+                            targetId={media._id}
+                            targetType="Media"
+                            targetLabel={media.label || undefined}
                         />
                     </div>
                 )}
