@@ -4,13 +4,13 @@ import {
     addCommentController,
     deleteCommentController,
     editCommentController,
-    getCommentsController,
+    getInteractionsController,
     toggleLikeController,
 } from "../controllers/interactionController.js";
 
 const router = express.Router();
 
-router.get("/:mediaId", getCommentsController);
+router.get("/:mediaId", getInteractionsController);
 router.post("/toggle-like", requireAuth, toggleLikeController);
 router.post("/", requireAuth, addCommentController);
 router.put("/:id", requireAuth, editCommentController);
