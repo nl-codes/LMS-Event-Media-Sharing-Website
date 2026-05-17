@@ -106,7 +106,7 @@ export default function NotificationBell() {
                     setOpen((prev) => !prev);
                     if (!open) load();
                 }}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-cusblue shadow-sm transition hover:bg-white"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-cusblue shadow-sm transition"
                 aria-label="Notifications">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
