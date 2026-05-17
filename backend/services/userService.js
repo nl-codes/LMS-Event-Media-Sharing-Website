@@ -8,8 +8,10 @@ export const addUsers = async ({ userName, email, password }) => {
     if (!userName || !email || !password) {
         throw new Error("Missing required fields");
     }
+    const emailLower = String(email).toLowerCase().trim();
+
     const existingUser = await User.findOne({
-        email: email,
+        email: emailLower,
     });
 
     if (existingUser) {
@@ -27,7 +29,7 @@ export const addUsers = async ({ userName, email, password }) => {
     const newUser = new User({
         userName: userName,
         password: hashedPassword,
-        email: email,
+        email: emailLower,
     });
 
     return await newUser.save();
