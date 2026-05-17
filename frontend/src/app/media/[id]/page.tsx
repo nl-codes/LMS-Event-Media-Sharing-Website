@@ -13,7 +13,10 @@ import { useGallerySocket } from "@/hooks/useGallerySocket";
 import type { Interaction } from "@/types/Interaction";
 import type { Media } from "@/types/Media";
 import Button from "@/components/buttons/Button";
-import { normalizeLikedByIds, normalizeMediaLikes } from "@/utils/HelperFunctions";
+import {
+    normalizeLikedByIds,
+    normalizeMediaLikes,
+} from "@/utils/HelperFunctions";
 
 type ModalTab = "comments" | "likes";
 
@@ -135,7 +138,9 @@ export default function MediaDetailPage() {
                 const likedBy = normalizeLikedByIds(data.likedBy);
                 setMedia(data);
                 setLikesCount(data.likesCount);
-                setIsLiked(Boolean(currentUserId && likedBy.includes(currentUserId)));
+                setIsLiked(
+                    Boolean(currentUserId && likedBy.includes(currentUserId)),
+                );
             } catch (error) {
                 toast.error(
                     error instanceof Error
@@ -178,9 +183,7 @@ export default function MediaDetailPage() {
             setHasLoadedLikes(true);
         } catch (error) {
             toast.error(
-                error instanceof Error
-                    ? error.message
-                    : "Failed to load likes",
+                error instanceof Error ? error.message : "Failed to load likes",
             );
         } finally {
             setAreLikesLoading(false);
@@ -200,7 +203,7 @@ export default function MediaDetailPage() {
 
     const handleToggleLike = async () => {
         if (!canLike) {
-            toast("Sign in to like");
+            toast.error("Sign in to like");
             return;
         }
 
@@ -260,9 +263,7 @@ export default function MediaDetailPage() {
                     likesCount: previousLikesCount,
                 };
             });
-            toast.error(
-                error instanceof Error ? error.message : "Like failed",
-            );
+            toast.error(error instanceof Error ? error.message : "Like failed");
         }
     };
 
@@ -360,30 +361,41 @@ export default function MediaDetailPage() {
                         </div>
 
                         <div className="flex w-full flex-wrap items-center gap-2 rounded-2xl border border-white/70 bg-white/60 p-2 shadow-sm ring-1 ring-cusblue/10 backdrop-blur-md sm:w-fit">
-                            <button
-                                type="button"
-                                onClick={handleToggleLike}
-                                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-extrabold text-cusblue transition hover:bg-white disabled:cursor-not-allowed"
-                                aria-label={
-                                    isLiked ? "Unlike media" : "Like media"
-                                }>
-                                <Heart
-                                    className={`h-5 w-5 transition duration-200 ${
-                                        isLikeAnimating
-                                            ? "scale-125"
-                                            : "scale-100"
-                                    }`}
-                                    color={isLiked ? "#f43f5e" : "currentColor"}
-                                    fill={isLiked ? "#f43f5e" : "none"}
-                                />
-                                <span>{likesCount}</span>
-                                <span>Likes</span>
-                            </button>
+                            <div className="inline-flex items-center gap-1 rounded-xl px-2 py-1 text-sm font-extrabold text-cusblue transition hover:bg-white">
+                                <button
+                                    type="button"
+                                    onClick={handleToggleLike}
+                                    className="rounded-lg p-2 transition hover:cursor-pointer disabled:cursor-not-allowed"
+                                    aria-label={
+                                        isLiked ? "Unlike media" : "Like media"
+                                    }>
+                                    <Heart
+                                        className={`h-5 w-5 transition duration-200 ${
+                                            isLikeAnimating
+                                                ? "scale-125"
+                                                : "scale-100"
+                                        }`}
+                                        color={
+                                            isLiked ? "#f43f5e" : "currentColor"
+                                        }
+                                        fill={isLiked ? "#f43f5e" : "none"}
+                                    />
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => openModal("likes")}
+                                    className="rounded-lg px-2 py-2 transition hover:cursor-pointer"
+                                    aria-label="View likes">
+                                    <span>{likesCount}</span>
+                                    <span className="ml-1">Likes</span>
+                                </button>
+                            </div>
 
                             <button
                                 type="button"
                                 onClick={() => openModal("comments")}
-                                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-extrabold text-cusblue transition hover:bg-white"
+                                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-extrabold text-cusblue transition hover:cursor-pointer"
                                 aria-label="Open comments">
                                 <MessageCircle className="h-5 w-5" />
                                 <span>{comments.length}</span>
@@ -416,7 +428,7 @@ export default function MediaDetailPage() {
                             ) : (
                                 <div className="flex items-center gap-4">
                                     <p className="text-sm font-medium text-slate-500">
-                                        Login in to comment.
+                                        Login in to like and comment.
                                     </p>
                                     <Button
                                         onClick={() => router.push("/login")}>
@@ -499,8 +511,7 @@ export default function MediaDetailPage() {
                                                 key={comment._id}
                                                 className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
                                                 <p className="text-sm font-black text-cusblue">
-                                                    {comment.author
-                                                        ?.userName ||
+                                                    {comment.author?.userName ||
                                                         "Unknown"}
                                                 </p>
                                                 <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">
@@ -525,10 +536,7 @@ export default function MediaDetailPage() {
                                             key={like._id}
                                             className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cusviolet/10 text-sm font-black text-cusviolet">
-                                                {(
-                                                    like.author?.userName ||
-                                                    "U"
-                                                )
+                                                {(like.author?.userName || "U")
                                                     .slice(0, 1)
                                                     .toUpperCase()}
                                             </div>
