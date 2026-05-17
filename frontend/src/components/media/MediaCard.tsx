@@ -4,8 +4,12 @@ import React from "react";
 import type { Media } from "@/types/Media";
 import Image from "next/image";
 import { Download, Heart } from "lucide-react";
+import { useRouter } from "next/navigation";
 import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButton";
-import { downloadSingleMedia } from "@/utils/HelperFunctions";
+import {
+    downloadSingleMedia,
+    normalizeLikedByIds,
+} from "@/utils/HelperFunctions";
 import toast from "react-hot-toast";
 
 interface MediaCardProps {
@@ -31,9 +35,10 @@ const MediaCard: React.FC<MediaCardProps> = ({
     isSelectionActive = false,
     onSelectionToggle,
 }) => {
+    const router = useRouter();
     const isUploader = media.uploaderId?._id === currentUserId;
     const canDelete = isHost || isUploader;
-    const isLiked = media.likedBy?.includes(currentUserId);
+    const isLiked = normalizeLikedByIds(media.likedBy).includes(currentUserId);
     const displayName =
         media.uploaderId?.userName || media.guestId?.userName || "Unknown";
     const uploadedBy = media.uploaderId?.userName ? "User" : "Guest";
@@ -59,15 +64,19 @@ const MediaCard: React.FC<MediaCardProps> = ({
     };
 
     const handleCardClick = () => {
-        if (!isSelectionActive) return;
-        onSelectionToggle?.(media._id);
+        if (isSelectionActive) {
+            onSelectionToggle?.(media._id);
+            return;
+        }
+
+        router.push(`/media/${media._id}`);
     };
 
     return (
         <div
-            className={`group relative flex flex-col overflow-hidden rounded-4xl bg-white border shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
-                isSelectionActive ? "cursor-pointer" : ""
-            } ${isSelected ? "border-2 border-orange-400 ring-2 ring-cusblue/40" : "border-slate-100"}`}
+            className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-4xl bg-white border shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
+                isSelected ? "border-2 border-orange-400 ring-2 ring-cusblue/40" : "border-slate-100"
+            }`}
             onClick={handleCardClick}>
             {/* Media Container */}
             <div className="relative h-72 w-full overflow-hidden bg-slate-100">
@@ -118,7 +127,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
                 {/* Delete Button - Smooth fade & slide */}
                 {canDelete && !isSelectionActive && (
-                    <div className="absolute top-4 right-4 translate-x-4 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute top-4 right-4 translate-x-4 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
                         <DeleteMediaConfirmButton
                             mediaId={media._id}
                             onConfirm={onDelete}

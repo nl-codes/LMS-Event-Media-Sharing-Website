@@ -84,9 +84,25 @@ export default function EventPublicGallery() {
             setGallery((prev) => prev.filter((m) => m._id !== mediaId));
             setSelectedIds((prev) => prev.filter((id) => id !== mediaId));
         },
-        onMediaLiked: ({ mediaId, likesCount }) => {
+        onMediaLiked: ({ mediaId, likesCount, userId, liked }) => {
             setGallery((prev) =>
-                prev.map((m) => (m._id === mediaId ? { ...m, likesCount } : m)),
+                prev.map((media) => {
+                    if (media._id !== mediaId) return media;
+
+                    const likedBy = normalizeLikedByIds(media.likedBy);
+                    const nextLikedBy =
+                        typeof liked === "boolean" && userId
+                            ? liked
+                                ? [...new Set([...likedBy, userId])]
+                                : likedBy.filter((id) => id !== userId)
+                            : likedBy;
+
+                    return {
+                        ...media,
+                        likedBy: nextLikedBy,
+                        likesCount,
+                    };
+                }),
             );
         },
     });
@@ -289,7 +305,17 @@ export default function EventPublicGallery() {
         );
 
         try {
-            await toggleLike(mediaId);
+            const result = await toggleLike(mediaId);
+            setGallery((prev) =>
+                prev.map((media) =>
+                    media._id === mediaId
+                        ? {
+                              ...media,
+                              likesCount: result.likesCount,
+                          }
+                        : media,
+                ),
+            );
         } catch (err) {
             setGallery(previousGallery);
             const errorMessage =

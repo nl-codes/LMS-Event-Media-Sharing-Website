@@ -26,6 +26,7 @@ export const normalizeLikedByIds = (likedBy: unknown): string[] => {
 export const normalizeMediaLikes = (media: Media): Media => {
     return {
         ...media,
+        likesCount: media.likesCount || 0,
         likedBy: normalizeLikedByIds(media.likedBy),
     };
 };

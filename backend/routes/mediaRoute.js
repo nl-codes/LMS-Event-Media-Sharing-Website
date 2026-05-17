@@ -5,9 +5,9 @@ import multer from "multer";
 import {
     uploadMediaController,
     getGalleryController,
+    getMediaByIdController,
     deleteMediaController,
     deleteMultipleMediaController,
-    toggleLikeController,
     getHighlightsController,
     setMediaLabelController,
 } from "../controllers/mediaController.js";
@@ -25,6 +25,9 @@ router.post(
     uploadMediaController,
 );
 
+// GET /item/:mediaId (public)
+router.get("/item/:mediaId", getMediaByIdController);
+
 // GET /:eventId (public)
 router.get("/:eventId", getGalleryController);
 
@@ -33,9 +36,6 @@ router.delete("/", requireAuth, deleteMultipleMediaController);
 
 // DELETE /:mediaId (auth required)
 router.delete("/:mediaId", requireAuth, deleteMediaController);
-
-// POST /:mediaId/like (auth required)
-router.post("/:mediaId/like", requireAuth, toggleLikeController);
 
 // GET /:eventId/highlights (public)
 router.get("/:eventId/highlights", getHighlightsController);

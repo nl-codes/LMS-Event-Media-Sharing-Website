@@ -1,9 +1,9 @@
 import {
     uploadMultipleMedia,
     getGallery,
+    getMediaById,
     deleteMedia,
     deleteMultipleMedia,
-    toggleLike,
     getHighlights,
     setMediaLabel,
 } from "../services/mediaService.js";
@@ -60,7 +60,12 @@ export const uploadMediaController = async (req, res) => {
         );
         const mediaPayload = mediaDocs.map((media) => {
             const populated = mediaMap.get(String(media._id));
-            return populated ? populated.toObject() : media.toObject();
+            const plain = populated ? populated.toObject() : media.toObject();
+            return {
+                ...plain,
+                likesCount: 0,
+                likedBy: [],
+            };
         });
 
         const io = getIO();
@@ -80,6 +85,17 @@ export const getGalleryController = async (req, res) => {
         const { eventId } = req.params;
         const gallery = await getGallery(eventId);
         res.status(200).json({ success: true, data: gallery });
+    } catch (error) {
+        res.status(404).json({ success: false, message: error.message });
+    }
+};
+
+// Handles GET /media/item/:mediaId
+export const getMediaByIdController = async (req, res) => {
+    try {
+        const { mediaId } = req.params;
+        const media = await getMediaById(mediaId);
+        res.status(200).json({ success: true, data: media });
     } catch (error) {
         res.status(404).json({ success: false, message: error.message });
     }
@@ -146,30 +162,6 @@ export const deleteMultipleMediaController = async (req, res) => {
         });
     } catch (error) {
         res.status(403).json({ success: false, message: error.message });
-    }
-};
-
-// Handles POST /media/:mediaId/like
-export const toggleLikeController = async (req, res) => {
-    try {
-        const { mediaId } = req.params;
-        const userId = req.user?.id;
-        if (!userId) {
-            return res
-                .status(401)
-                .json({ success: false, message: "Authentication required" });
-        }
-        const updatedMedia = await toggleLike(mediaId, userId);
-
-        const io = getIO();
-        io.to(String(updatedMedia.eventId)).emit("media_liked", {
-            mediaId,
-            likesCount: updatedMedia.likesCount,
-        });
-
-        res.status(200).json({ success: true, data: updatedMedia });
-    } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
     }
 };
 
