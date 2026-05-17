@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Heart, MessageCircle, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
@@ -540,11 +541,17 @@ export default function MediaDetailPage() {
                                                     key={comment._id}
                                                     className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
                                                     <div className="flex items-start justify-between gap-3">
-                                                        <p className="text-sm font-black text-cusblue">
-                                                            {comment.author
-                                                                ?.userName ||
-                                                                "Unknown"}
-                                                        </p>
+                                                        {comment.author?._id ? (
+                                                            <Link
+                                                                href={`/home/profile/${comment.author._id}/others`}
+                                                                className="text-sm font-black text-cusblue hover:underline">
+                                                                {comment.author.userName || "Unknown"}
+                                                            </Link>
+                                                        ) : (
+                                                            <p className="text-sm font-black text-cusblue">
+                                                                Unknown
+                                                            </p>
+                                                        )}
                                                         {currentUserId &&
                                                             !isOwnComment && (
                                                                 <ReportMenu
