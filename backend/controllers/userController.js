@@ -8,6 +8,7 @@ import {
 } from "../services/userService.js";
 import { User } from "../models/userModel.js";
 import { createNotification } from "../services/notificationService.js";
+import { createAppeal } from "../services/appealService.js";
 import { generateGeneralToken } from "../utils/generateToken.js";
 import { generateJWTtoken } from "../utils/auth/generateJWTtoken.js";
 import {
@@ -180,27 +181,25 @@ export const submitUnsuspendAppeal = async (req, res) => {
             });
         }
 
-        const user = await User.findOne({ email: String(email).toLowerCase() });
-        if (!user || user.status !== "suspended") {
-            return res.status(200).json({
-                message: "Appeal received",
-            });
+        const result = await createAppeal({ email, appealMessage });
+
+        if (result) {
+            const { user } = result;
+            const admins = await User.find({
+                role: { $in: ["admin", "superadmin"] },
+            }).select("_id");
+
+            await Promise.all(
+                admins.map((admin) =>
+                    createNotification({
+                        recipientId: admin._id,
+                        message: `Unsuspend appeal from ${user.userName} (${user.email})`,
+                        type: "system",
+                        link: `/admin/appeals`,
+                    }),
+                ),
+            );
         }
-
-        const admins = await User.find({
-            role: { $in: ["admin", "superadmin"] },
-        }).select("_id");
-
-        await Promise.all(
-            admins.map((admin) =>
-                createNotification({
-                    recipientId: admin._id,
-                    message: `Unsuspend appeal from ${user.userName} (${user.email}): ${appealMessage.trim()}`,
-                    type: "system",
-                    link: `/admin/users`,
-                }),
-            ),
-        );
 
         return res.status(200).json({
             message: "Appeal received",
