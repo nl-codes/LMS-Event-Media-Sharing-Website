@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import BackButton from "@/components/navigation/BackButton";
+import ReportMenu from "@/components/report/ReportMenu";
 import { useUser } from "@/context/UserContext";
 import { addComment, getComments, getLikes } from "@/lib/interactionApi";
 import { getMediaById, toggleLike } from "@/lib/mediaApi";
@@ -529,19 +530,39 @@ export default function MediaDetailPage() {
                                     </p>
                                 ) : (
                                     <div className="space-y-4">
-                                        {comments.map((comment) => (
-                                            <article
-                                                key={comment._id}
-                                                className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
-                                                <p className="text-sm font-black text-cusblue">
-                                                    {comment.author?.userName ||
-                                                        "Unknown"}
-                                                </p>
-                                                <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">
-                                                    {comment.content}
-                                                </p>
-                                            </article>
-                                        ))}
+                                        {comments.map((comment) => {
+                                            const isOwnComment =
+                                                currentUserId &&
+                                                comment.author?._id ===
+                                                    currentUserId;
+                                            return (
+                                                <article
+                                                    key={comment._id}
+                                                    className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <p className="text-sm font-black text-cusblue">
+                                                            {comment.author
+                                                                ?.userName ||
+                                                                "Unknown"}
+                                                        </p>
+                                                        {currentUserId &&
+                                                            !isOwnComment && (
+                                                                <ReportMenu
+                                                                    targetId={
+                                                                        comment._id
+                                                                    }
+                                                                    targetType="Interaction"
+                                                                    targetLabel="comment"
+                                                                    triggerClassName="rounded-full p-1.5 text-slate-400 transition hover:bg-white hover:text-rose-500"
+                                                                />
+                                                            )}
+                                                    </div>
+                                                    <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">
+                                                        {comment.content}
+                                                    </p>
+                                                </article>
+                                            );
+                                        })}
                                     </div>
                                 )
                             ) : areLikesLoading ? (
