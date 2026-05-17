@@ -4,6 +4,7 @@ import {
     getProfile,
     updateProfile,
     deleteProfile,
+    getPublicProfile,
 } from "../services/profileService.js";
 
 export const addProfile = async (req, res) => {
@@ -65,6 +66,17 @@ export const editProfile = async (req, res) => {
         console.error("❌ Error updating profile: ", err);
         const status = err.message === "Profile not found" ? 404 : 400;
         res.status(status).json({ error: err.message });
+    }
+};
+
+export const retrievePublicProfile = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const data = await getPublicProfile(userId);
+        res.status(200).json({ success: true, data });
+    } catch (err) {
+        const status = err.message === "User not found" ? 404 : 400;
+        res.status(status).json({ success: false, error: err.message });
     }
 };
 
