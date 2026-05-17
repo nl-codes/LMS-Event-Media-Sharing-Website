@@ -26,15 +26,15 @@ export default function SignedHeader({ userName }: { userName: string }) {
                         {userName && `Welcome, ${userName}`}
                     </div>
 
+                    {/* Notification Bell */}
+                    <NotificationBell />
+
                     {/* Profile Button */}
                     <Button
                         className="flex items-center gap-2"
                         handleClick={handleProfileClick}>
                         Profile <FaRegUser />
                     </Button>
-
-                    {/* Notification Bell */}
-                    <NotificationBell />
 
                     {/* div is necessary to hold the logout content */}
                     <div>
