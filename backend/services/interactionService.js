@@ -106,15 +106,19 @@ export const toggleLike = async ({ mediaId, authorId }) => {
     }
 };
 
-export const getCommentsByMediaId = async (mediaId) => {
+export const getInteractionsByMediaId = async (mediaId, type = "comment") => {
     validateObjectId(mediaId, "media id");
+
+    if (!["comment", "like"].includes(type)) {
+        throw new Error("Invalid interaction type");
+    }
 
     const media = await Media.findById(mediaId).select("_id");
     if (!media) {
         throw new Error("Media not found");
     }
 
-    return Interaction.find({ media: mediaId, type: "comment" })
+    return Interaction.find({ media: mediaId, type })
         .sort({ createdAt: -1 })
         .populate("author", "userName");
 };
