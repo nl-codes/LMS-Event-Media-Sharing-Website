@@ -5,6 +5,7 @@ import {
     retrieveProfile,
     editProfile,
     removeProfile,
+    retrievePublicProfile,
 } from "../controllers/profileController.js";
 import { uploadUserProfile } from "../middleware/uploadMiddleware.js";
 
@@ -24,5 +25,6 @@ router.put(
     editProfile,
 );
 router.delete("/", requireAuth, removeProfile);
+router.get("/:userId/public", requireAuth, retrievePublicProfile);
 
 export default router;
