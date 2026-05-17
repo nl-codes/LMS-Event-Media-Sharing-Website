@@ -8,6 +8,7 @@ import {
     reactivateUser,
     registerUser,
     resetPasswordController,
+    submitUnsuspendAppeal,
 } from "../controllers/userController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
@@ -20,6 +21,7 @@ router.get("/activate", activateUser);
 router.post("/resend-activation", reactivateUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPasswordController);
+router.post("/unsuspend-appeal", submitUnsuspendAppeal);
 
 // Protected routes
 router.post("/logout", requireAuth, logoutUser);
