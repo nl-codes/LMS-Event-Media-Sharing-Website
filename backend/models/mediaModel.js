@@ -38,6 +38,15 @@ const mediaSchema = new Schema({
         type: Boolean,
         default: false,
     },
+    isHidden: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
+    hiddenReason: {
+        type: String,
+        default: "",
+    },
     label: {
         type: String,
         default: null,
