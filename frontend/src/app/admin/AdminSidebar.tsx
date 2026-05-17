@@ -2,14 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, LayoutDashboard, Shield, Users } from "lucide-react";
+import {
+    CalendarDays,
+    Flag,
+    LayoutDashboard,
+    Shield,
+    Users,
+    MessageSquareWarning,
+} from "lucide-react";
 import clsx from "clsx";
 import LogoutButton from "@/components/buttons/LogoutButton";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const navItems = [
     { href: "/admin/home", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/events", label: "Events", icon: CalendarDays },
     { href: "/admin/users", label: "Users", icon: Users },
+    { href: "/admin/reports", label: "Reporting", icon: Flag },
+    {
+        href: "/admin/appeals",
+        label: "Appeal Review",
+        icon: MessageSquareWarning,
+    },
 ];
 
 export default function AdminSidebar() {
@@ -56,8 +70,9 @@ export default function AdminSidebar() {
                     })}
                 </nav>
 
-                <div className="mt-4 lg:mt-6">
+                <div className="mt-4 flex items-center justify-between gap-2 lg:mt-6">
                     <LogoutButton redirectTo="/admin/login" />
+                    <NotificationBell />
                 </div>
             </div>
         </aside>

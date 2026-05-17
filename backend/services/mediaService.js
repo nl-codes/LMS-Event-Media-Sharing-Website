@@ -169,7 +169,7 @@ export const uploadMultipleMedia = async (
 
 // Get all media for an event
 export const getGallery = async (eventId) => {
-    const media = await Media.find({ eventId })
+    const media = await Media.find({ eventId, isHidden: { $ne: true } })
         .sort({ createdAt: -1 })
         .populate("uploaderId", "userName")
         .populate("guestId", "userName guest_id");

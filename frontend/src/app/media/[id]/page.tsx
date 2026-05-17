@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Heart, MessageCircle, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import BackButton from "@/components/navigation/BackButton";
+import ReportMenu from "@/components/report/ReportMenu";
 import { useUser } from "@/context/UserContext";
 import { addComment, getComments, getLikes } from "@/lib/interactionApi";
 import { getMediaById, toggleLike } from "@/lib/mediaApi";
@@ -529,19 +531,45 @@ export default function MediaDetailPage() {
                                     </p>
                                 ) : (
                                     <div className="space-y-4">
-                                        {comments.map((comment) => (
-                                            <article
-                                                key={comment._id}
-                                                className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
-                                                <p className="text-sm font-black text-cusblue">
-                                                    {comment.author?.userName ||
-                                                        "Unknown"}
-                                                </p>
-                                                <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">
-                                                    {comment.content}
-                                                </p>
-                                            </article>
-                                        ))}
+                                        {comments.map((comment) => {
+                                            const isOwnComment =
+                                                currentUserId &&
+                                                comment.author?._id ===
+                                                    currentUserId;
+                                            return (
+                                                <article
+                                                    key={comment._id}
+                                                    className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        {comment.author?._id ? (
+                                                            <Link
+                                                                href={`/home/profile/${comment.author._id}/others`}
+                                                                className="text-sm font-black text-cusblue hover:underline">
+                                                                {comment.author.userName || "Unknown"}
+                                                            </Link>
+                                                        ) : (
+                                                            <p className="text-sm font-black text-cusblue">
+                                                                Unknown
+                                                            </p>
+                                                        )}
+                                                        {currentUserId &&
+                                                            !isOwnComment && (
+                                                                <ReportMenu
+                                                                    targetId={
+                                                                        comment._id
+                                                                    }
+                                                                    targetType="Interaction"
+                                                                    targetLabel="comment"
+                                                                    triggerClassName="rounded-full p-1.5 text-slate-400 transition hover:bg-white hover:text-rose-500"
+                                                                />
+                                                            )}
+                                                    </div>
+                                                    <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">
+                                                        {comment.content}
+                                                    </p>
+                                                </article>
+                                            );
+                                        })}
                                     </div>
                                 )
                             ) : areLikesLoading ? (
@@ -554,21 +582,34 @@ export default function MediaDetailPage() {
                                 </p>
                             ) : (
                                 <div className="space-y-3">
-                                    {likes.map((like) => (
-                                        <div
-                                            key={like._id}
-                                            className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cusviolet/10 text-sm font-black text-cusviolet">
-                                                {(like.author?.userName || "U")
-                                                    .slice(0, 1)
-                                                    .toUpperCase()}
+                                    {likes.map((like) => {
+                                        const inner = (
+                                            <>
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cusviolet/10 text-sm font-black text-cusviolet">
+                                                    {(like.author?.userName || "U")
+                                                        .slice(0, 1)
+                                                        .toUpperCase()}
+                                                </div>
+                                                <p className="text-sm font-black text-cusblue">
+                                                    {like.author?.userName || "Unknown"}
+                                                </p>
+                                            </>
+                                        );
+                                        return like.author?._id ? (
+                                            <Link
+                                                key={like._id}
+                                                href={`/home/profile/${like.author._id}/others`}
+                                                className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4 transition-colors hover:border-cusblue/30 hover:bg-cuscream/60">
+                                                {inner}
+                                            </Link>
+                                        ) : (
+                                            <div
+                                                key={like._id}
+                                                className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
+                                                {inner}
                                             </div>
-                                            <p className="text-sm font-black text-cusblue">
-                                                {like.author?.userName ||
-                                                    "Unknown"}
-                                            </p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

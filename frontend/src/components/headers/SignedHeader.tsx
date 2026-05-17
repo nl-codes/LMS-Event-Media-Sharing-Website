@@ -5,6 +5,7 @@ import { FaRegUser } from "react-icons/fa";
 import Link from "next/link";
 import LogoRounded from "../logo/Logo_Rounded";
 import LogoutButton from "@/components/buttons/LogoutButton";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 export default function SignedHeader({ userName }: { userName: string }) {
     const router = useRouter();
@@ -24,6 +25,10 @@ export default function SignedHeader({ userName }: { userName: string }) {
                     <div className="text-lg font-semibold text-black">
                         {userName && `Welcome, ${userName}`}
                     </div>
+
+                    {/* Notification Bell */}
+                    <NotificationBell />
+
                     {/* Profile Button */}
                     <Button
                         className="flex items-center gap-2"
@@ -31,6 +36,7 @@ export default function SignedHeader({ userName }: { userName: string }) {
                         Profile <FaRegUser />
                     </Button>
 
+                    {/* div is necessary to hold the logout content */}
                     <div>
                         <LogoutButton />
                     </div>

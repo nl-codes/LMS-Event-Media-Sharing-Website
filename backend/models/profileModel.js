@@ -12,6 +12,12 @@ const profileSchema = new Schema(
         lastName: { type: String, trim: true, default: "" },
         bio: { type: String, trim: true, default: "" },
         profilePicture: { type: String, default: "" },
+        gender: {
+            type: String,
+            enum: ["male", "female", "other", ""],
+            default: "",
+        },
+        country: { type: String, trim: true, default: "" },
     },
     { timestamps: true },
 );

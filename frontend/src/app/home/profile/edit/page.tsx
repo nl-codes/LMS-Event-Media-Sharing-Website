@@ -32,6 +32,8 @@ export default function ProfileEditPage() {
         data.append("firstName", formData.firstName);
         data.append("lastName", formData.lastName);
         data.append("bio", formData.bio);
+        data.append("gender", formData.gender);
+        data.append("country", formData.country);
 
         if (formData.profilePicture instanceof File) {
             data.append("profilePicture", formData.profilePicture);
@@ -70,6 +72,8 @@ export default function ProfileEditPage() {
                         lastName: p.lastName,
                         bio: p.bio,
                         profilePicture: p.profilePicture,
+                        gender: p.gender ?? "",
+                        country: p.country ?? "",
                     });
                     setProfileExists(true);
                 } else {
@@ -78,6 +82,8 @@ export default function ProfileEditPage() {
                         lastName: "",
                         bio: "",
                         profilePicture: null,
+                        gender: "",
+                        country: "",
                     });
                     setProfileExists(false);
                 }
