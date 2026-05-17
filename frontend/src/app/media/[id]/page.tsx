@@ -582,21 +582,34 @@ export default function MediaDetailPage() {
                                 </p>
                             ) : (
                                 <div className="space-y-3">
-                                    {likes.map((like) => (
-                                        <div
-                                            key={like._id}
-                                            className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cusviolet/10 text-sm font-black text-cusviolet">
-                                                {(like.author?.userName || "U")
-                                                    .slice(0, 1)
-                                                    .toUpperCase()}
+                                    {likes.map((like) => {
+                                        const inner = (
+                                            <>
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cusviolet/10 text-sm font-black text-cusviolet">
+                                                    {(like.author?.userName || "U")
+                                                        .slice(0, 1)
+                                                        .toUpperCase()}
+                                                </div>
+                                                <p className="text-sm font-black text-cusblue">
+                                                    {like.author?.userName || "Unknown"}
+                                                </p>
+                                            </>
+                                        );
+                                        return like.author?._id ? (
+                                            <Link
+                                                key={like._id}
+                                                href={`/home/profile/${like.author._id}/others`}
+                                                className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4 transition-colors hover:border-cusblue/30 hover:bg-cuscream/60">
+                                                {inner}
+                                            </Link>
+                                        ) : (
+                                            <div
+                                                key={like._id}
+                                                className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
+                                                {inner}
                                             </div>
-                                            <p className="text-sm font-black text-cusblue">
-                                                {like.author?.userName ||
-                                                    "Unknown"}
-                                            </p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
