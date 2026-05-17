@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import default_profile from "public/profile-male.png";
 import { Profile } from "@/types/Profile";
-import { Mail, Calendar, Edit3, Trash2 } from "lucide-react";
+import { Mail, Calendar, Edit3, Trash2, Globe, Users } from "lucide-react";
 import { FiUser } from "react-icons/fi";
 import FlaggedMediaSection from "@/components/profile/FlaggedMediaSection";
+import ReactCountryFlag from "react-country-flag";
+import { Country } from "country-state-city";
 
 export default function ProfileCard() {
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -163,6 +165,46 @@ export default function ProfileCard() {
                                 </p>
                             </div>
                         </div>
+
+                        {profile.gender && (
+                            <div className="flex items-center gap-4 text-gray-600">
+                                <div className="w-10 h-10 bg-pink-50 rounded-lg flex items-center justify-center text-pink-400">
+                                    <Users size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase">
+                                        Gender
+                                    </p>
+                                    <p className="text-sm font-medium capitalize">
+                                        {profile.gender}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {profile.country && (() => {
+                                const countryName = Country.getCountryByCode(profile.country)?.name ?? profile.country;
+                                return (
+                                    <div className="flex items-center gap-4 text-gray-600">
+                                        <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-500">
+                                            <Globe size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase">
+                                                Country
+                                            </p>
+                                            <p className="text-sm font-medium flex items-center gap-2">
+                                                <ReactCountryFlag
+                                                    countryCode={profile.country}
+                                                    svg
+                                                    style={{ width: "1.2em", height: "1.2em", borderRadius: "2px" }}
+                                                />
+                                                {countryName}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                         <div className="flex items-center gap-4 text-gray-600">
                             <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-500">
