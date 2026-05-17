@@ -2,7 +2,7 @@ import {
     addComment,
     deleteComment,
     editComment,
-    getCommentsByMediaId,
+    getInteractionsByMediaId,
     toggleLike,
 } from "../services/interactionService.js";
 import { getIO } from "../config/socketConfig.js";
@@ -17,10 +17,14 @@ const getStatusCode = (error) => {
     return 500;
 };
 
-export const getCommentsController = async (req, res) => {
+export const getInteractionsController = async (req, res) => {
     try {
-        const comments = await getCommentsByMediaId(req.params.mediaId);
-        res.status(200).json({ success: true, data: comments });
+        const type = req.query.type || "comment";
+        const interactions = await getInteractionsByMediaId(
+            req.params.mediaId,
+            type,
+        );
+        res.status(200).json({ success: true, data: interactions });
     } catch (error) {
         res.status(getStatusCode(error)).json({
             success: false,
