@@ -121,9 +121,22 @@ export default function LoginForm() {
 
             {/* Error Message Display */}
             {errorMsg && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm animate-in fade-in slide-in-from-top-1">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm animate-in fade-in slide-in-from-top-1">
                     <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                    <span>{errorMsg}</span>
+                    <span>
+                        {errorMsg}
+                        {errorMsg.toLowerCase().includes("suspended") && (
+                            <>
+                                {" "}
+                                <a
+                                    href="/request/unsuspend"
+                                    className="underline font-bold">
+                                    File an appeal
+                                </a>
+                                .
+                            </>
+                        )}
+                    </span>
                 </div>
             )}
 
