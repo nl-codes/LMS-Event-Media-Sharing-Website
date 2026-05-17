@@ -25,6 +25,13 @@ export async function getComments(mediaId: string) {
     return json.data || [];
 }
 
+export async function getLikes(mediaId: string) {
+    const json = await request<Interaction[]>(
+        `/interactions/${mediaId}?type=like`,
+    );
+    return json.data || [];
+}
+
 export async function addComment(mediaId: string, content: string) {
     const json = await request<Interaction>("/interactions", {
         method: "POST",
