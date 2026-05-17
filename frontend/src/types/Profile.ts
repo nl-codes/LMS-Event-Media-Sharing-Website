@@ -5,6 +5,8 @@ export type Profile = {
     lastName: string;
     bio: string;
     profilePicture: string;
+    gender?: string;
+    country?: string;
     user: User | null;
     updatedAt: string;
 };
