@@ -8,6 +8,7 @@ import {
     LayoutDashboard,
     Shield,
     Users,
+    MessageSquareWarning,
 } from "lucide-react";
 import clsx from "clsx";
 import LogoutButton from "@/components/buttons/LogoutButton";
@@ -18,6 +19,11 @@ const navItems = [
     { href: "/admin/events", label: "Events", icon: CalendarDays },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/reports", label: "Reporting", icon: Flag },
+    {
+        href: "/admin/appeals",
+        label: "Appeal Review",
+        icon: MessageSquareWarning,
+    },
 ];
 
 export default function AdminSidebar() {
