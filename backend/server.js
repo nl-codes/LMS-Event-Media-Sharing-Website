@@ -16,6 +16,7 @@ import webhookRoutes from "./routes/webhookRoutes.js";
 import adminRoutes from "./routes/adminRoute.js";
 import superAdminRoutes from "./routes/superAdminRoute.js";
 import interactionRoutes from "./routes/interactionRoute.js";
+import reportRoutes from "./routes/reportRoute.js";
 import notificationRoutes from "./routes/notificationRoute.js";
 import { runStartupSync } from "./services/syncManager.js";
 
@@ -171,6 +172,7 @@ app.use("/payments", paymentRoutes);
 app.use("/admins", adminRoutes);
 app.use("/superadmins", superAdminRoutes);
 app.use("/interactions", interactionRoutes);
+app.use("/reports", reportRoutes);
 app.use("/notifications", notificationRoutes);
 
 const port = process.env.PORT;
