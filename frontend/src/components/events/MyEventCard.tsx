@@ -36,7 +36,7 @@ export default function MyEventCard({ event, onDelete }: MyEventCardProps) {
 
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-cusblue/5 flex flex-col transition-all hover:scale-[1.02] profile-card-animate">
                 <div className="mb-5 rounded-2xl overflow-hidden border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
-                    <div className="relative h-44 w-full rounded-2xl overflow-hidden bg-cuscream">
+                    <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-cuscream">
                         {hasThumbnail ? (
                             <Image
                                 src={event.thumbnail}
@@ -55,11 +55,11 @@ export default function MyEventCard({ event, onDelete }: MyEventCardProps) {
 
                 {/* Header: Title & Premium Badge */}
                 <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-bold text-cusblue leading-tight">
+                    <h3 className="text-xl font-bold text-cusblue leading-tight line-clamp-2 min-h-12">
                         {event.eventName}
                     </h3>
                     {event.isPremium && (
-                        <span className="bg-custeal/20 text-custeal text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md border border-custeal/30">
+                        <span className="shrink-0 bg-custeal/20 text-custeal text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md border border-custeal/30 ml-2">
                             Premium
                         </span>
                     )}

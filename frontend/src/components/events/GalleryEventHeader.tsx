@@ -5,6 +5,8 @@ import { Calendar, Clock, MapPin } from "lucide-react";
 import type { Event } from "@/types/Event";
 import clsx from "clsx";
 import Image from "next/image";
+import Link from "next/link";
+import UserAvatar from "@/components/common/UserAvatar";
 
 interface GalleryEventHeaderProps {
     event: Pick<
@@ -16,9 +18,9 @@ interface GalleryEventHeaderProps {
         | "endTime"
         | "isLive"
         | "thumbnail"
+        | "hostId"
     >;
     subtitle?: string;
-    roleBadge?: string;
 }
 
 const DESCRIPTION_TRUNCATE_LENGTH = 170;
@@ -52,7 +54,6 @@ function formatTimeLabel(dateValue: string) {
 export default function GalleryEventHeader({
     event,
     subtitle = "Shared Event Gallery",
-    roleBadge,
 }: GalleryEventHeaderProps) {
     const [now, setNow] = useState(() => Date.now());
     const [expandedDescription, setExpandedDescription] = useState(false);
@@ -126,7 +127,7 @@ export default function GalleryEventHeader({
     return (
         <section className="rounded-3xl bg-cuscream p-6 md:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl">
+                <div className="max-w-120">
                     <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cusblue/5 bg-white px-4 py-1.5 shadow-sm">
                         <span
                             className={clsx(
@@ -139,16 +140,36 @@ export default function GalleryEventHeader({
                         </span>
                     </div>
 
-                    <h1 className="mb-2 text-3xl font-bold tracking-tight text-cusblue md:text-4xl">
+                    <h1 className="mb-2 text-3xl font-bold tracking-tight leading-tight w-full wrap-break-word text-cusblue md:text-4xl">
                         {event.eventName || "Event Gallery"}
                     </h1>
-                    <div className="mb-4 flex flex-wrap items-center gap-2">
+
+                    <div className="my-4 flex flex-wrap items-center gap-2">
                         <p className="text-sm text-cusviolet/80">{subtitle}</p>
-                        {roleBadge && (
-                            <span className="rounded-full bg-cusblue px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-cuscream">
-                                {roleBadge}
-                            </span>
-                        )}
+
+                        {/* Host */}
+                        {(() => {
+                            const host =
+                                typeof event.hostId === "object" &&
+                                event.hostId !== null
+                                    ? event.hostId
+                                    : null;
+                            if (!host) return null;
+                            return (
+                                <Link
+                                    href={`/home/profile/${host._id}/others`}
+                                    className="inline-flex items-center gap-2 rounded-full border border-cusblue bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur-md transition hover:bg-white">
+                                    <UserAvatar
+                                        src={host.profilePicture}
+                                        name={host.userName}
+                                        size="small"
+                                    />
+                                    <span className="text-xs font-bold text-cusblue">
+                                        Hosted by {host.userName || "Anonymous"}
+                                    </span>
+                                </Link>
+                            );
+                        })()}
                     </div>
 
                     <p className="max-w-2xl text-base leading-relaxed text-cusviolet/85">
@@ -169,9 +190,9 @@ export default function GalleryEventHeader({
                     )}
                 </div>
 
-                <div className="w-full max-w-[220px] rounded-2xl border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
-                    <div className="rounded-2xl bg-white/75 p-2 backdrop-blur-sm">
-                        <div className="relative h-28 w-full overflow-hidden rounded-xl bg-cuscream">
+                <div className="w-full max-w-100 rounded-2xl p-px">
+                    <div className="rounded-2xl p-2 backdrop-blur-sm">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-cuscream">
                             {event.thumbnail ? (
                                 <Image
                                     src={event.thumbnail}

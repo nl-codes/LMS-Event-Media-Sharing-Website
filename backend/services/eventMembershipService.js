@@ -1,5 +1,6 @@
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 export const joinEvent = async (eventId, userId) => {
     if (!eventId || !userId) {
@@ -26,12 +27,15 @@ export const getUserMemberships = async (userId) => {
         throw new Error("userId is required");
     }
 
-    return await EventMembership.find({ userId })
-        .populate(
-            "eventId",
-            "eventName startTime uniqueSlug location description thumbnail hostId",
-        )
+    const memberships = await EventMembership.find({ userId })
+        .populate({
+            path: "eventId",
+            select: "eventName startTime uniqueSlug location description thumbnail hostId",
+            populate: { path: "hostId", select: "userName email" },
+        })
         .sort({ lastAccessedAt: -1 });
+
+    return attachAvatars(memberships, ["eventId.hostId"]);
 };
 
 /**

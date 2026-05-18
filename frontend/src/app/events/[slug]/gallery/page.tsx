@@ -22,6 +22,7 @@ import ChatContainer from "@/components/chat/ChatContainer";
 import type { Media } from "@/types/Media";
 import type { Event } from "@/types/Event";
 import BackButton from "@/components/navigation/BackButton";
+import UserAvatar from "@/components/common/UserAvatar";
 import {
     downloadAsZip,
     normalizeLikedByIds,
@@ -45,7 +46,6 @@ export default function EventPublicGallery() {
     const [isSelectionActive, setIsSelectionActive] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-    const [hostName, setHostName] = useState("");
     const isHost = event?.hostId === eventId;
     const currentUserId = user?._id || "";
     const scopedGuestDisplayName =
@@ -143,9 +143,6 @@ export default function EventPublicGallery() {
 
                 setEventId(event._id);
                 setEvent(event);
-                if (event.hostId && typeof event.hostId === "object") {
-                    setHostName(event.hostId.userName || "");
-                }
                 await fetchGallery(event._id);
             } catch (err) {
                 if (isMounted) {
@@ -350,7 +347,6 @@ export default function EventPublicGallery() {
                 <GalleryEventHeader
                     event={event}
                     subtitle="Shared Event Gallery"
-                    roleBadge={`${hostName}'s Event`}
                 />
             )}
 
@@ -361,8 +357,17 @@ export default function EventPublicGallery() {
             />
 
             <div className="w-full lg:w-auto">
-                <div className="rounded-4xl border border-white/40 bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md">
-                    <div className="flex flex-col gap-4">
+                <div className="rounded-4xl border border-white/40 bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md flex flex-col gap-6">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2 text-xs text-cusviolet/70">
+                            <UserAvatar
+                                src={user?.profilePicture}
+                                name={uploaderDisplayName}
+                                size="small"
+                            />
+                            <span>Uploading as {uploaderDisplayName}</span>
+                        </div>
+
                         <div className="flex flex-wrap items-center justify-end gap-3">
                             <button
                                 type="button"
@@ -393,21 +398,17 @@ export default function EventPublicGallery() {
                                 Download All
                             </button>
                         </div>
-
-                        {isSelectionActive && (
-                            <SelectionActionBar
-                                selectedCount={selectedIds.length}
-                                totalCount={gallery.length}
-                                onDownload={handleDownloadMedia}
-                                onDelete={handleBulkDelete}
-                                isUser={isHost || Boolean(user)}
-                            />
-                        )}
-
-                        <p className="text-xs text-cusviolet/70">
-                            Uploading as {uploaderDisplayName}
-                        </p>
                     </div>
+
+                    {isSelectionActive && (
+                        <SelectionActionBar
+                            selectedCount={selectedIds.length}
+                            totalCount={gallery.length}
+                            onDownload={handleDownloadMedia}
+                            onDelete={handleBulkDelete}
+                            isUser={isHost || Boolean(user)}
+                        />
+                    )}
                 </div>
             </div>
 

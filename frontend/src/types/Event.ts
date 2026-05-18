@@ -2,7 +2,14 @@ export type EventStatus = "Active" | "Completed" | "Cancelled";
 
 export interface Event {
     _id: string;
-    hostId: string | { _id: string; userName?: string; email?: string };
+    hostId:
+        | string
+        | {
+              _id: string;
+              userName?: string;
+              email?: string;
+              profilePicture?: string;
+          };
     eventName: string;
     thumbnail: string;
     description?: string;

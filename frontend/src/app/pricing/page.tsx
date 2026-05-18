@@ -82,7 +82,7 @@ export default function PricingPage() {
     return (
         <main className="min-h-screen bg-cuscream selection:bg-cusblue/20 px-4 py-4 text-slate-900 sm:px-8">
             <div className="flex flex-row">
-                <BackButton label="Back to Login" />
+                <BackButton label="Back" />
             </div>
             <div className="relative z-10 mx-auto w-full max-w-6xl">
                 <div className="mx-auto mb-20 max-w-3xl text-center">

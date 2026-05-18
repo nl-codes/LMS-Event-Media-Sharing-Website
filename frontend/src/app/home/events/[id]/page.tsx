@@ -24,6 +24,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import Button from "@/components/buttons/Button";
+import UserAvatar from "@/components/common/UserAvatar";
 
 export default function EventDetailsPage() {
     const [event, setEvent] = useState<Event | null>(null);
@@ -129,7 +130,7 @@ export default function EventDetailsPage() {
                 />
             )}
 
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10 profile-card-animate">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 profile-card-animate">
                 {/* Header Actions */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                     <BackButton label="Back to My Events" />
@@ -168,10 +169,10 @@ export default function EventDetailsPage() {
                 </div>
 
                 {/* Main Content: Thumbnail Left, Rest Right */}
-                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row items-center">
                     {/* LEFT: Thumbnail Section (16:9) */}
-                    <div className="w-full lg:w-[45%] p-6 lg:p-8">
-                        <div className="relative aspect-video lg:h-full w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
+                    <div className="w-1/2 p-6 lg:p-8">
+                        <div className="relative aspect-video w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
                             {event.thumbnail ? (
                                 <Image
                                     src={event.thumbnail}
@@ -201,7 +202,7 @@ export default function EventDetailsPage() {
                     </div>
 
                     {/* RIGHT: Event Details Section */}
-                    <div className="flex-1 p-8 lg:p-10 lg:pl-4 space-y-8">
+                    <div className="flex-1 max-w-1/2 p-8 lg:p-10 lg:pl-4 space-y-8">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <span
@@ -212,7 +213,7 @@ export default function EventDetailsPage() {
                                     {event.isLive ? "Live" : "Draft"}
                                 </span>
                             </div>
-                            <h1 className="text-4xl font-black text-cusblue tracking-tight leading-none mb-4">
+                            <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight mb-4 w-full wrap-break-word">
                                 {event.eventName}
                             </h1>
                             <p className="text-slate-500 text-sm leading-relaxed max-w-xl line-clamp-4">
@@ -220,6 +221,35 @@ export default function EventDetailsPage() {
                                     "No description provided for this event."}
                             </p>
                         </div>
+
+                        {/* Host */}
+                        {(() => {
+                            const host =
+                                typeof event.hostId === "object" &&
+                                event.hostId !== null
+                                    ? event.hostId
+                                    : null;
+                            if (!host) return null;
+                            return (
+                                <Link
+                                    href={`/home/profile/${host._id}/others`}
+                                    className="-mt-2 flex w-fit items-center gap-3 rounded-2xl bg-white/70 px-4 py-2 shadow-sm ring-1 ring-cusblue/10 transition hover:bg-white">
+                                    <UserAvatar
+                                        src={host.profilePicture}
+                                        name={host.userName}
+                                        size="small"
+                                    />
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            Hosted by
+                                        </p>
+                                        <p className="text-sm font-bold text-cusblue">
+                                            {host.userName || "Anonymous"}
+                                        </p>
+                                    </div>
+                                </Link>
+                            );
+                        })()}
 
                         {/* Info Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

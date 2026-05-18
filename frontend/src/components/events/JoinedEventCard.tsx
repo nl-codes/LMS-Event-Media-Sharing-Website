@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Event } from "@/types/Event";
 import { Calendar, MapPin, Globe, Eye, LogIn } from "lucide-react";
 import Image from "next/image";
+import UserAvatar from "@/components/common/UserAvatar";
 
 type JoinedEventCardProps = {
     event: Event;
@@ -11,11 +12,15 @@ type JoinedEventCardProps = {
 
 export default function JoinedEventCard({ event }: JoinedEventCardProps) {
     const hasThumbnail = Boolean(event.thumbnail);
+    const host =
+        typeof event.hostId === "object" && event.hostId !== null
+            ? event.hostId
+            : null;
 
     return (
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-cusblue/5 flex flex-col transition-all hover:scale-[1.02] profile-card-animate">
             <div className="mb-5 rounded-2xl overflow-hidden border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
-                <div className="relative h-44 w-full rounded-2xl overflow-hidden bg-cuscream">
+                <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-cuscream">
                     {hasThumbnail ? (
                         <Image
                             src={event.thumbnail}
@@ -33,9 +38,30 @@ export default function JoinedEventCard({ event }: JoinedEventCardProps) {
             </div>
 
             {/* Event Name */}
-            <h3 className="text-lg font-bold text-cusblue leading-tight mb-4">
+            <h3 className="text-lg font-bold text-cusblue leading-tight mb-3">
                 {event.eventName}
             </h3>
+
+            {/* Host */}
+            {host && (
+                <Link
+                    href={`/home/profile/${host._id}/others`}
+                    className="mb-4 flex items-center gap-2 rounded-xl bg-cusblue/5 px-3 py-2 transition-colors hover:bg-cusblue/10">
+                    <UserAvatar
+                        src={host.profilePicture}
+                        name={host.userName}
+                        size="small"
+                    />
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-cusblue/60">
+                            Host
+                        </p>
+                        <p className="truncate text-xs font-bold text-cusblue">
+                            {host.userName || "Anonymous"}
+                        </p>
+                    </div>
+                </Link>
+            )}
 
             {/* Minimal Details */}
             <div className="space-y-2 mb-6 grow text-sm">

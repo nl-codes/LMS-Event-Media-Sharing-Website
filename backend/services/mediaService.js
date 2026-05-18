@@ -2,6 +2,7 @@ import Media from "../models/mediaModel.js";
 import { Event } from "../models/eventModel.js";
 import Interaction from "../models/interactionModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 const attachLikeMetadata = async (mediaDocs) => {
     const docs = Array.isArray(mediaDocs) ? mediaDocs : [mediaDocs];
@@ -174,7 +175,8 @@ export const getGallery = async (eventId) => {
         .populate("uploaderId", "userName")
         .populate("guestId", "userName guest_id");
 
-    return attachLikeMetadata(media);
+    const withLikes = await attachLikeMetadata(media);
+    return attachAvatars(withLikes, ["uploaderId"]);
 };
 
 export const getMediaById = async (mediaId) => {
@@ -184,7 +186,8 @@ export const getMediaById = async (mediaId) => {
         .populate("guestId", "userName guest_id");
 
     if (!media) throw new Error("Media not found");
-    return attachLikeMetadata(media);
+    const withLikes = await attachLikeMetadata(media);
+    return attachAvatars(withLikes, ["uploaderId"]);
 };
 
 // Delete a media item
@@ -299,7 +302,8 @@ export const getHighlights = async (eventId) => {
         .populate("uploaderId", "userName")
         .populate("guestId", "userName guest_id");
 
-    return attachLikeMetadata(highlights);
+    const withLikes = await attachLikeMetadata(highlights);
+    return attachAvatars(withLikes, ["uploaderId"]);
 };
 
 // Delete all media for an event (auto-deletion)

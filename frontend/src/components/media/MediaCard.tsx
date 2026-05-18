@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Download, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
+import UserAvatar from "@/components/common/UserAvatar";
 import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButton";
 import ReportMenu from "@/components/report/ReportMenu";
 import {
@@ -157,22 +158,38 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
             {/* Bottom Bar */}
             <div className="flex items-center justify-between p-5 bg-linear-to-b from-transparent to-white">
-                <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                        {uploadedBy}
-                    </span>
+                <div className="flex items-center gap-3">
                     {media.uploaderId?._id ? (
                         <Link
                             href={`/home/profile/${media.uploaderId._id}/others`}
                             onClick={(e) => e.stopPropagation()}
-                            className="text-sm font-extrabold text-slate-800 tracking-tight hover:text-cusblue transition-colors hover:underline">
-                            {displayName}
+                            className="shrink-0">
+                            <UserAvatar
+                                src={media.uploaderId.profilePicture}
+                                name={displayName}
+                                size="small"
+                            />
                         </Link>
                     ) : (
-                        <span className="text-sm font-extrabold text-slate-800 tracking-tight">
-                            {displayName}
-                        </span>
+                        <UserAvatar name={displayName} size="small" />
                     )}
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            {uploadedBy}
+                        </span>
+                        {media.uploaderId?._id ? (
+                            <Link
+                                href={`/home/profile/${media.uploaderId._id}/others`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-sm font-extrabold text-slate-800 tracking-tight hover:text-cusblue transition-colors hover:underline">
+                                {displayName}
+                            </Link>
+                        ) : (
+                            <span className="text-sm font-extrabold text-slate-800 tracking-tight">
+                                {displayName}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">

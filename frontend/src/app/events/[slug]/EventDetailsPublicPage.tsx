@@ -5,18 +5,17 @@ import {
     ShieldCheck,
     Lock,
     Loader2,
-    User,
     Sparkles,
     Image as ImageIcon,
     Play,
     CheckCircle2,
 } from "lucide-react";
 import type { Event } from "@/types/Event";
-import BackButton from "@/components/navigation/BackButton";
-import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import EventStatusLabel from "@/components/events/EventStatusLabel";
+import UserAvatar from "@/components/common/UserAvatar";
 
 interface EventDetailsPublicPageProps {
     event: Event;
@@ -31,7 +30,6 @@ export default function EventDetailsPublicPage({
     gateResult,
     onCheckUpload,
 }: EventDetailsPublicPageProps) {
-    const { user, isInitialized } = useUser();
     const router = useRouter();
 
     const formatDate = (date: string | Date) =>
@@ -51,17 +49,11 @@ export default function EventDetailsPublicPage({
 
     return (
         <main className="min-h-screen bg-cuscream selection:bg-custeal selection:text-white pb-20">
-            {isInitialized && user && (
-                <div className="max-w-6xl mx-auto px-6 pt-8">
-                    <BackButton label="Back" />
-                </div>
-            )}
-
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 profile-card-animate">
-                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 profile-card-animate">
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row items-center">
                     {/* Thumbnail Section */}
-                    <div className="w-full lg:w-[45%] p-6 lg:p-8">
-                        <div className="relative aspect-video lg:h-full w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
+                    <div className="w-1/2 lg:w-[50%] p-6 lg:p-8">
+                        <div className="relative aspect-video w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
                             {event.thumbnail ? (
                                 <Image
                                     src={event.thumbnail}
@@ -82,7 +74,7 @@ export default function EventDetailsPublicPage({
                     </div>
 
                     {/* Details Section */}
-                    <div className="flex-1 p-8 lg:p-10 lg:pl-4 space-y-8">
+                    <div className="flex-1 max-w-1/2 p-8 lg:p-10 lg:pl-4 space-y-8">
                         <div>
                             <div className="mb-4">
                                 <EventStatusLabel
@@ -90,7 +82,7 @@ export default function EventDetailsPublicPage({
                                     endTime={event.endTime}
                                 />
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-black text-cusblue tracking-tight leading-tight mb-4">
+                            <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight mb-4 w-full wrap-break-word">
                                 {event.eventName}
                             </h1>
                             <p className="text-slate-500 text-base leading-relaxed max-w-xl">
@@ -101,20 +93,40 @@ export default function EventDetailsPublicPage({
                         {/* Info Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Host Card */}
-                            <div className="bg-white/50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-                                <div className="p-2 bg-cusblue text-white rounded-xl shadow-sm shrink-0">
-                                    <User size={18} />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                        Hosted By
-                                    </p>
-                                    <p className="text-sm font-bold text-cusblue truncate">
-                                        {(event.hostId as { userName?: string })
-                                            ?.userName || "Anonymous Host"}
-                                    </p>
-                                </div>
-                            </div>
+                            {(() => {
+                                const host =
+                                    typeof event.hostId === "object" &&
+                                    event.hostId !== null
+                                        ? event.hostId
+                                        : null;
+                                const hostName =
+                                    host?.userName || "Anonymous Host";
+                                const inner = (
+                                    <div className="bg-white/50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm transition-colors hover:bg-white/80">
+                                        <UserAvatar
+                                            src={host?.profilePicture}
+                                            name={hostName}
+                                            size="small"
+                                        />
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                Hosted By
+                                            </p>
+                                            <p className="text-sm font-bold text-cusblue truncate">
+                                                {hostName}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                                return host?._id ? (
+                                    <Link
+                                        href={`/home/profile/${host._id}/others`}>
+                                        {inner}
+                                    </Link>
+                                ) : (
+                                    inner
+                                );
+                            })()}
 
                             {/* Location Card */}
                             <div className="bg-white/50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">

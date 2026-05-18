@@ -1,6 +1,7 @@
 import { Event } from "../models/eventModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 export const createEvent = async (eventData) => {
     try {
@@ -12,7 +13,7 @@ export const createEvent = async (eventData) => {
         await event.save();
 
         // Populate host information
-        await event.populate("hostId", "username email");
+        await event.populate("hostId", "userName email");
 
         return event;
     } catch (error) {
@@ -24,14 +25,14 @@ export const findEventById = async (eventId) => {
     try {
         const event = await Event.findById(eventId).populate(
             "hostId",
-            "username email",
+            "userName email",
         );
 
         if (!event) {
             throw new Error("Event not found");
         }
 
-        return event;
+        return attachAvatars(event, ["hostId"]);
     } catch (error) {
         throw error;
     }
@@ -40,9 +41,9 @@ export const findEventById = async (eventId) => {
 export const findAllEventsByHost = async (hostId) => {
     try {
         const events = await Event.find({ hostId })
-            .populate("hostId", "username email")
+            .populate("hostId", "userName email")
             .sort({ createdAt: -1 });
-        return events;
+        return attachAvatars(events, ["hostId"]);
     } catch (error) {
         throw error;
     }
@@ -59,7 +60,7 @@ export const findEventBySlug = async (slug) => {
             throw new Error("Event not found");
         }
 
-        return event;
+        return attachAvatars(event, ["hostId"]);
     } catch (error) {
         throw error;
     }
@@ -105,7 +106,7 @@ export const updateEvent = async (eventId, updateData, requesterId) => {
             eventId,
             updateData,
             { new: true, runValidators: true },
-        ).populate("hostId", "username email");
+        ).populate("hostId", "userName email");
 
         return updatedEvent;
     } catch (error) {
@@ -132,7 +133,7 @@ export const updateEventStatus = async (eventId, status, requesterId) => {
             eventId,
             { status },
             { new: true, runValidators: true },
-        ).populate("hostId", "username email");
+        ).populate("hostId", "userName email");
 
         return updatedEvent;
     } catch (error) {

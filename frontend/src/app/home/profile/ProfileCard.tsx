@@ -4,14 +4,13 @@ import toast from "react-hot-toast";
 import { backend_url } from "@/config/backend";
 import Button from "@/components/buttons/Button";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import default_profile from "public/profile-male.png";
 import { Profile } from "@/types/Profile";
 import { Mail, Calendar, Edit3, Trash2, Globe, Users } from "lucide-react";
 import { FiUser } from "react-icons/fi";
 import FlaggedMediaSection from "@/components/profile/FlaggedMediaSection";
 import ReactCountryFlag from "react-country-flag";
 import { Country } from "country-state-city";
+import UserAvatar from "@/components/common/UserAvatar";
 
 export default function ProfileCard() {
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -101,15 +100,14 @@ export default function ProfileCard() {
                 <div className="relative px-8 pb-8">
                     {/* Profile Image Overlay */}
                     <div className="relative -top-12 -mb-8 flex justify-between items-end">
-                        <div className="relative w-32 h-32 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-white">
-                            <Image
-                                src={profile.profilePicture || default_profile}
-                                alt="Profile"
-                                fill
-                                className="object-cover"
-                                priority
-                            />
-                        </div>
+                        <UserAvatar
+                            src={profile.profilePicture}
+                            name={
+                                `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() ||
+                                profile.user?.userName
+                            }
+                            size="large"
+                        />
 
                         <div className="flex gap-2 mb-2">
                             <button
@@ -182,8 +180,11 @@ export default function ProfileCard() {
                             </div>
                         )}
 
-                        {profile.country && (() => {
-                                const countryName = Country.getCountryByCode(profile.country)?.name ?? profile.country;
+                        {profile.country &&
+                            (() => {
+                                const countryName =
+                                    Country.getCountryByCode(profile.country)
+                                        ?.name ?? profile.country;
                                 return (
                                     <div className="flex items-center gap-4 text-gray-600">
                                         <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-500">
@@ -195,9 +196,15 @@ export default function ProfileCard() {
                                             </p>
                                             <p className="text-sm font-medium flex items-center gap-2">
                                                 <ReactCountryFlag
-                                                    countryCode={profile.country}
+                                                    countryCode={
+                                                        profile.country
+                                                    }
                                                     svg
-                                                    style={{ width: "1.2em", height: "1.2em", borderRadius: "2px" }}
+                                                    style={{
+                                                        width: "1.2em",
+                                                        height: "1.2em",
+                                                        borderRadius: "2px",
+                                                    }}
                                                 />
                                                 {countryName}
                                             </p>
