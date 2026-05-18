@@ -11,8 +11,6 @@ import {
     CheckCircle2,
 } from "lucide-react";
 import type { Event } from "@/types/Event";
-import BackButton from "@/components/navigation/BackButton";
-import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,7 +30,6 @@ export default function EventDetailsPublicPage({
     gateResult,
     onCheckUpload,
 }: EventDetailsPublicPageProps) {
-    const { user, isInitialized } = useUser();
     const router = useRouter();
 
     const formatDate = (date: string | Date) =>
@@ -52,12 +49,6 @@ export default function EventDetailsPublicPage({
 
     return (
         <main className="min-h-screen bg-cuscream selection:bg-custeal selection:text-white pb-20">
-            {isInitialized && user && (
-                <div className="max-w-6xl mx-auto px-6 pt-8">
-                    <BackButton label="Back" />
-                </div>
-            )}
-
             <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 profile-card-animate">
                 <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row">
                     {/* Thumbnail Section */}
