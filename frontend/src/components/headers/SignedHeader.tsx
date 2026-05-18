@@ -9,15 +9,16 @@ import NotificationBell from "@/components/notifications/NotificationBell";
 import UserAvatar from "@/components/common/UserAvatar";
 import { useUser } from "@/context/UserContext";
 
-export default function SignedHeader({ userName }: { userName: string }) {
+export default function SignedHeader() {
     const router = useRouter();
     const { user } = useUser();
+    const userName = user?.userName ?? "";
 
     const handleProfileClick = () => router.push("/home/profile");
 
     return (
-        <header className="w-full pt-4">
-            <div className="flex items-center justify-between px-16 pb-4 border-b-2 border-cusblue">
+        <header className=" top-0 z-50 w-full bg-cuscream/80 backdrop-blur-md border-b border-cusblue/10">
+            <div className="flex items-center justify-between gap-6 py-4 px-16">
                 {/* Logo Container */}
                 <Link href="/home" replace>
                     <LogoRounded size={80} />
@@ -36,7 +37,7 @@ export default function SignedHeader({ userName }: { userName: string }) {
                         className="rounded-full transition-transform hover:scale-105 active:scale-95">
                         <UserAvatar
                             src={user?.profilePicture}
-                            name={user?.userName || userName}
+                            name={userName}
                             size="small"
                         />
                     </button>
