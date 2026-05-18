@@ -127,7 +127,7 @@ export default function GalleryEventHeader({
     return (
         <section className="rounded-3xl bg-cuscream p-6 md:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl">
+                <div className="max-w-120">
                     <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cusblue/5 bg-white px-4 py-1.5 shadow-sm">
                         <span
                             className={clsx(
@@ -140,7 +140,7 @@ export default function GalleryEventHeader({
                         </span>
                     </div>
 
-                    <h1 className="mb-2 text-3xl font-bold tracking-tight text-cusblue md:text-4xl">
+                    <h1 className="mb-2 text-3xl font-bold tracking-tight leading-tight w-full wrap-break-word text-cusblue md:text-4xl">
                         {event.eventName || "Event Gallery"}
                     </h1>
 

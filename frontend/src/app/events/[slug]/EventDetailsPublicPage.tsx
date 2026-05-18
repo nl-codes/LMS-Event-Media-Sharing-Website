@@ -74,7 +74,7 @@ export default function EventDetailsPublicPage({
                     </div>
 
                     {/* Details Section */}
-                    <div className="flex-1 p-8 lg:p-10 lg:pl-4 space-y-8">
+                    <div className="flex-1 max-w-1/2 p-8 lg:p-10 lg:pl-4 space-y-8">
                         <div>
                             <div className="mb-4">
                                 <EventStatusLabel
@@ -82,7 +82,7 @@ export default function EventDetailsPublicPage({
                                     endTime={event.endTime}
                                 />
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-black text-cusblue tracking-tight leading-tight mb-4">
+                            <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight mb-4 w-full wrap-break-word">
                                 {event.eventName}
                             </h1>
                             <p className="text-slate-500 text-base leading-relaxed max-w-xl">

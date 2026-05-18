@@ -55,11 +55,11 @@ export default function MyEventCard({ event, onDelete }: MyEventCardProps) {
 
                 {/* Header: Title & Premium Badge */}
                 <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-bold text-cusblue leading-tight">
+                    <h3 className="text-xl font-bold text-cusblue leading-tight line-clamp-2 min-h-12">
                         {event.eventName}
                     </h3>
                     {event.isPremium && (
-                        <span className="bg-custeal/20 text-custeal text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md border border-custeal/30">
+                        <span className="shrink-0 bg-custeal/20 text-custeal text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md border border-custeal/30 ml-2">
                             Premium
                         </span>
                     )}

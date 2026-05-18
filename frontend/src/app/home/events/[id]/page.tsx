@@ -202,7 +202,7 @@ export default function EventDetailsPage() {
                     </div>
 
                     {/* RIGHT: Event Details Section */}
-                    <div className="flex-1 p-8 lg:p-10 lg:pl-4 space-y-8">
+                    <div className="flex-1 max-w-1/2 p-8 lg:p-10 lg:pl-4 space-y-8">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <span
@@ -213,7 +213,7 @@ export default function EventDetailsPage() {
                                     {event.isLive ? "Live" : "Draft"}
                                 </span>
                             </div>
-                            <h1 className="text-4xl font-black text-cusblue tracking-tight leading-none mb-4">
+                            <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight mb-4 w-full wrap-break-word">
                                 {event.eventName}
                             </h1>
                             <p className="text-slate-500 text-sm leading-relaxed max-w-xl line-clamp-4">
