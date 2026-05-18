@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Interaction from "../models/interactionModel.js";
 import Media from "../models/mediaModel.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 const validateObjectId = (id, label) => {
     if (!mongoose.isValidObjectId(id)) {
@@ -29,7 +30,11 @@ export const addComment = async ({ content, authorId, mediaId }) => {
         media: mediaId,
     });
 
-    return Interaction.findById(comment._id).populate("author", "userName");
+    const populated = await Interaction.findById(comment._id).populate(
+        "author",
+        "userName",
+    );
+    return attachAvatars(populated, ["author"]);
 };
 
 const toggleLikeOperation = async ({ authorId, mediaId, session = null }) => {
@@ -118,9 +123,10 @@ export const getInteractionsByMediaId = async (mediaId, type = "comment") => {
         throw new Error("Media not found");
     }
 
-    return Interaction.find({ media: mediaId, type })
+    const interactions = await Interaction.find({ media: mediaId, type })
         .sort({ createdAt: -1 })
         .populate("author", "userName");
+    return attachAvatars(interactions, ["author"]);
 };
 
 export const editComment = async ({ commentId, authorId, content }) => {
@@ -144,7 +150,11 @@ export const editComment = async ({ commentId, authorId, content }) => {
     comment.content = trimmedContent;
     await comment.save();
 
-    return Interaction.findById(comment._id).populate("author", "userName");
+    const populated = await Interaction.findById(comment._id).populate(
+        "author",
+        "userName",
+    );
+    return attachAvatars(populated, ["author"]);
 };
 
 export const deleteComment = async ({ commentId, authorId }) => {
