@@ -8,40 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, AlertCircle } from "lucide-react";
 import EventDetailsPublicPage from "./EventDetailsPublicPage";
 import { useIdentity } from "@/context/IdentityContext";
-
-type ScopedGuestCookie = {
-    guestId: string;
-    userName: string;
-    eventId: string;
-};
-
-function getScopedGuestCookie(eventSlug: string): ScopedGuestCookie | null {
-    if (typeof document === "undefined" || !eventSlug) return null;
-
-    const cookieKey = `guest_${eventSlug}`;
-    const cookieValue = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith(`${cookieKey}=`))
-        ?.split("=")[1];
-
-    if (!cookieValue) return null;
-
-    try {
-        const parsed = JSON.parse(decodeURIComponent(cookieValue));
-        if (
-            parsed &&
-            typeof parsed.guestId === "string" &&
-            typeof parsed.userName === "string" &&
-            typeof parsed.eventId === "string"
-        ) {
-            return parsed as ScopedGuestCookie;
-        }
-    } catch {
-        return null;
-    }
-
-    return null;
-}
+import { getScopedGuestCookie } from "@/lib/guestIdentity";
 
 function UsernameModal({
     open,

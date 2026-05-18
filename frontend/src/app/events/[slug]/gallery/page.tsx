@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
 import { useIdentity } from "@/context/IdentityContext";
 import { getEventBySlug } from "@/lib/eventApi";
+import { getScopedGuestUserName } from "@/lib/guestIdentity";
 import {
     deleteMedia,
     deleteMultipleMedia,
@@ -48,26 +49,7 @@ export default function EventPublicGallery() {
 
     const isHost = event?.hostId === eventId;
     const currentUserId = user?._id || "";
-    const scopedGuestDisplayName =
-        typeof document !== "undefined" && slug
-            ? (() => {
-                  const cookieValue = document.cookie
-                      .split("; ")
-                      .find((row) => row.startsWith(`guest_${slug}=`))
-                      ?.split("=")[1];
-                  if (!cookieValue) return null;
-                  try {
-                      const parsed = JSON.parse(
-                          decodeURIComponent(cookieValue),
-                      ) as {
-                          userName?: string;
-                      };
-                      return parsed.userName || null;
-                  } catch {
-                      return null;
-                  }
-              })()
-            : null;
+    const scopedGuestDisplayName = slug ? getScopedGuestUserName(slug) : null;
     const uploaderDisplayName =
         user?.userName || scopedGuestDisplayName || displayName;
 
