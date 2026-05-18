@@ -26,15 +26,19 @@ export default function SignedHeader() {
 
                 {/* Navigation Actions */}
                 <div className="flex items-center gap-4">
-                    <div className="text-lg font-semibold text-black">
-                        {userName && `Welcome, ${userName}`}
+                    <div className="text-lg font-semibold text-transparent bg-linear-to-r from-cusviolet to-cusblue bg-clip-text">
+                        {userName && (
+                            <>
+                                Welcome, <span className="">{userName}</span>
+                            </>
+                        )}
                     </div>
 
                     <button
                         type="button"
                         onClick={handleProfileClick}
                         aria-label="Open profile"
-                        className="rounded-full transition-transform hover:scale-105 active:scale-95">
+                        className="rounded-full transition-transform hover:scale-105 active:scale-95 flex items-center">
                         <UserAvatar
                             src={user?.profilePicture}
                             name={userName}
