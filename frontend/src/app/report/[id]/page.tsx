@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { AlertTriangle, ShieldCheck, X } from "lucide-react";
+import { AlertTriangle, Download, ShieldCheck, X } from "lucide-react";
 import BackButton from "@/components/navigation/BackButton";
 import { useUser } from "@/context/UserContext";
 import { dismissReport, getReport, verifyReport } from "@/lib/reportApi";
@@ -122,6 +122,29 @@ export default function ReportDetailPage() {
         }
     };
 
+    const handleDownload = async (url: string, label?: string) => {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Failed to fetch media");
+            const blob = await res.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = objectUrl;
+            const extFromType = blob.type.split("/")[1]?.split(";")[0];
+            const extFromUrl = url.split("?")[0].split(".").pop();
+            const ext = extFromUrl && extFromUrl.length <= 5 ? extFromUrl : extFromType || "bin";
+            a.download = `${label || "reported-media"}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(objectUrl);
+        } catch (err) {
+            toast.error(
+                err instanceof Error ? err.message : "Failed to download",
+            );
+        }
+    };
+
     const handleDismiss = async () => {
         if (!reasoning.trim()) {
             toast.error("Reasoning is required");
@@ -198,9 +221,26 @@ export default function ReportDetailPage() {
 
                 {target && (
                     <section className="mt-6 rounded-3xl bg-white p-6 shadow-xl ring-1 ring-cusblue/10">
-                        <h2 className="mb-4 text-xs font-black uppercase tracking-widest text-cusviolet/70">
-                            Reported Content
-                        </h2>
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <h2 className="text-xs font-black uppercase tracking-widest text-cusviolet/70">
+                                Reported Content
+                            </h2>
+                            {report.targetType === "Media" && target.mediaUrl && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        handleDownload(
+                                            target.mediaUrl!,
+                                            target.label,
+                                        )
+                                    }
+                                    title="Download media"
+                                    className="inline-flex items-center gap-2 rounded-2xl border border-cusblue/20 bg-white px-3 py-1.5 text-xs font-extrabold text-cusblue transition hover:bg-cuscream">
+                                    <Download className="h-4 w-4" />
+                                    Download
+                                </button>
+                            )}
+                        </div>
                         {report.targetType === "Media" && target.mediaUrl ? (
                             <div className="space-y-3">
                                 <div className="relative h-80 w-full overflow-hidden rounded-2xl bg-slate-100">
