@@ -190,9 +190,9 @@ export default function GalleryEventHeader({
                     )}
                 </div>
 
-                <div className="w-full max-w-[220px] rounded-2xl border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
-                    <div className="rounded-2xl bg-white/75 p-2 backdrop-blur-sm">
-                        <div className="relative h-28 w-full overflow-hidden rounded-xl bg-cuscream">
+                <div className="w-full max-w-100 rounded-2xl p-px">
+                    <div className="rounded-2xl p-2 backdrop-blur-sm">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-cuscream">
                             {event.thumbnail ? (
                                 <Image
                                     src={event.thumbnail}

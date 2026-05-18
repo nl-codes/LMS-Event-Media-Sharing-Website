@@ -130,7 +130,7 @@ export default function EventDetailsPage() {
                 />
             )}
 
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10 profile-card-animate">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 profile-card-animate">
                 {/* Header Actions */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                     <BackButton label="Back to My Events" />
@@ -169,10 +169,10 @@ export default function EventDetailsPage() {
                 </div>
 
                 {/* Main Content: Thumbnail Left, Rest Right */}
-                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row items-center">
                     {/* LEFT: Thumbnail Section (16:9) */}
-                    <div className="w-full lg:w-[45%] p-6 lg:p-8">
-                        <div className="relative aspect-video lg:h-full w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
+                    <div className="w-1/2 p-6 lg:p-8">
+                        <div className="relative aspect-video w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
                             {event.thumbnail ? (
                                 <Image
                                     src={event.thumbnail}

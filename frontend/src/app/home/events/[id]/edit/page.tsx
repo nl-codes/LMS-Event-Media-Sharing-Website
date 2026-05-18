@@ -110,7 +110,7 @@ export default function EditEventPage() {
 
     return (
         <main className="min-h-screen py-12 px-4 sm:px-6">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                     <BackButton label="Cancel and go back" />
                 </div>
@@ -132,7 +132,7 @@ export default function EditEventPage() {
                     <form onSubmit={onSubmit} className="p-8 lg:p-10">
                         <div className="flex flex-col lg:flex-row gap-10">
                             {/* Thumbnail */}
-                            <div className="w-full lg:w-2/5 space-y-4">
+                            <div className="w-1/2 lg:w-1/2 space-y-4">
                                 <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
                                     <ImageIcon size={16} />
                                     Cover Image
@@ -162,7 +162,7 @@ export default function EditEventPage() {
                                     onClick={() =>
                                         fileInputRef.current?.click()
                                     }
-                                    className="group relative h-64 lg:h-[420px] w-full rounded-4xl border-2 border-dashed border-cusblue/20 bg-cusblue/5 overflow-hidden cursor-pointer hover:border-cusblue/40 transition-all shadow-inner">
+                                    className="group relative aspect-video  w-full rounded-4xl border-2 border-dashed border-cusblue/20 bg-cusblue/5 overflow-hidden cursor-pointer hover:border-cusblue/40 transition-all shadow-inner">
                                     {thumbnailPreview || currentThumbnail ? (
                                         <>
                                             <Image

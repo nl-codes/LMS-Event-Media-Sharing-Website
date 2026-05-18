@@ -134,7 +134,7 @@ export default function CreateEventPage() {
                                     onClick={() =>
                                         fileInputRef.current?.click()
                                     }
-                                    className="group relative h-64 lg:h-[420px] w-full rounded-4xl border-2 border-dashed border-cusblue/20 bg-cusblue/5 overflow-hidden cursor-pointer hover:border-cusblue/40 transition-all shadow-inner">
+                                    className="group relative aspect-video w-full rounded-4xl border-2 border-dashed border-cusblue/20 bg-cusblue/5 overflow-hidden cursor-pointer hover:border-cusblue/40 transition-all shadow-inner">
                                     {thumbnailPreview ? (
                                         <>
                                             <Image

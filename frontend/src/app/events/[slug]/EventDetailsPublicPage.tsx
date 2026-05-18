@@ -49,11 +49,11 @@ export default function EventDetailsPublicPage({
 
     return (
         <main className="min-h-screen bg-cuscream selection:bg-custeal selection:text-white pb-20">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 profile-card-animate">
-                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 profile-card-animate">
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row items-center">
                     {/* Thumbnail Section */}
-                    <div className="w-full lg:w-[45%] p-6 lg:p-8">
-                        <div className="relative aspect-video lg:h-full w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
+                    <div className="w-1/2 lg:w-[50%] p-6 lg:p-8">
+                        <div className="relative aspect-video w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
                             {event.thumbnail ? (
                                 <Image
                                     src={event.thumbnail}

@@ -36,7 +36,7 @@ export default function MyEventCard({ event, onDelete }: MyEventCardProps) {
 
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-cusblue/5 flex flex-col transition-all hover:scale-[1.02] profile-card-animate">
                 <div className="mb-5 rounded-2xl overflow-hidden border border-transparent bg-linear-to-r from-cusblue to-cusviolet p-px">
-                    <div className="relative h-44 w-full rounded-2xl overflow-hidden bg-cuscream">
+                    <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-cuscream">
                         {hasThumbnail ? (
                             <Image
                                 src={event.thumbnail}
