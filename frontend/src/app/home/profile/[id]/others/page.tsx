@@ -19,21 +19,10 @@ import { getPublicProfile, type PublicProfile } from "@/lib/profileApi";
 import type { Event } from "@/types/Event";
 import clsx from "clsx";
 import BackButton from "@/components/navigation/BackButton";
-
-function formatMemberSince(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-        month: "long",
-        year: "numeric",
-    });
-}
-
-function formatEventDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
-}
+import {
+    HelperFormatDate,
+    HelperFormatMonthYear,
+} from "@/utils/HelperFunctions";
 
 function EventPill({ event, href }: { event: Event; href: string }) {
     return (
@@ -58,7 +47,7 @@ function EventPill({ event, href }: { event: Event; href: string }) {
                     </p>
                     <div className="flex items-center gap-1 mt-0.5 text-[11px] text-slate-500">
                         <Calendar className="w-3 h-3 text-cusblue/50 shrink-0" />
-                        <span>{formatEventDate(event.startTime)}</span>
+                        <span>{HelperFormatDate(event.startTime)}</span>
                     </div>
                     <div className="flex items-center gap-1 mt-0.5 text-[11px] text-slate-500">
                         <MapPin className="w-3 h-3 text-cusblue/50 shrink-0" />
@@ -185,7 +174,7 @@ export default function OthersProfilePage() {
                             </div>
                             {/* Member since badge */}
                             <span className="mb-1 rounded-2xl border border-cusblue/10 bg-cusblue/5 px-4 py-1.5 text-xs font-bold text-cusblue/70">
-                                Member since {formatMemberSince(user.createdAt)}
+                                Member since {HelperFormatMonthYear(user.createdAt)}
                             </span>
                         </div>
 
@@ -279,7 +268,7 @@ export default function OthersProfilePage() {
                                         Joined
                                     </p>
                                     <p className="text-sm font-semibold text-gray-700">
-                                        {formatMemberSince(user.createdAt)}
+                                        {HelperFormatMonthYear(user.createdAt)}
                                     </p>
                                 </div>
                             </div>
