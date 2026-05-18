@@ -6,9 +6,12 @@ import Link from "next/link";
 import LogoRounded from "../logo/Logo_Rounded";
 import LogoutButton from "@/components/buttons/LogoutButton";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import UserAvatar from "@/components/common/UserAvatar";
+import { useUser } from "@/context/UserContext";
 
 export default function SignedHeader({ userName }: { userName: string }) {
     const router = useRouter();
+    const { user } = useUser();
 
     const handleProfileClick = () => router.push("/home/profile");
 
@@ -25,6 +28,18 @@ export default function SignedHeader({ userName }: { userName: string }) {
                     <div className="text-lg font-semibold text-black">
                         {userName && `Welcome, ${userName}`}
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={handleProfileClick}
+                        aria-label="Open profile"
+                        className="rounded-full transition-transform hover:scale-105 active:scale-95">
+                        <UserAvatar
+                            src={user?.profilePicture}
+                            name={user?.userName || userName}
+                            size="small"
+                        />
+                    </button>
 
                     {/* Notification Bell */}
                     <NotificationBell />

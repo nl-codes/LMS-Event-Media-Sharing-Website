@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, MessageCircle, Send, X } from "lucide-react";
+import UserAvatar from "@/components/common/UserAvatar";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import BackButton from "@/components/navigation/BackButton";
@@ -541,17 +542,53 @@ export default function MediaDetailPage() {
                                                     key={comment._id}
                                                     className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
                                                     <div className="flex items-start justify-between gap-3">
-                                                        {comment.author?._id ? (
-                                                            <Link
-                                                                href={`/home/profile/${comment.author._id}/others`}
-                                                                className="text-sm font-black text-cusblue hover:underline">
-                                                                {comment.author.userName || "Unknown"}
-                                                            </Link>
-                                                        ) : (
-                                                            <p className="text-sm font-black text-cusblue">
-                                                                Unknown
-                                                            </p>
-                                                        )}
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            {comment.author
+                                                                ?._id ? (
+                                                                <Link
+                                                                    href={`/home/profile/${comment.author._id}/others`}
+                                                                    className="shrink-0">
+                                                                    <UserAvatar
+                                                                        src={
+                                                                            comment
+                                                                                .author
+                                                                                .profilePicture
+                                                                        }
+                                                                        name={
+                                                                            comment
+                                                                                .author
+                                                                                .userName
+                                                                        }
+                                                                        size="small"
+                                                                    />
+                                                                </Link>
+                                                            ) : (
+                                                                <UserAvatar
+                                                                    name={
+                                                                        comment
+                                                                            .author
+                                                                            ?.userName ||
+                                                                        "Unknown"
+                                                                    }
+                                                                    size="small"
+                                                                />
+                                                            )}
+                                                            {comment.author
+                                                                ?._id ? (
+                                                                <Link
+                                                                    href={`/home/profile/${comment.author._id}/others`}
+                                                                    className="text-sm font-black text-cusblue hover:underline truncate">
+                                                                    {comment
+                                                                        .author
+                                                                        .userName ||
+                                                                        "Unknown"}
+                                                                </Link>
+                                                            ) : (
+                                                                <p className="text-sm font-black text-cusblue truncate">
+                                                                    Unknown
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                         {currentUserId &&
                                                             !isOwnComment && (
                                                                 <ReportMenu
@@ -585,13 +622,20 @@ export default function MediaDetailPage() {
                                     {likes.map((like) => {
                                         const inner = (
                                             <>
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cusviolet/10 text-sm font-black text-cusviolet">
-                                                    {(like.author?.userName || "U")
-                                                        .slice(0, 1)
-                                                        .toUpperCase()}
-                                                </div>
+                                                <UserAvatar
+                                                    src={
+                                                        like.author
+                                                            ?.profilePicture
+                                                    }
+                                                    name={
+                                                        like.author?.userName ||
+                                                        "Unknown"
+                                                    }
+                                                    size="small"
+                                                />
                                                 <p className="text-sm font-black text-cusblue">
-                                                    {like.author?.userName || "Unknown"}
+                                                    {like.author?.userName ||
+                                                        "Unknown"}
                                                 </p>
                                             </>
                                         );

@@ -24,6 +24,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import Button from "@/components/buttons/Button";
+import UserAvatar from "@/components/common/UserAvatar";
 
 export default function EventDetailsPage() {
     const [event, setEvent] = useState<Event | null>(null);
@@ -220,6 +221,35 @@ export default function EventDetailsPage() {
                                     "No description provided for this event."}
                             </p>
                         </div>
+
+                        {/* Host */}
+                        {(() => {
+                            const host =
+                                typeof event.hostId === "object" &&
+                                event.hostId !== null
+                                    ? event.hostId
+                                    : null;
+                            if (!host) return null;
+                            return (
+                                <Link
+                                    href={`/home/profile/${host._id}/others`}
+                                    className="-mt-2 flex w-fit items-center gap-3 rounded-2xl bg-white/70 px-4 py-2 shadow-sm ring-1 ring-cusblue/10 transition hover:bg-white">
+                                    <UserAvatar
+                                        src={host.profilePicture}
+                                        name={host.userName}
+                                        size="small"
+                                    />
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            Hosted by
+                                        </p>
+                                        <p className="text-sm font-bold text-cusblue">
+                                            {host.userName || "Anonymous"}
+                                        </p>
+                                    </div>
+                                </Link>
+                            );
+                        })()}
 
                         {/* Info Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

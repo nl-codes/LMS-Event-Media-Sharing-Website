@@ -5,7 +5,6 @@ import {
     ShieldCheck,
     Lock,
     Loader2,
-    User,
     Sparkles,
     Image as ImageIcon,
     Play,
@@ -16,7 +15,9 @@ import BackButton from "@/components/navigation/BackButton";
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import EventStatusLabel from "@/components/events/EventStatusLabel";
+import UserAvatar from "@/components/common/UserAvatar";
 
 interface EventDetailsPublicPageProps {
     event: Event;
@@ -101,20 +102,40 @@ export default function EventDetailsPublicPage({
                         {/* Info Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Host Card */}
-                            <div className="bg-white/50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-                                <div className="p-2 bg-cusblue text-white rounded-xl shadow-sm shrink-0">
-                                    <User size={18} />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                        Hosted By
-                                    </p>
-                                    <p className="text-sm font-bold text-cusblue truncate">
-                                        {(event.hostId as { userName?: string })
-                                            ?.userName || "Anonymous Host"}
-                                    </p>
-                                </div>
-                            </div>
+                            {(() => {
+                                const host =
+                                    typeof event.hostId === "object" &&
+                                    event.hostId !== null
+                                        ? event.hostId
+                                        : null;
+                                const hostName =
+                                    host?.userName || "Anonymous Host";
+                                const inner = (
+                                    <div className="bg-white/50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm transition-colors hover:bg-white/80">
+                                        <UserAvatar
+                                            src={host?.profilePicture}
+                                            name={hostName}
+                                            size="small"
+                                        />
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                Hosted By
+                                            </p>
+                                            <p className="text-sm font-bold text-cusblue truncate">
+                                                {hostName}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                                return host?._id ? (
+                                    <Link
+                                        href={`/home/profile/${host._id}/others`}>
+                                        {inner}
+                                    </Link>
+                                ) : (
+                                    inner
+                                );
+                            })()}
 
                             {/* Location Card */}
                             <div className="bg-white/50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">

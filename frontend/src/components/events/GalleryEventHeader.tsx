@@ -5,6 +5,8 @@ import { Calendar, Clock, MapPin } from "lucide-react";
 import type { Event } from "@/types/Event";
 import clsx from "clsx";
 import Image from "next/image";
+import Link from "next/link";
+import UserAvatar from "@/components/common/UserAvatar";
 
 interface GalleryEventHeaderProps {
     event: Pick<
@@ -16,6 +18,7 @@ interface GalleryEventHeaderProps {
         | "endTime"
         | "isLive"
         | "thumbnail"
+        | "hostId"
     >;
     subtitle?: string;
     roleBadge?: string;
@@ -150,6 +153,30 @@ export default function GalleryEventHeader({
                             </span>
                         )}
                     </div>
+
+                    {/* Host */}
+                    {(() => {
+                        const host =
+                            typeof event.hostId === "object" &&
+                            event.hostId !== null
+                                ? event.hostId
+                                : null;
+                        if (!host) return null;
+                        return (
+                            <Link
+                                href={`/home/profile/${host._id}/others`}
+                                className="mb-4 inline-flex items-center gap-2 rounded-full border border-white bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur-md transition hover:bg-white">
+                                <UserAvatar
+                                    src={host.profilePicture}
+                                    name={host.userName}
+                                    size="small"
+                                />
+                                <span className="text-xs font-bold text-cusblue">
+                                    Hosted by {host.userName || "Anonymous"}
+                                </span>
+                            </Link>
+                        );
+                    })()}
 
                     <p className="max-w-2xl text-base leading-relaxed text-cusviolet/85">
                         {shouldTruncate && !expandedDescription
