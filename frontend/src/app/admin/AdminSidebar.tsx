@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import LogoutButton from "@/components/buttons/LogoutButton";
-import NotificationBell from "@/components/notifications/NotificationBell";
 
 const navItems = [
     { href: "/admin/home", label: "Dashboard", icon: LayoutDashboard },
@@ -72,7 +71,6 @@ export default function AdminSidebar() {
 
                 <div className="mt-4 flex items-center justify-between gap-2 lg:mt-6">
                     <LogoutButton redirectTo="/admin/login" />
-                    <NotificationBell />
                 </div>
             </div>
         </aside>
