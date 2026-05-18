@@ -363,94 +363,137 @@ export default function MediaDetailPage() {
                         )}
                     </div>
 
-                    <div className="space-y-5 p-5 sm:p-7">
+                    <div className="space-y-6 p-5 sm:p-7">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-cusviolet">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cusviolet/80">
                                     {eventTitle}
                                 </p>
-                                <h1 className="mt-1 text-2xl font-black text-cusblue sm:text-3xl">
+                                <h1 className="text-2xl font-black text-cusblue sm:text-3xl tracking-tight">
                                     {media.label || "Event media"}
                                 </h1>
-                                <p className="mt-2 text-sm font-medium text-slate-600">
-                                    Uploaded by {uploadedBy} on{" "}
-                                    {formatDate(media.createdAt)}
-                                </p>
+
+                                {/* Improved Uploaded By Section */}
+                                <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                                    <div className="flex items-center gap-2">
+                                        {media.uploaderId ? (
+                                            <Link
+                                                href={`/home/profile/${media.uploaderId._id}/others`}
+                                                className="transition-transform hover:scale-105 active:scale-95">
+                                                <UserAvatar
+                                                    src={
+                                                        media.uploaderId
+                                                            .profilePicture
+                                                    }
+                                                    name={
+                                                        media.uploaderId
+                                                            .userName
+                                                    }
+                                                    size="small"
+                                                />
+                                            </Link>
+                                        ) : (
+                                            <UserAvatar
+                                                name={
+                                                    media.guestId?.userName ||
+                                                    "Unknown"
+                                                }
+                                                size="small"
+                                            />
+                                        )}
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                                            <span className="text-sm font-bold text-cusblue">
+                                                {uploadedBy}
+                                            </span>
+                                            <span className="hidden h-1 w-1 rounded-full bg-slate-300 sm:block" />
+                                            <span className="text-xs font-medium text-slate-500">
+                                                {formatDate(media.createdAt)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Likes and Comments Bar */}
+                            <div className="flex items-center gap-1 rounded-2xl border border-white/70 bg-white/60 p-1.5 shadow-sm ring-1 ring-cusblue/5 backdrop-blur-md sm:w-fit">
+                                <div className="flex items-center rounded-xl bg-white/40 px-1 py-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleLike}
+                                        className="group rounded-lg p-2 transition-colors hover:bg-white disabled:cursor-not-allowed"
+                                        aria-label={
+                                            isLiked
+                                                ? "Unlike media"
+                                                : "Like media"
+                                        }>
+                                        <Heart
+                                            className={`h-5 w-5 transition duration-300 ${
+                                                isLikeAnimating
+                                                    ? "scale-125"
+                                                    : "group-hover:scale-110"
+                                            }`}
+                                            color={
+                                                isLiked ? "#f43f5e" : "#64748b"
+                                            }
+                                            fill={isLiked ? "#f43f5e" : "none"}
+                                        />
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => openModal("likes")}
+                                        className="px-2 py-2 text-sm font-black text-cusblue hover:cursor-pointer">
+                                        {likesCount}
+                                        <span className="ml-1">Likes</span>
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => openModal("comments")}
+                                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-black text-cusblue transition hover:bg-white/80 hover:cursor-pointer">
+                                    <MessageCircle className="h-5 w-5 text-slate-500 " />
+                                    <span>{comments.length}</span>
+                                    <span>Comments</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex w-full flex-wrap items-center gap-2 rounded-2xl border border-white/70 bg-white/60 p-2 shadow-sm ring-1 ring-cusblue/10 backdrop-blur-md sm:w-fit">
-                            <div className="inline-flex items-center gap-1 rounded-xl px-2 py-1 text-sm font-extrabold text-cusblue transition hover:bg-white">
-                                <button
-                                    type="button"
-                                    onClick={handleToggleLike}
-                                    className="rounded-lg p-2 transition hover:cursor-pointer disabled:cursor-not-allowed"
-                                    aria-label={
-                                        isLiked ? "Unlike media" : "Like media"
-                                    }>
-                                    <Heart
-                                        className={`h-5 w-5 transition duration-200 ${
-                                            isLikeAnimating
-                                                ? "scale-125"
-                                                : "scale-100"
-                                        }`}
-                                        color={
-                                            isLiked ? "#f43f5e" : "currentColor"
-                                        }
-                                        fill={isLiked ? "#f43f5e" : "none"}
-                                    />
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => openModal("likes")}
-                                    className="rounded-lg px-2 py-2 transition hover:cursor-pointer"
-                                    aria-label="View likes">
-                                    <span>{likesCount}</span>
-                                    <span className="ml-1">Likes</span>
-                                </button>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("comments")}
-                                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-extrabold text-cusblue transition hover:cursor-pointer"
-                                aria-label="Open comments">
-                                <MessageCircle className="h-5 w-5" />
-                                <span>{comments.length}</span>
-                                <span>Comments</span>
-                            </button>
-                        </div>
-
-                        <div className="border-t border-cusblue/10 pt-5">
+                        {/* Comment Input Area */}
+                        <div className="border-t border-cusblue/5 pt-6">
                             {canComment ? (
-                                <div className="flex flex-col gap-3">
+                                <div className="group relative">
                                     <textarea
                                         value={commentText}
                                         onChange={(event) =>
                                             setCommentText(event.target.value)
                                         }
-                                        rows={3}
+                                        rows={1} // Starts small
                                         maxLength={600}
-                                        placeholder="Add a comment..."
-                                        className="w-full resize-none rounded-2xl border border-cusblue/15 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cusviolet focus:ring-4 focus:ring-cusviolet/10"
+                                        placeholder="Add a thoughtful comment..."
+                                        className="min-h-[50px] w-full resize-none rounded-2xl border border-cusblue/10 bg-cuscream/20 px-5 py-4 text-sm text-slate-800 outline-none transition-all focus:min-h-[100px] focus:border-cusviolet/30 focus:bg-white focus:ring-4 focus:ring-cusviolet/5"
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={handlePostComment}
-                                        disabled={isPosting}
-                                        className="inline-flex w-fit items-center gap-2 rounded-2xl bg-linear-to-r from-cusblue to-cusviolet px-5 py-3 text-sm font-extrabold text-white shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60">
-                                        <Send className="h-4 w-4" />
-                                        {isPosting ? "Posting..." : "Post"}
-                                    </button>
+                                    <div className="mt-3 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={handlePostComment}
+                                            disabled={
+                                                isPosting || !commentText.trim()
+                                            }
+                                            className="inline-flex items-center gap-2 rounded-xl bg-cusblue px-6 py-2.5 text-sm font-black text-white shadow-lg shadow-cusblue/20 transition-all hover:-translate-y-px hover:bg-cusviolet active:translate-y-0 disabled:opacity-50 disabled:shadow-none">
+                                            <Send className="h-4 w-4" />
+                                            {isPosting ? "Posting..." : "Post"}
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-4">
-                                    <p className="text-sm font-medium text-slate-500">
+                                <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
+                                    <p className="text-sm font-bold text-slate-500">
                                         Login in to like and comment.
                                     </p>
                                     <Button
-                                        onClick={() => router.push("/login")}>
+                                        onClick={() => router.push("/login")}
+                                        className="scale-90">
                                         Login
                                     </Button>
                                 </div>
