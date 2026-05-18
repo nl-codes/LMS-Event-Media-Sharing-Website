@@ -69,6 +69,28 @@ export const formatToLocalDatetime = (dateString: string) => {
     return localISOTime;
 };
 
+export const HelperFormatDateTime = (date: string) =>
+    new Intl.DateTimeFormat("en", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(date));
+
+export const HelperFormatDate = (date: string | Date) =>
+    new Date(date).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
+
+export const HelperFormatTime = (date: string | Date) =>
+    new Date(date).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
 export const handleCopyText = async (textToCopy: string) => {
     try {
         await navigator.clipboard.writeText(textToCopy);
