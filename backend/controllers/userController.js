@@ -7,6 +7,7 @@ import {
     verifyUserActivationToken,
 } from "../services/userService.js";
 import { User } from "../models/userModel.js";
+import { Profile } from "../models/profileModel.js";
 import { createNotification } from "../services/notificationService.js";
 import { createAppeal } from "../services/appealService.js";
 import { generateGeneralToken } from "../utils/generateToken.js";
@@ -60,11 +61,15 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const loginUser = await verifyUser(req.body);
+        const profile = await Profile.findOne({ user: loginUser._id })
+            .select("profilePicture")
+            .lean();
         const token = generateJWTtoken({
             email: loginUser.email,
             userName: loginUser.userName,
             role: "user",
             id: loginUser._id,
+            profilePicture: profile?.profilePicture || "",
         });
         res.cookie("token", token, {
             httpOnly: true, // Prevents JS access (XSS protection)
@@ -210,12 +215,21 @@ export const submitUnsuspendAppeal = async (req, res) => {
     }
 };
 
-export const getMe = (req, res) => {
+export const getMe = async (req, res) => {
     // req.user is set by requireAuth middleware
+    let profilePicture = req.user.profilePicture || "";
+    try {
+        const profile = await Profile.findOne({ user: req.user.id })
+            .select("profilePicture")
+            .lean();
+        if (profile) profilePicture = profile.profilePicture || "";
+    } catch {}
+
     res.json({
         _id: req.user.id,
         email: req.user.email,
         userName: req.user.userName,
         role: req.user.role,
+        profilePicture,
     });
 };
