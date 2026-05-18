@@ -21,6 +21,7 @@ import { useUser } from "@/context/UserContext";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
+import { useSelection } from "@/hooks/useSelection";
 import {
     downloadAsZip,
     normalizeLikedByIds,
@@ -37,8 +38,14 @@ const GalleryPage = () => {
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loading, setLoading] = useState(true);
     const [isHost, setIsHost] = useState(false);
-    const [isSelectionActive, setIsSelectionActive] = useState(false);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const {
+        isActive: isSelectionActive,
+        selectedIds,
+        start: handleStartSelection,
+        clear: handleClearSelection,
+        toggle: handleSelectToggle,
+        remove: handleRemoveFromSelection,
+    } = useSelection({ canStart: () => isHost });
 
     const currentUserId = user?._id || "";
 
@@ -53,7 +60,7 @@ const GalleryPage = () => {
         },
         onMediaDeleted: (mediaId) => {
             setGallery((prev) => prev.filter((m) => m._id !== mediaId));
-            setSelectedIds((prev) => prev.filter((id) => id !== mediaId));
+            handleRemoveFromSelection(mediaId);
         },
         onMediaLiked: ({ mediaId, likesCount, userId, liked }) => {
             setGallery((prev) =>
@@ -136,28 +143,6 @@ const GalleryPage = () => {
         }
     };
 
-    const handleStartSelection = () => {
-        if (!isHost) return;
-        setIsSelectionActive(true);
-    };
-
-    const handleClearSelection = () => {
-        setSelectedIds([]);
-        setIsSelectionActive(false);
-    };
-
-    const handleSelectToggle = (mediaId: string) => {
-        if (!isSelectionActive) return;
-
-        setSelectedIds((prev) => {
-            if (prev.includes(mediaId)) {
-                return prev.filter((id) => id !== mediaId);
-            }
-
-            return [...prev, mediaId];
-        });
-    };
-
     const handleConfirmBulkDelete = () => {
         if (!selectedIds.length) return;
 
@@ -188,8 +173,7 @@ const GalleryPage = () => {
                 setGallery((prev) =>
                     prev.filter((media) => !idsToDelete.includes(media._id)),
                 );
-                setSelectedIds([]);
-                setIsSelectionActive(false);
+                handleClearSelection();
             },
         });
     };
@@ -273,11 +257,7 @@ const GalleryPage = () => {
             </div>
 
             {event && (
-                <GalleryEventHeader
-                    event={event}
-                    subtitle={gallerySubtitle}
-                    roleBadge={isHost ? "HOST" : undefined}
-                />
+                <GalleryEventHeader event={event} subtitle={gallerySubtitle} />
             )}
 
             <div className="w-full lg:w-auto">

@@ -11,6 +11,8 @@ import FlaggedMediaSection from "@/components/profile/FlaggedMediaSection";
 import ReactCountryFlag from "react-country-flag";
 import { Country } from "country-state-city";
 import UserAvatar from "@/components/common/UserAvatar";
+import InfoCard from "@/app/home/profile/InfoCard";
+import { HelperFormatMonthYear } from "@/utils/HelperFunctions";
 
 export default function ProfileCard() {
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -150,34 +152,21 @@ export default function ProfileCard() {
 
                     {/* Info Grid */}
                     <div className="mt-8 pt-6 border-t border-gray-50 grid grid-cols-1 gap-4">
-                        <div className="flex items-center gap-4 text-gray-600">
-                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-cusblue">
-                                <Mail size={20} />
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase">
-                                    Email Address
-                                </p>
-                                <p className="text-sm font-medium">
-                                    {profile.user?.email}
-                                </p>
-                            </div>
-                        </div>
+                        <InfoCard
+                            icon={<Mail size={20} />}
+                            iconColor="blue"
+                            label="Email Address">
+                            {profile.user?.email}
+                        </InfoCard>
 
                         {profile.gender && (
-                            <div className="flex items-center gap-4 text-gray-600">
-                                <div className="w-10 h-10 bg-pink-50 rounded-lg flex items-center justify-center text-pink-400">
-                                    <Users size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase">
-                                        Gender
-                                    </p>
-                                    <p className="text-sm font-medium capitalize">
-                                        {profile.gender}
-                                    </p>
-                                </div>
-                            </div>
+                            <InfoCard
+                                icon={<Users size={20} />}
+                                iconColor="pink"
+                                label="Gender"
+                                valueClassName="capitalize">
+                                {profile.gender}
+                            </InfoCard>
                         )}
 
                         {profile.country &&
@@ -186,51 +175,31 @@ export default function ProfileCard() {
                                     Country.getCountryByCode(profile.country)
                                         ?.name ?? profile.country;
                                 return (
-                                    <div className="flex items-center gap-4 text-gray-600">
-                                        <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-500">
-                                            <Globe size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase">
-                                                Country
-                                            </p>
-                                            <p className="text-sm font-medium flex items-center gap-2">
-                                                <ReactCountryFlag
-                                                    countryCode={
-                                                        profile.country
-                                                    }
-                                                    svg
-                                                    style={{
-                                                        width: "1.2em",
-                                                        height: "1.2em",
-                                                        borderRadius: "2px",
-                                                    }}
-                                                />
-                                                {countryName}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    <InfoCard
+                                        icon={<Globe size={20} />}
+                                        iconColor="emerald"
+                                        label="Country"
+                                        valueClassName="flex items-center gap-2">
+                                        <ReactCountryFlag
+                                            countryCode={profile.country}
+                                            svg
+                                            style={{
+                                                width: "1.2em",
+                                                height: "1.2em",
+                                                borderRadius: "2px",
+                                            }}
+                                        />
+                                        {countryName}
+                                    </InfoCard>
                                 );
                             })()}
 
-                        <div className="flex items-center gap-4 text-gray-600">
-                            <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-500">
-                                <Calendar size={20} />
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase">
-                                    Joined / Updated
-                                </p>
-                                <p className="text-sm font-medium">
-                                    {new Date(
-                                        profile.updatedAt,
-                                    ).toLocaleDateString(undefined, {
-                                        month: "long",
-                                        year: "numeric",
-                                    })}
-                                </p>
-                            </div>
-                        </div>
+                        <InfoCard
+                            icon={<Calendar size={20} />}
+                            iconColor="purple"
+                            label="Joined / Updated">
+                            {HelperFormatMonthYear(profile.updatedAt)}
+                        </InfoCard>
                     </div>
                 </div>
             </div>

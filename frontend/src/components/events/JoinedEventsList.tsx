@@ -25,9 +25,13 @@ export default function JoinedEventsList() {
                 setLoading(true);
                 const data = await getJoinedEvents();
 
-                const excludingHostOwnedEvents = data.filter(
-                    (event) => event.hostId !== user._id,
-                );
+                const excludingHostOwnedEvents = data.filter((event) => {
+                    const hostId =
+                        typeof event.hostId === "object" && event.hostId !== null
+                            ? event.hostId._id
+                            : event.hostId;
+                    return hostId !== user._id;
+                });
 
                 setEvents(excludingHostOwnedEvents);
                 setError("");

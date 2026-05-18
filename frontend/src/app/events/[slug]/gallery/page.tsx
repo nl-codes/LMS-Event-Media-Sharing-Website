@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
 import { useIdentity } from "@/context/IdentityContext";
 import { getEventBySlug } from "@/lib/eventApi";
+import { getScopedGuestUserName } from "@/lib/guestIdentity";
 import {
     deleteMedia,
     deleteMultipleMedia,
@@ -13,6 +14,7 @@ import {
     toggleLike,
 } from "@/lib/mediaApi";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
+import { useSelection } from "@/hooks/useSelection";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
@@ -43,31 +45,18 @@ export default function EventPublicGallery() {
     const [gallery, setGallery] = useState<Media[]>([]);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadingGallery, setLoadingGallery] = useState(false);
-    const [isSelectionActive, setIsSelectionActive] = useState(false);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const {
+        isActive: isSelectionActive,
+        selectedIds,
+        start: handleStartSelection,
+        clear: handleClearSelection,
+        toggle: handleSelectToggle,
+        remove: handleRemoveFromSelection,
+    } = useSelection();
 
     const isHost = event?.hostId === eventId;
     const currentUserId = user?._id || "";
-    const scopedGuestDisplayName =
-        typeof document !== "undefined" && slug
-            ? (() => {
-                  const cookieValue = document.cookie
-                      .split("; ")
-                      .find((row) => row.startsWith(`guest_${slug}=`))
-                      ?.split("=")[1];
-                  if (!cookieValue) return null;
-                  try {
-                      const parsed = JSON.parse(
-                          decodeURIComponent(cookieValue),
-                      ) as {
-                          userName?: string;
-                      };
-                      return parsed.userName || null;
-                  } catch {
-                      return null;
-                  }
-              })()
-            : null;
+    const scopedGuestDisplayName = slug ? getScopedGuestUserName(slug) : null;
     const uploaderDisplayName =
         user?.userName || scopedGuestDisplayName || displayName;
 
@@ -82,7 +71,7 @@ export default function EventPublicGallery() {
         },
         onMediaDeleted: (mediaId) => {
             setGallery((prev) => prev.filter((m) => m._id !== mediaId));
-            setSelectedIds((prev) => prev.filter((id) => id !== mediaId));
+            handleRemoveFromSelection(mediaId);
         },
         onMediaLiked: ({ mediaId, likesCount, userId, liked }) => {
             setGallery((prev) =>
@@ -149,8 +138,7 @@ export default function EventPublicGallery() {
                     setEventId("");
                     setEvent(null);
                     setGallery([]);
-                    setSelectedIds([]);
-                    setIsSelectionActive(false);
+                    handleClearSelection();
                     const errorMessage =
                         err instanceof Error
                             ? err.message
@@ -169,7 +157,7 @@ export default function EventPublicGallery() {
         return () => {
             isMounted = false;
         };
-    }, [slug, fetchGallery]);
+    }, [slug, fetchGallery, handleClearSelection]);
 
     const handleDelete = async (mediaId: string) => {
         try {
@@ -238,27 +226,6 @@ export default function EventPublicGallery() {
         } catch {
             toast.error("Failed to delete selected media");
         }
-    };
-
-    const handleStartSelection = () => {
-        setIsSelectionActive(true);
-    };
-
-    const handleClearSelection = () => {
-        setSelectedIds([]);
-        setIsSelectionActive(false);
-    };
-
-    const handleSelectToggle = (mediaId: string) => {
-        if (!isSelectionActive) return;
-
-        setSelectedIds((prev) => {
-            if (prev.includes(mediaId)) {
-                return prev.filter((id) => id !== mediaId);
-            }
-
-            return [...prev, mediaId];
-        });
     };
 
     const handleDownloadMedia = () => {

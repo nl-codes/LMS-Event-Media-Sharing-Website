@@ -69,6 +69,38 @@ export const formatToLocalDatetime = (dateString: string) => {
     return localISOTime;
 };
 
+export const HelperFormatDateTime = (date: string) =>
+    new Intl.DateTimeFormat("en", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(date));
+
+export const HelperFormatDate = (date: string | Date) =>
+    new Date(date).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
+
+export const HelperFormatTime = (date: string | Date) =>
+    new Date(date).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+export const HelperFormatMonthYear = (date: string | Date) =>
+    new Date(date).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric",
+    });
+
+/** True when a Media's mediaType represents an image (photo/image) rather than a video. */
+export const isImageMedia = (mediaType: string | undefined | null): boolean =>
+    ["photo", "image"].includes((mediaType ?? "").toLowerCase());
+
 export const handleCopyText = async (textToCopy: string) => {
     try {
         await navigator.clipboard.writeText(textToCopy);
