@@ -17,7 +17,7 @@ export default function SignedHeader() {
     const handleProfileClick = () => router.push("/home/profile");
 
     return (
-        <header className=" top-0 z-50 w-full bg-cuscream/80 backdrop-blur-md border-b border-cusblue/10">
+        <header className="relative z-50 w-full bg-cuscream/80 backdrop-blur-md border-b border-cusblue/10">
             <div className="flex items-center justify-between gap-6 py-4 px-16">
                 {/* Logo Container */}
                 <Link href="/home" replace>
