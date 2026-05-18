@@ -91,6 +91,12 @@ export const HelperFormatTime = (date: string | Date) =>
         minute: "2-digit",
     });
 
+export const HelperFormatMonthYear = (date: string | Date) =>
+    new Date(date).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric",
+    });
+
 export const handleCopyText = async (textToCopy: string) => {
     try {
         await navigator.clipboard.writeText(textToCopy);
