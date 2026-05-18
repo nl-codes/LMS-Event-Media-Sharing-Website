@@ -97,6 +97,10 @@ export const HelperFormatMonthYear = (date: string | Date) =>
         year: "numeric",
     });
 
+/** True when a Media's mediaType represents an image (photo/image) rather than a video. */
+export const isImageMedia = (mediaType: string | undefined | null): boolean =>
+    ["photo", "image"].includes((mediaType ?? "").toLowerCase());
+
 export const handleCopyText = async (textToCopy: string) => {
     try {
         await navigator.clipboard.writeText(textToCopy);
