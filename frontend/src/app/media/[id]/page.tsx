@@ -2,35 +2,28 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Heart, MessageCircle, Send, X } from "lucide-react";
-import UserAvatar from "@/components/common/UserAvatar";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import BackButton from "@/components/navigation/BackButton";
-import ReportMenu from "@/components/report/ReportMenu";
 import { useUser } from "@/context/UserContext";
 import { addComment, getComments, getLikes } from "@/lib/interactionApi";
-import { getMediaById, toggleLike } from "@/lib/mediaApi";
+import { getMediaById } from "@/lib/mediaApi";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
+import { useLikeToggle } from "@/hooks/useLikeToggle";
+import InteractionModal, {
+    type InteractionModalTab,
+} from "@/components/media/InteractionModal";
 import type { Interaction } from "@/types/Interaction";
 import type { Media } from "@/types/Media";
-import Button from "@/components/buttons/Button";
 import {
     normalizeLikedByIds,
     normalizeMediaLikes,
 } from "@/utils/HelperFunctions";
+import MediaMetaData from "./MediaMetaData";
+import LikeAndCommentDisplay from "./LikeAndCommentDisplay";
+import MediaCommentBar from "./MediaCommentBar";
 
-type ModalTab = "comments" | "likes";
-
-const formatDate = (date: string) =>
-    new Intl.DateTimeFormat("en", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(new Date(date));
+type ModalTab = InteractionModalTab;
 
 export default function MediaDetailPage() {
     const params = useParams<{ id: string }>();
@@ -50,8 +43,6 @@ export default function MediaDetailPage() {
     const [isPosting, setIsPosting] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<ModalTab>("comments");
-    const [isLiked, setIsLiked] = useState(false);
-    const [likesCount, setLikesCount] = useState(0);
     const [isLikeAnimating, setIsLikeAnimating] = useState(false);
 
     const eventTitle = useMemo(() => {
@@ -72,6 +63,47 @@ export default function MediaDetailPage() {
             ? media.eventId
             : media.eventId._id;
     }, [media]);
+
+    const { isLiked, likesCount, toggle, setIsLiked, setLikesCount } =
+        useLikeToggle(mediaId, false, 0, {
+            canLike: Boolean(canLike),
+            onOptimisticUpdate: (nextLiked, nextCount) => {
+                setIsLikeAnimating(true);
+                window.setTimeout(() => setIsLikeAnimating(false), 180);
+                setMedia((prev) => {
+                    if (!prev) return prev;
+                    const likedBy = normalizeLikedByIds(prev.likedBy);
+                    const nextLikedBy = nextLiked
+                        ? [...new Set([...likedBy, currentUserId])]
+                        : likedBy.filter((id) => id !== currentUserId);
+                    return {
+                        ...prev,
+                        likedBy: nextLikedBy,
+                        likesCount: nextCount,
+                    };
+                });
+                setHasLoadedLikes(false);
+            },
+            onRollback: (previousLiked, previousCount) => {
+                setMedia((prev) => {
+                    if (!prev) return prev;
+                    const likedBy = normalizeLikedByIds(prev.likedBy);
+                    const restoredLikedBy = previousLiked
+                        ? [...new Set([...likedBy, currentUserId])]
+                        : likedBy.filter((id) => id !== currentUserId);
+                    return {
+                        ...prev,
+                        likedBy: restoredLikedBy,
+                        likesCount: previousCount,
+                    };
+                });
+            },
+            onSuccess: (result) => {
+                setMedia((prev) =>
+                    prev ? { ...prev, likesCount: result.likesCount } : prev,
+                );
+            },
+        });
 
     const handleNewMedia = useCallback(() => {}, []);
 
@@ -124,7 +156,7 @@ export default function MediaDetailPage() {
 
             setHasLoadedLikes(false);
         },
-        [currentUserId, mediaId],
+        [currentUserId, mediaId, setIsLiked, setLikesCount],
     );
 
     useGallerySocket({
@@ -156,7 +188,7 @@ export default function MediaDetailPage() {
         };
 
         if (mediaId) loadMedia();
-    }, [currentUserId, mediaId]);
+    }, [currentUserId, mediaId, setIsLiked, setLikesCount]);
 
     useEffect(() => {
         const loadComments = async () => {
@@ -218,72 +250,6 @@ export default function MediaDetailPage() {
     const openModal = (tab: ModalTab) => {
         setActiveTab(tab);
         setIsModalOpen(true);
-    };
-
-    const handleToggleLike = async () => {
-        if (!canLike) {
-            toast.error("Sign in to like");
-            return;
-        }
-
-        const previousLiked = isLiked;
-        const previousLikesCount = likesCount;
-        const nextLiked = !isLiked;
-        const nextLikesCount = nextLiked
-            ? likesCount + 1
-            : Math.max(0, likesCount - 1);
-
-        setIsLiked(nextLiked);
-        setLikesCount(nextLikesCount);
-        setIsLikeAnimating(true);
-        window.setTimeout(() => setIsLikeAnimating(false), 180);
-        setMedia((prev) => {
-            if (!prev) return prev;
-
-            const likedBy = normalizeLikedByIds(prev.likedBy);
-            const nextLikedBy = nextLiked
-                ? [...new Set([...likedBy, currentUserId])]
-                : likedBy.filter((id) => id !== currentUserId);
-
-            return {
-                ...prev,
-                likedBy: nextLikedBy,
-                likesCount: nextLikesCount,
-            };
-        });
-        setHasLoadedLikes(false);
-
-        try {
-            const result = await toggleLike(mediaId);
-            setIsLiked(result.liked);
-            setLikesCount(result.likesCount);
-            setMedia((prev) =>
-                prev
-                    ? {
-                          ...prev,
-                          likesCount: result.likesCount,
-                      }
-                    : prev,
-            );
-        } catch (error) {
-            setIsLiked(previousLiked);
-            setLikesCount(previousLikesCount);
-            setMedia((prev) => {
-                if (!prev) return prev;
-
-                const likedBy = normalizeLikedByIds(prev.likedBy);
-                const restoredLikedBy = previousLiked
-                    ? [...new Set([...likedBy, currentUserId])]
-                    : likedBy.filter((id) => id !== currentUserId);
-
-                return {
-                    ...prev,
-                    likedBy: restoredLikedBy,
-                    likesCount: previousLikesCount,
-                };
-            });
-            toast.error(error instanceof Error ? error.message : "Like failed");
-        }
     };
 
     const handlePostComment = async () => {
@@ -365,343 +331,44 @@ export default function MediaDetailPage() {
 
                     <div className="space-y-6 p-5 sm:p-7">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cusviolet/80">
-                                    {eventTitle}
-                                </p>
-                                <h1 className="text-2xl font-black text-cusblue sm:text-3xl tracking-tight">
-                                    {media.label || "Event media"}
-                                </h1>
+                            <MediaMetaData
+                                eventTitle={eventTitle}
+                                media={media}
+                                uploadedBy={uploadedBy}
+                            />
 
-                                {/* Improved Uploaded By Section */}
-                                <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-                                    <div className="flex items-center gap-2">
-                                        {media.uploaderId ? (
-                                            <Link
-                                                href={`/home/profile/${media.uploaderId._id}/others`}
-                                                className="transition-transform hover:scale-105 active:scale-95">
-                                                <UserAvatar
-                                                    src={
-                                                        media.uploaderId
-                                                            .profilePicture
-                                                    }
-                                                    name={
-                                                        media.uploaderId
-                                                            .userName
-                                                    }
-                                                    size="small"
-                                                />
-                                            </Link>
-                                        ) : (
-                                            <UserAvatar
-                                                name={
-                                                    media.guestId?.userName ||
-                                                    "Unknown"
-                                                }
-                                                size="small"
-                                            />
-                                        )}
-                                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                                            <span className="text-sm font-bold text-cusblue">
-                                                {uploadedBy}
-                                            </span>
-                                            <span className="hidden h-1 w-1 rounded-full bg-slate-300 sm:block" />
-                                            <span className="text-xs font-medium text-slate-500">
-                                                {formatDate(media.createdAt)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Likes and Comments Bar */}
-                            <div className="flex items-center gap-1 rounded-2xl border border-white/70 bg-white/60 p-1.5 shadow-sm ring-1 ring-cusblue/5 backdrop-blur-md sm:w-fit">
-                                <div className="flex items-center rounded-xl bg-white/40 px-1 py-0.5">
-                                    <button
-                                        type="button"
-                                        onClick={handleToggleLike}
-                                        className="group rounded-lg p-2 transition-colors hover:bg-white disabled:cursor-not-allowed"
-                                        aria-label={
-                                            isLiked
-                                                ? "Unlike media"
-                                                : "Like media"
-                                        }>
-                                        <Heart
-                                            className={`h-5 w-5 transition duration-300 ${
-                                                isLikeAnimating
-                                                    ? "scale-125"
-                                                    : "group-hover:scale-110"
-                                            }`}
-                                            color={
-                                                isLiked ? "#f43f5e" : "#64748b"
-                                            }
-                                            fill={isLiked ? "#f43f5e" : "none"}
-                                        />
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => openModal("likes")}
-                                        className="px-2 py-2 text-sm font-black text-cusblue hover:cursor-pointer">
-                                        {likesCount}
-                                        <span className="ml-1">Likes</span>
-                                    </button>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => openModal("comments")}
-                                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-black text-cusblue transition hover:bg-white/80 hover:cursor-pointer">
-                                    <MessageCircle className="h-5 w-5 text-slate-500 " />
-                                    <span>{comments.length}</span>
-                                    <span>Comments</span>
-                                </button>
-                            </div>
+                            <LikeAndCommentDisplay
+                                isLiked={isLiked}
+                                likesCount={likesCount}
+                                isLikeAnimating={isLikeAnimating}
+                                commentsCount={comments.length}
+                                onToggleLike={toggle}
+                                onOpenModal={openModal}
+                            />
                         </div>
-
-                        {/* Comment Input Area */}
-                        <div className="border-t border-cusblue/5 pt-6">
-                            {canComment ? (
-                                <div className="group relative">
-                                    <textarea
-                                        value={commentText}
-                                        onChange={(event) =>
-                                            setCommentText(event.target.value)
-                                        }
-                                        rows={1} // Starts small
-                                        maxLength={600}
-                                        placeholder="Add a thoughtful comment..."
-                                        className="min-h-[50px] w-full resize-none rounded-2xl border border-cusblue/10 bg-cuscream/20 px-5 py-4 text-sm text-slate-800 outline-none transition-all focus:min-h-[100px] focus:border-cusviolet/30 focus:bg-white focus:ring-4 focus:ring-cusviolet/5"
-                                    />
-                                    <div className="mt-3 flex justify-end">
-                                        <button
-                                            type="button"
-                                            onClick={handlePostComment}
-                                            disabled={
-                                                isPosting || !commentText.trim()
-                                            }
-                                            className="inline-flex items-center gap-2 rounded-xl bg-cusblue px-6 py-2.5 text-sm font-black text-white shadow-lg shadow-cusblue/20 transition-all hover:-translate-y-px hover:bg-cusviolet active:translate-y-0 disabled:opacity-50 disabled:shadow-none">
-                                            <Send className="h-4 w-4" />
-                                            {isPosting ? "Posting..." : "Post"}
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
-                                    <p className="text-sm font-bold text-slate-500">
-                                        Login in to like and comment.
-                                    </p>
-                                    <Button
-                                        onClick={() => router.push("/login")}
-                                        className="scale-90">
-                                        Login
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
+                        <MediaCommentBar
+                            canComment={Boolean(canComment)}
+                            commentText={commentText}
+                            isPosting={isPosting}
+                            setCommentText={setCommentText}
+                            onPostComment={handlePostComment}
+                        />
                     </div>
                 </section>
             </div>
 
             {isModalOpen && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm"
-                    onClick={() => setIsModalOpen(false)}
-                    role="presentation">
-                    <div
-                        className="flex max-h-[82vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/60 shadow-2xl backdrop-blur-xl"
-                        onClick={(event) => event.stopPropagation()}
-                        role="dialog"
-                        aria-modal="true">
-                        <div className="flex items-center justify-between bg-linear-to-r from-cusblue to-cusviolet px-5 py-4 text-white">
-                            <div className="flex items-center gap-2">
-                                {activeTab === "comments" ? (
-                                    <MessageCircle className="h-5 w-5" />
-                                ) : (
-                                    <Heart
-                                        className="h-5 w-5"
-                                        fill="currentColor"
-                                    />
-                                )}
-                                <h2 className="text-lg font-black">
-                                    {activeTab === "comments"
-                                        ? "Comments"
-                                        : "Liked by"}
-                                </h2>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setIsModalOpen(false)}
-                                className="rounded-full p-2 transition hover:bg-white/15"
-                                aria-label="Close comments">
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <div className="border-b border-cusblue/10 bg-white/50 px-5 py-3">
-                            <div className="inline-flex rounded-2xl bg-cuscream/70 p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab("comments")}
-                                    className={`rounded-xl px-4 py-2 text-sm font-extrabold transition ${
-                                        activeTab === "comments"
-                                            ? "bg-white text-cusblue shadow-sm"
-                                            : "text-slate-500 hover:text-cusblue"
-                                    }`}>
-                                    Comments ({comments.length})
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab("likes")}
-                                    className={`rounded-xl px-4 py-2 text-sm font-extrabold transition ${
-                                        activeTab === "likes"
-                                            ? "bg-white text-cusblue shadow-sm"
-                                            : "text-slate-500 hover:text-cusblue"
-                                    }`}>
-                                    Likes ({likesCount})
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="max-h-[58vh] overflow-y-auto p-5">
-                            {activeTab === "comments" ? (
-                                areCommentsLoading ? (
-                                    <p className="text-sm font-semibold text-slate-500">
-                                        Loading comments...
-                                    </p>
-                                ) : comments.length === 0 ? (
-                                    <p className="text-sm font-semibold text-slate-500">
-                                        No comments yet.
-                                    </p>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {comments.map((comment) => {
-                                            const isOwnComment =
-                                                currentUserId &&
-                                                comment.author?._id ===
-                                                    currentUserId;
-                                            return (
-                                                <article
-                                                    key={comment._id}
-                                                    className="rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div className="flex items-center gap-2 min-w-0">
-                                                            {comment.author
-                                                                ?._id ? (
-                                                                <Link
-                                                                    href={`/home/profile/${comment.author._id}/others`}
-                                                                    className="shrink-0">
-                                                                    <UserAvatar
-                                                                        src={
-                                                                            comment
-                                                                                .author
-                                                                                .profilePicture
-                                                                        }
-                                                                        name={
-                                                                            comment
-                                                                                .author
-                                                                                .userName
-                                                                        }
-                                                                        size="small"
-                                                                    />
-                                                                </Link>
-                                                            ) : (
-                                                                <UserAvatar
-                                                                    name={
-                                                                        comment
-                                                                            .author
-                                                                            ?.userName ||
-                                                                        "Unknown"
-                                                                    }
-                                                                    size="small"
-                                                                />
-                                                            )}
-                                                            {comment.author
-                                                                ?._id ? (
-                                                                <Link
-                                                                    href={`/home/profile/${comment.author._id}/others`}
-                                                                    className="text-sm font-black text-cusblue hover:underline truncate">
-                                                                    {comment
-                                                                        .author
-                                                                        .userName ||
-                                                                        "Unknown"}
-                                                                </Link>
-                                                            ) : (
-                                                                <p className="text-sm font-black text-cusblue truncate">
-                                                                    Unknown
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                        {currentUserId &&
-                                                            !isOwnComment && (
-                                                                <ReportMenu
-                                                                    targetId={
-                                                                        comment._id
-                                                                    }
-                                                                    targetType="Interaction"
-                                                                    targetLabel="comment"
-                                                                    triggerClassName="rounded-full p-1.5 text-slate-400 transition hover:bg-white hover:text-rose-500"
-                                                                />
-                                                            )}
-                                                    </div>
-                                                    <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">
-                                                        {comment.content}
-                                                    </p>
-                                                </article>
-                                            );
-                                        })}
-                                    </div>
-                                )
-                            ) : areLikesLoading ? (
-                                <p className="text-sm font-semibold text-slate-500">
-                                    Loading likes...
-                                </p>
-                            ) : likes.length === 0 ? (
-                                <p className="text-sm font-semibold text-slate-500">
-                                    No likes yet.
-                                </p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {likes.map((like) => {
-                                        const inner = (
-                                            <>
-                                                <UserAvatar
-                                                    src={
-                                                        like.author
-                                                            ?.profilePicture
-                                                    }
-                                                    name={
-                                                        like.author?.userName ||
-                                                        "Unknown"
-                                                    }
-                                                    size="small"
-                                                />
-                                                <p className="text-sm font-black text-cusblue">
-                                                    {like.author?.userName ||
-                                                        "Unknown"}
-                                                </p>
-                                            </>
-                                        );
-                                        return like.author?._id ? (
-                                            <Link
-                                                key={like._id}
-                                                href={`/home/profile/${like.author._id}/others`}
-                                                className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4 transition-colors hover:border-cusblue/30 hover:bg-cuscream/60">
-                                                {inner}
-                                            </Link>
-                                        ) : (
-                                            <div
-                                                key={like._id}
-                                                className="flex items-center gap-3 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-4">
-                                                {inner}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <InteractionModal
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    onClose={() => setIsModalOpen(false)}
+                    comments={comments}
+                    likes={likes}
+                    likesCount={likesCount}
+                    areCommentsLoading={areCommentsLoading}
+                    areLikesLoading={areLikesLoading}
+                    currentUserId={currentUserId}
+                />
             )}
         </main>
     );
