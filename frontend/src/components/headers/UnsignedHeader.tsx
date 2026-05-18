@@ -3,7 +3,7 @@
 import Button from "@/components/buttons/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PlayCircle, Tag, Calendar } from "lucide-react";
+import { PlayCircle, Tag, Calendar, LogIn } from "lucide-react";
 import LogoRounded from "../logo/Logo_Rounded";
 
 export default function UnsignedHeader() {
@@ -30,6 +30,11 @@ export default function UnsignedHeader() {
                     <Button handleClick={() => {}}>
                         <Calendar className="w-4 h-4 opacity-70" />
                         Events
+                    </Button>
+
+                    <Button handleClick={() => router.push("/login")}>
+                        <LogIn className="w-4 h-4 opacity-70" />
+                        Login
                     </Button>
                 </nav>
             </div>
