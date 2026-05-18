@@ -16,6 +16,7 @@ import InteractionModal, {
 import type { Interaction } from "@/types/Interaction";
 import type { Media } from "@/types/Media";
 import {
+    isImageMedia,
     normalizeLikedByIds,
     normalizeMediaLikes,
 } from "@/utils/HelperFunctions";
@@ -307,9 +308,7 @@ export default function MediaDetailPage() {
 
                 <section className="mt-5 overflow-hidden rounded-3xl bg-white/80 shadow-xl ring-1 ring-cusblue/10">
                     <div className="flex min-h-[52vh] items-center justify-center bg-slate-950 sm:min-h-[68vh]">
-                        {["photo", "image"].includes(
-                            media.mediaType?.toLowerCase(),
-                        ) ? (
+                        {isImageMedia(media.mediaType) ? (
                             <div className="relative h-[52vh] w-full sm:h-[68vh]">
                                 <Image
                                     src={media.mediaUrl}

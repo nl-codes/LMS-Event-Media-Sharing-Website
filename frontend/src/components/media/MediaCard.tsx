@@ -11,6 +11,7 @@ import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButto
 import ReportMenu from "@/components/report/ReportMenu";
 import {
     downloadSingleMedia,
+    isImageMedia,
     normalizeLikedByIds,
 } from "@/utils/HelperFunctions";
 import toast from "react-hot-toast";
@@ -85,7 +86,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
             onClick={handleCardClick}>
             {/* Media Container */}
             <div className="relative h-72 w-full overflow-hidden bg-slate-100">
-                {["photo", "image"].includes(media.mediaType?.toLowerCase()) ? (
+                {isImageMedia(media.mediaType) ? (
                     <Image
                         src={media.mediaUrl}
                         alt={media.label || "Event media"}
