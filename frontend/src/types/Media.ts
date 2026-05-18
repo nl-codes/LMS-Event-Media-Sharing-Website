@@ -20,6 +20,7 @@ export interface Media {
     uploaderId?: {
         _id: string;
         userName: string;
+        profilePicture?: string;
     };
     guestId?: {
         _id: string;

@@ -1,6 +1,7 @@
 export interface InteractionAuthor {
     _id: string;
     userName: string;
+    profilePicture?: string;
 }
 
 export interface Interaction {
