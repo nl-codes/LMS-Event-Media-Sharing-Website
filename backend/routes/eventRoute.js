@@ -5,6 +5,7 @@ import { uploadEventThumbnail } from "../middleware/uploadMiddleware.js";
 import {
     registerEvent,
     getEventById,
+    getEventParticipantsController,
     getHostEvents,
     getEventBySlug,
     editEvent,
@@ -32,6 +33,11 @@ router.get(
     "/:eventId/insights",
     requireAuth,
     getEventInsightsController,
+);
+router.get(
+    "/:id/participants",
+    requireAuth,
+    getEventParticipantsController,
 );
 router.patch(
     "/:id",
