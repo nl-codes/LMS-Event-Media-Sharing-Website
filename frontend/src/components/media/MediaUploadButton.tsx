@@ -1,12 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getEventUsage, uploadMedia, type EventUsage } from "@/lib/mediaApi";
+import { compressImageIfNeeded } from "@/lib/compressImage";
+import { probeVideoDuration } from "@/lib/probeVideo";
 import { formatBytes } from "@/constants/tierLimits";
 import toast from "react-hot-toast";
+
+const isVideoFile = (file: File) => file.type.startsWith("video/");
 
 interface MediaUploadButtonProps {
     eventId: string;
     eventSlug?: string;
-    onUploadSuccess: () => void;
+    onUploadSuccess: (hasVideos: boolean) => void;
 }
 
 const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
@@ -59,10 +63,49 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
             return;
         }
 
-        if (fileSizeLimit) {
-            const oversize = Array.from(files).find(
-                (f) => f.size > fileSizeLimit,
+        const fileArray = Array.from(files);
+        const videos = fileArray.filter(isVideoFile);
+        const images = fileArray.filter((f) => !isVideoFile(f));
+
+        // ---- Video-specific tier validation (size, duration, free-tier block).
+        if (videos.length > 0) {
+            if (!usage?.allowsVideo) {
+                toast.error("Upgrade to Premium for video support.");
+                resetInput();
+                return;
+            }
+
+            const oversizeVideo = videos.find(
+                (v) => v.size > usage.maxVideoBytes,
             );
+            if (oversizeVideo) {
+                toast.error(
+                    `Video "${oversizeVideo.name}" exceeds the ${formatBytes(
+                        usage.maxVideoBytes,
+                    )} limit for your ${usage.tier} tier.`,
+                );
+                resetInput();
+                return;
+            }
+
+            const durations = await Promise.all(
+                videos.map((v) => probeVideoDuration(v)),
+            );
+            const tooLongIdx = durations.findIndex(
+                (d) => d !== null && d > usage.maxVideoSeconds,
+            );
+            if (tooLongIdx >= 0) {
+                toast.error(
+                    `Video "${videos[tooLongIdx].name}" is longer than the ${usage.maxVideoSeconds}s limit for your ${usage.tier} tier.`,
+                );
+                resetInput();
+                return;
+            }
+        }
+
+        // ---- Image size check (tier image cap only; videos already validated).
+        if (fileSizeLimit && images.length > 0) {
+            const oversize = images.find((f) => f.size > fileSizeLimit);
             if (oversize) {
                 toast.error(
                     `"${oversize.name}" is larger than the ${formatBytes(
@@ -75,22 +118,35 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
         }
 
         setLoading(true);
-        setUploadCount(files.length);
+        setUploadCount(fileArray.length);
+
+        // Compress images only; videos pass through unchanged.
+        const prepared = await Promise.all(
+            fileArray.map((file) =>
+                isVideoFile(file) ? file : compressImageIfNeeded(file),
+            ),
+        );
 
         const formData = new FormData();
-        Array.from(files).forEach((file) => {
+        prepared.forEach((file) => {
             formData.append("files", file);
         });
         formData.append("eventId", eventId);
 
         try {
-            await toast.promise(uploadMedia(formData, eventSlug), {
-                loading: `Uploading ${files.length} files...`,
-                success: `${files.length} file${files.length > 1 ? "s" : ""} uploaded!`,
-                error: (err) =>
-                    err instanceof Error ? err.message : "Upload failed",
-            });
-            onUploadSuccess();
+            const result = await toast.promise(
+                uploadMedia(formData, eventSlug),
+                {
+                    loading: `Uploading ${fileArray.length} file${fileArray.length > 1 ? "s" : ""}...`,
+                    success: (res) =>
+                        res.hasVideos
+                            ? `Upload received. ${res.pending.length} video${res.pending.length > 1 ? "s" : ""} will appear in the gallery shortly.`
+                            : `${fileArray.length} file${fileArray.length > 1 ? "s" : ""} uploaded!`,
+                    error: (err) =>
+                        err instanceof Error ? err.message : "Upload failed",
+                },
+            );
+            onUploadSuccess(result.hasVideos);
         } catch {
             // toast.promise already surfaced the error; keep gallery state intact.
         } finally {

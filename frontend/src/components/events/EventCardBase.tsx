@@ -80,7 +80,7 @@ export default function EventCardBase({
                     </div>
                     {event.isPremium && (
                         <span className="shrink-0 bg-custeal/20 text-custeal text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md border border-custeal/30 ml-2">
-                            Premium
+                            {event.tier}
                         </span>
                     )}
                 </div>

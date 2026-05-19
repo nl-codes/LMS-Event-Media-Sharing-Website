@@ -1,16 +1,26 @@
 const ONE_MB = 1024 * 1024;
+
 export const TIER_LIMITS = {
     free: {
         maxFileSizeBytes: 1 * ONE_MB,
         maxFiles: 100,
+        allowsVideo: false,
+        maxVideoBytes: 0,
+        maxVideoSeconds: 0,
     },
     premium: {
         maxFileSizeBytes: 5 * ONE_MB,
-        maxFiles: 500,
+        maxFiles: 200,
+        allowsVideo: true,
+        maxVideoBytes: 10 * ONE_MB,
+        maxVideoSeconds: 15,
     },
     pro: {
         maxFileSizeBytes: 10 * ONE_MB,
-        maxFiles: 1000,
+        maxFiles: 500,
+        allowsVideo: true,
+        maxVideoBytes: 20 * ONE_MB,
+        maxVideoSeconds: 60,
     },
 };
 

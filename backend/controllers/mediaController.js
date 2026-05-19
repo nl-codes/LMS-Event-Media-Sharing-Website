@@ -10,6 +10,25 @@ import {
 } from "../services/mediaService.js";
 import Media from "../models/mediaModel.js";
 import { getIO } from "../config/socketConfig.js";
+import { promises as fs } from "fs";
+import path from "path";
+import crypto from "crypto";
+import { enqueueVideoJob } from "../queues/videoQueue.js";
+
+const TMP_DIR = path.resolve("uploads/tmp");
+
+const ensureTmpDir = async () => {
+    await fs.mkdir(TMP_DIR, { recursive: true });
+};
+
+const writeVideoToTmp = async (file) => {
+    await ensureTmpDir();
+    const ext = path.extname(file.originalname) || ".bin";
+    const filename = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`;
+    const filePath = path.join(TMP_DIR, filename);
+    await fs.writeFile(filePath, file.buffer);
+    return filePath;
+};
 
 // Handles POST /media/upload
 export const uploadMediaController = async (req, res) => {
@@ -43,38 +62,84 @@ export const uploadMediaController = async (req, res) => {
                 .json({ success: false, message: "Missing required fields" });
         }
 
-        const mediaDocs = await uploadMultipleMedia(
-            eventId,
-            uploaderId,
-            guestId,
-            req.files,
+        const imageFiles = req.files.filter(
+            (f) => !f.mimetype?.startsWith("video/"),
+        );
+        const videoFiles = req.files.filter((f) =>
+            f.mimetype?.startsWith("video/"),
         );
 
-        const savedMedia = await Media.find({
-            _id: { $in: mediaDocs.map((media) => media._id) },
-        })
-            .populate("uploaderId", "userName")
-            .populate("guestId", "userName guest_id");
+        // Images: synchronous Cloudinary upload, immediate gallery emit.
+        let mediaPayload = [];
+        if (imageFiles.length > 0) {
+            const mediaDocs = await uploadMultipleMedia(
+                eventId,
+                uploaderId,
+                guestId,
+                imageFiles,
+            );
 
-        const mediaMap = new Map(
-            savedMedia.map((media) => [String(media._id), media]),
-        );
-        const mediaPayload = mediaDocs.map((media) => {
-            const populated = mediaMap.get(String(media._id));
-            const plain = populated ? populated.toObject() : media.toObject();
-            return {
-                ...plain,
-                likesCount: 0,
-                likedBy: [],
-            };
+            const savedMedia = await Media.find({
+                _id: { $in: mediaDocs.map((media) => media._id) },
+            })
+                .populate("uploaderId", "userName")
+                .populate("guestId", "userName guest_id");
+
+            const mediaMap = new Map(
+                savedMedia.map((media) => [String(media._id), media]),
+            );
+            mediaPayload = mediaDocs.map((media) => {
+                const populated = mediaMap.get(String(media._id));
+                const plain = populated
+                    ? populated.toObject()
+                    : media.toObject();
+                return {
+                    ...plain,
+                    likesCount: 0,
+                    likedBy: [],
+                };
+            });
+
+            const io = getIO();
+            mediaPayload.forEach((item) => {
+                io.to(String(eventId)).emit("new_media", item);
+            });
+        }
+
+        // Videos: persist to tmp, enqueue, return pending markers.
+        const pendingVideos = [];
+        for (const file of videoFiles) {
+            try {
+                const inputPath = await writeVideoToTmp(file);
+                const job = await enqueueVideoJob({
+                    inputPath,
+                    eventId,
+                    uploaderId,
+                    guestId,
+                    originalName: file.originalname,
+                });
+                pendingVideos.push({
+                    jobId: job.id,
+                    originalName: file.originalname,
+                    mediaType: "video",
+                    status: "processing",
+                });
+            } catch (err) {
+                console.error("Failed to enqueue video job:", err);
+                return res.status(503).json({
+                    success: false,
+                    message:
+                        "Video processing service is currently unavailable. Please try again shortly.",
+                });
+            }
+        }
+
+        const status = videoFiles.length > 0 ? 202 : 201;
+        res.status(status).json({
+            success: true,
+            data: mediaPayload,
+            pending: pendingVideos,
         });
-
-        const io = getIO();
-        mediaPayload.forEach((item) => {
-            io.to(String(eventId)).emit("new_media", item);
-        });
-
-        res.status(201).json({ success: true, data: mediaPayload });
     } catch (error) {
         const status = error.status || 400;
         res.status(status).json({ success: false, message: error.message });

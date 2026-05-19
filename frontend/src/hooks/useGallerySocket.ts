@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { getSocket } from "@/config/socket";
 import type { Media } from "@/types/Media";
 
@@ -48,6 +48,24 @@ export const useGallerySocket = ({
     onMediaDeleted,
     onMediaLiked,
 }: UseGallerySocketProps) => {
+    // Keep stable refs to the latest callbacks so the socket handlers never go stale without needing to be re-registered.
+    const onNewMediaRef = useRef(onNewMedia);
+    const onMediaDeletedRef = useRef(onMediaDeleted);
+    const onMediaLikedRef = useRef(onMediaLiked);
+
+    useEffect(() => {
+        onNewMediaRef.current = onNewMedia;
+    }, [onNewMedia]);
+
+    useEffect(() => {
+        onMediaDeletedRef.current = onMediaDeleted;
+    }, [onMediaDeleted]);
+
+    useEffect(() => {
+        onMediaLikedRef.current = onMediaLiked;
+    }, [onMediaLiked]);
+
+    // Only runs when eventId changes i.e. joining/leaving the room. Callback identity changes never cause reconnects.
     useEffect(() => {
         if (!eventId) return;
 
@@ -59,24 +77,34 @@ export const useGallerySocket = ({
 
         socket.emit("join_gallery", eventId);
 
-        const handleDeleted = ({ mediaId }: { mediaId: string }) => {
-            onMediaDeleted(mediaId);
+        const handleNewMedia = (media: IncomingSocketMedia) => {
+            onNewMediaRef.current(normalizeIncomingMedia(media));
         };
 
-        const handleNewMedia = (media: IncomingSocketMedia) => {
-            onNewMedia(normalizeIncomingMedia(media));
+        const handleDeleted = ({ mediaId }: { mediaId: string }) => {
+            onMediaDeletedRef.current(mediaId);
+        };
+
+        const handleLiked = (data: {
+            mediaId: string;
+            likesCount: number;
+            userId: string;
+            liked?: boolean;
+        }) => {
+            onMediaLikedRef.current(data);
         };
 
         socket.on("new_media", handleNewMedia);
         socket.on("media_deleted", handleDeleted);
-        socket.on("media_liked", onMediaLiked);
+        socket.on("media_liked", handleLiked);
 
         return () => {
             socket.emit("leave_gallery", eventId);
             socket.off("new_media", handleNewMedia);
             socket.off("media_deleted", handleDeleted);
-            socket.off("media_liked", onMediaLiked);
-            socket.disconnect();
+            socket.off("media_liked", handleLiked);
+            // Do NOT call socket.disconnect() here — the socket is a shared
+            // singleton and may be used by chat or other hooks on the same page.
         };
-    }, [eventId, onNewMedia, onMediaDeleted, onMediaLiked]);
+    }, [eventId]);
 };

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Zap } from "lucide-react";
 import BackButton from "@/components/navigation/BackButton";
 
-export const PRICING_TIERS_CONST: PricingTier[] = [
+const PRICING_TIERS: PricingTier[] = [
     {
         key: "free",
         name: "Free",
@@ -20,9 +20,8 @@ export const PRICING_TIERS_CONST: PricingTier[] = [
             "Unlimited guests",
             "Upload Window for 24 hours",
             "Saved for 7 days",
-            "Maximum File size of 1 MB",
+            "Maximum File size of 5 MB",
             "Download All feature",
-            "No video support",
         ],
         cta: "Start for Free",
         icon: Sparkles,
@@ -34,14 +33,13 @@ export const PRICING_TIERS_CONST: PricingTier[] = [
         billing: "One-time fee",
         tagline: "Perfect for bachelor parties and mid-size college events.",
         features: [
-            "Up to 200 uploads",
+            "Up to 500 uploads",
             "Unlimited guests",
             "Upload Window for 7 days",
             "Saved for 1 month",
-            "Maximum File size of 5 MB",
+            "Maximum File size of 50 MB",
             "High-Quality (HQ) uploads",
             "Download All feature",
-            "Videos upto 15 seconds",
         ],
         cta: "Upgrade to Premium",
         icon: Zap,
@@ -54,14 +52,13 @@ export const PRICING_TIERS_CONST: PricingTier[] = [
         billing: "One-time fee",
         tagline: "Best for large weddings, conferences, and public events.",
         features: [
-            "Unlimited uploads",
+            "10,000+ uploads",
             "Unlimited guests",
             "Upload Window for 3 months",
             "Saved for 1 year",
-            "Large File supports",
+            "Maximum File size of 500 MB",
             "Priority HQ processing",
             "Download All feature",
-            "Videos upto 60 seconds",
         ],
         cta: "Go Pro",
         icon: Sparkles,
@@ -110,7 +107,7 @@ export default function PricingPage() {
                 </div>
 
                 <PricingCardsGrid
-                    tiers={PRICING_TIERS_CONST}
+                    tiers={PRICING_TIERS}
                     onCheckout={handleCheckout}
                 />
 

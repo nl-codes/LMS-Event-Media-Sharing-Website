@@ -3,20 +3,34 @@ export type TierKey = "free" | "premium" | "pro";
 export type TierLimit = {
     maxFileSizeBytes: number;
     maxFiles: number;
+    allowsVideo: boolean;
+    maxVideoBytes: number;
+    maxVideoSeconds: number;
 };
+
+const ONE_MB = 1024 * 1024;
 
 export const TIER_LIMITS: Record<TierKey, TierLimit> = {
     free: {
-        maxFileSizeBytes: 1 * 1024 * 1024,
+        maxFileSizeBytes: 1 * ONE_MB,
         maxFiles: 100,
+        allowsVideo: false,
+        maxVideoBytes: 0,
+        maxVideoSeconds: 0,
     },
     premium: {
-        maxFileSizeBytes: 5 * 1024 * 1024,
-        maxFiles: 500,
+        maxFileSizeBytes: 5 * ONE_MB,
+        maxFiles: 200,
+        allowsVideo: true,
+        maxVideoBytes: 10 * ONE_MB,
+        maxVideoSeconds: 15,
     },
     pro: {
-        maxFileSizeBytes: 10 * 1024 * 1024,
-        maxFiles: 1000,
+        maxFileSizeBytes: 10 * ONE_MB,
+        maxFiles: 500,
+        allowsVideo: true,
+        maxVideoBytes: 20 * ONE_MB,
+        maxVideoSeconds: 60,
     },
 };
 
@@ -28,7 +42,7 @@ export const getTierLimits = (tier: string | undefined | null): TierLimit =>
     ];
 
 export const formatBytes = (bytes: number): string => {
-    if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+    if (bytes >= ONE_MB) return `${Math.round(bytes / ONE_MB)} MB`;
     if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
     return `${bytes} B`;
 };
