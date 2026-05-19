@@ -12,7 +12,6 @@ import {
     MessageSquareWarning,
 } from "lucide-react";
 import clsx from "clsx";
-import LogoutButton from "@/components/buttons/LogoutButton";
 
 const navItems = [
     { href: "/admin/home", label: "Dashboard", icon: LayoutDashboard },
@@ -70,10 +69,6 @@ export default function AdminSidebar() {
                         );
                     })}
                 </nav>
-
-                <div className="mt-4 flex items-center justify-between gap-2 lg:mt-6">
-                    <LogoutButton redirectTo="/admin/login" />
-                </div>
             </div>
         </aside>
     );
