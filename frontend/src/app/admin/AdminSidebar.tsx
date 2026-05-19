@@ -7,6 +7,7 @@ import {
     Flag,
     LayoutDashboard,
     Shield,
+    TrendingUp,
     Users,
     MessageSquareWarning,
 } from "lucide-react";
@@ -15,6 +16,7 @@ import LogoutButton from "@/components/buttons/LogoutButton";
 
 const navItems = [
     { href: "/admin/home", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/insights", label: "Insights", icon: TrendingUp },
     { href: "/admin/events", label: "Events", icon: CalendarDays },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/reports", label: "Reporting", icon: Flag },
