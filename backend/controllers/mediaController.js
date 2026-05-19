@@ -6,6 +6,7 @@ import {
     deleteMultipleMedia,
     getHighlights,
     setMediaLabel,
+    getEventUsage,
 } from "../services/mediaService.js";
 import Media from "../models/mediaModel.js";
 import { getIO } from "../config/socketConfig.js";
@@ -75,7 +76,19 @@ export const uploadMediaController = async (req, res) => {
 
         res.status(201).json({ success: true, data: mediaPayload });
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        const status = error.status || 400;
+        res.status(status).json({ success: false, message: error.message });
+    }
+};
+
+// Handles GET /media/usage/:eventId
+export const getEventUsageController = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const usage = await getEventUsage(eventId);
+        res.status(200).json({ success: true, data: usage });
+    } catch (error) {
+        res.status(404).json({ success: false, message: error.message });
     }
 };
 
