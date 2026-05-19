@@ -31,9 +31,7 @@ const eventStorage = new CloudinaryStorage({
 const uploadUserProfile = multer({ storage: profileStorage });
 const uploadEventThumbnail = multer({ storage: eventStorage });
 
-// Hard ceiling for multer: the largest per-file cap across all tiers and
-// across both image and video, so oversized files for any tier/medium are
-// dropped before buffering completes.
+// Hard ceiling for multer: the largest per-file cap across all tiers and across both image and video, so oversized files for any tier/medium are dropped before buffering completes.
 const MAX_TIER_FILE_BYTES = Math.max(
     ...Object.values(TIER_LIMITS).flatMap((t) => [
         t.maxFileSizeBytes,
