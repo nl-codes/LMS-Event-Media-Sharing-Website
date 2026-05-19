@@ -40,3 +40,48 @@ export const getEventAnalytics = (range: AnalyticsRange) =>
     fetchAnalytics("events", range);
 export const getMediaAnalytics = (range: AnalyticsRange) =>
     fetchAnalytics("media", range);
+
+export type EventInsightsHost = {
+    _id: string;
+    userName?: string;
+    email?: string;
+    profilePicture?: string;
+};
+
+export type EventInsightsResponse = {
+    success: boolean;
+    event: {
+        _id: string;
+        eventName: string;
+        status: string;
+        tier: string;
+        startTime: string;
+        endTime: string;
+    };
+    host: EventInsightsHost | null;
+    totals: { members: number; media: number };
+    members: {
+        data: AnalyticsPoint[];
+        granularity: AnalyticsGranularity;
+        range: AnalyticsRange;
+    };
+    media: {
+        data: AnalyticsPoint[];
+        granularity: AnalyticsGranularity;
+        range: AnalyticsRange;
+    };
+    message?: string;
+};
+
+export async function getEventInsights(
+    eventId: string,
+    range: AnalyticsRange,
+): Promise<EventInsightsResponse> {
+    const url = `${backend_url}/events/${eventId}/insights?range=${encodeURIComponent(range)}`;
+    const res = await fetch(url, { credentials: "include" });
+    const json = (await res.json().catch(() => ({}))) as EventInsightsResponse;
+    if (!res.ok || !json.success) {
+        throw new Error(json.message || "Failed to load event insights");
+    }
+    return json;
+}
