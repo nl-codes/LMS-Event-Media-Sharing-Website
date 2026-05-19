@@ -1,6 +1,7 @@
 import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
+import { Profile } from "../models/profileModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
@@ -193,19 +194,44 @@ export const getEventParticipants = async (eventId, requesterId) => {
             .lean(),
     ]);
 
-    // attachAvatars expects mongoose-ish docs with a populated ref path.
-    const hydrated = await attachAvatars(memberships, ["userId"]);
+    const userIds = memberships
+        .map((m) =>
+            m.userId && typeof m.userId === "object" ? m.userId._id : null,
+        )
+        .filter(Boolean);
 
-    const registered = hydrated
+    const profiles = await Profile.find({ user: { $in: userIds } })
+        .select("user firstName lastName profilePicture")
+        .lean();
+    const profileMap = new Map(
+        profiles.map((p) => [
+            String(p.user),
+            {
+                firstName: p.firstName || "",
+                lastName: p.lastName || "",
+                profilePicture: p.profilePicture || "",
+            },
+        ]),
+    );
+
+    const registered = memberships
         .filter((m) => m.userId && typeof m.userId === "object")
-        .map((m) => ({
-            id: String(m.userId._id),
-            name: m.userId.userName || "Unknown",
-            userName: m.userId.userName || "",
-            type: "registered",
-            profilePicture: m.userId.profilePicture || "",
-            joinedAt: m.joinedAt,
-        }));
+        .map((m) => {
+            const {
+                firstName = "",
+                lastName = "",
+                profilePicture = "",
+            } = profileMap.get(String(m.userId._id)) || {};
+            const fullName = `${firstName} ${lastName}`.trim();
+            return {
+                id: String(m.userId._id),
+                name: fullName || m.userId.userName || "Unknown",
+                userName: m.userId.userName || "",
+                type: "registered",
+                profilePicture,
+                joinedAt: m.joinedAt,
+            };
+        });
 
     const guestEntries = guests.map((g) => ({
         id: g.guest_id,
