@@ -10,7 +10,7 @@ const isVideoFile = (file: File) => file.type.startsWith("video/");
 interface MediaUploadButtonProps {
     eventId: string;
     eventSlug?: string;
-    onUploadSuccess: () => void;
+    onUploadSuccess: (hasVideos: boolean) => void;
 }
 
 const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
@@ -134,16 +134,19 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
         formData.append("eventId", eventId);
 
         try {
-            await toast.promise(uploadMedia(formData, eventSlug), {
-                loading: `Uploading ${fileArray.length} file${fileArray.length > 1 ? "s" : ""}...`,
-                success:
-                    videos.length > 0
-                        ? `Upload received. ${videos.length} video${videos.length > 1 ? "s" : ""} will appear in the gallery shortly.`
-                        : `${fileArray.length} file${fileArray.length > 1 ? "s" : ""} uploaded!`,
-                error: (err) =>
-                    err instanceof Error ? err.message : "Upload failed",
-            });
-            onUploadSuccess();
+            const result = await toast.promise(
+                uploadMedia(formData, eventSlug),
+                {
+                    loading: `Uploading ${fileArray.length} file${fileArray.length > 1 ? "s" : ""}...`,
+                    success: (res) =>
+                        res.hasVideos
+                            ? `Upload received. ${res.pending.length} video${res.pending.length > 1 ? "s" : ""} will appear in the gallery shortly.`
+                            : `${fileArray.length} file${fileArray.length > 1 ? "s" : ""} uploaded!`,
+                    error: (err) =>
+                        err instanceof Error ? err.message : "Upload failed",
+                },
+            );
+            onUploadSuccess(result.hasVideos);
         } catch {
             // toast.promise already surfaced the error; keep gallery state intact.
         } finally {
