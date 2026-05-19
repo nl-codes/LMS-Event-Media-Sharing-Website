@@ -364,6 +364,9 @@ export const getEventUsage = async (eventId) => {
         remaining: Math.max(limits.maxFiles - used, 0),
         maxFileSizeBytes: limits.maxFileSizeBytes,
         atCapacity: used >= limits.maxFiles,
+        allowsVideo: limits.allowsVideo,
+        maxVideoBytes: limits.maxVideoBytes,
+        maxVideoSeconds: limits.maxVideoSeconds,
     };
 };
 
