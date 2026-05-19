@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getEventUsage, uploadMedia, type EventUsage } from "@/lib/mediaApi";
+import { compressImageIfNeeded } from "@/lib/compressImage";
 import { formatBytes } from "@/constants/tierLimits";
 import toast from "react-hot-toast";
 
@@ -77,8 +78,12 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
         setLoading(true);
         setUploadCount(files.length);
 
+        const prepared = await Promise.all(
+            Array.from(files).map((file) => compressImageIfNeeded(file)),
+        );
+
         const formData = new FormData();
-        Array.from(files).forEach((file) => {
+        prepared.forEach((file) => {
             formData.append("files", file);
         });
         formData.append("eventId", eventId);
