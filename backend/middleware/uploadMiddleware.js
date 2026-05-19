@@ -31,9 +31,14 @@ const eventStorage = new CloudinaryStorage({
 const uploadUserProfile = multer({ storage: profileStorage });
 const uploadEventThumbnail = multer({ storage: eventStorage });
 
-// Hard ceiling for multer: set to the largest tier's per-file cap so that oversized files for any tier are dropped before buffering completes.
+// Hard ceiling for multer: the largest per-file cap across all tiers and
+// across both image and video, so oversized files for any tier/medium are
+// dropped before buffering completes.
 const MAX_TIER_FILE_BYTES = Math.max(
-    ...Object.values(TIER_LIMITS).map((t) => t.maxFileSizeBytes),
+    ...Object.values(TIER_LIMITS).flatMap((t) => [
+        t.maxFileSizeBytes,
+        t.maxVideoBytes || 0,
+    ]),
 );
 
 const uploadEventMedia = multer({
@@ -65,6 +70,26 @@ const validateUploadTierLimits = async (req, res, next) => {
         const files = req.files || [];
 
         for (const file of files) {
+            const isVideo = file.mimetype?.startsWith("video/");
+
+            if (isVideo) {
+                if (!limits.allowsVideo) {
+                    return res.status(403).json({
+                        success: false,
+                        message: `Video uploads are not available on the ${event.tier} tier. Upgrade to Premium for video support.`,
+                    });
+                }
+                if (file.size > limits.maxVideoBytes) {
+                    return res.status(413).json({
+                        success: false,
+                        message: `Video "${file.originalname}" exceeds the ${formatBytes(
+                            limits.maxVideoBytes,
+                        )} per-video limit for the ${event.tier} tier.`,
+                    });
+                }
+                continue;
+            }
+
             if (file.size > limits.maxFileSizeBytes) {
                 return res.status(413).json({
                     success: false,
