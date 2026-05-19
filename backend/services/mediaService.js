@@ -3,6 +3,7 @@ import { Event } from "../models/eventModel.js";
 import Interaction from "../models/interactionModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
+import { getTierLimits } from "../constants/tierLimits.js";
 
 const attachLikeMetadata = async (mediaDocs) => {
     const docs = Array.isArray(mediaDocs) ? mediaDocs : [mediaDocs];
@@ -97,6 +98,19 @@ export const uploadMultipleMedia = async (
         throw new Error("No files provided");
     }
 
+    const tierLimits = getTierLimits(event.tier);
+    const existingCount = await Media.countDocuments({ eventId });
+    if (existingCount + files.length > tierLimits.maxFiles) {
+        const remaining = Math.max(tierLimits.maxFiles - existingCount, 0);
+        const reason =
+            remaining === 0
+                ? `Storage limit reached for your tier (${event.tier}). Upgrade to upload more.`
+                : `Upload exceeds your ${event.tier} tier limit (${tierLimits.maxFiles} files). You have ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`;
+        const err = new Error(reason);
+        err.status = 403;
+        throw err;
+    }
+
     const uploadedAssets = [];
     const createdMediaIds = [];
 
@@ -113,6 +127,7 @@ export const uploadMultipleMedia = async (
                             resource_type:
                                 mediaType === "video" ? "video" : "image",
                             folder: `events/${eventId}`,
+                            bytes_limit: tierLimits.maxFileSizeBytes,
                         },
                         (error, result) => {
                             if (error) reject(error);
@@ -319,6 +334,25 @@ export const deleteAllMediaForEvent = async (eventId) => {
     });
     await Media.deleteMany({ eventId });
     return { success: true, message: "All media deleted for event" };
+};
+
+// Tier usage snapshot for an event (used by upload UI)
+export const getEventUsage = async (eventId) => {
+    const event = await Event.findById(eventId).select("tier");
+    if (!event) throw new Error("Event not found");
+
+    const tier = event.tier || "free";
+    const limits = getTierLimits(tier);
+    const used = await Media.countDocuments({ eventId });
+
+    return {
+        tier,
+        used,
+        maxFiles: limits.maxFiles,
+        remaining: Math.max(limits.maxFiles - used, 0),
+        maxFileSizeBytes: limits.maxFileSizeBytes,
+        atCapacity: used >= limits.maxFiles,
+    };
 };
 
 // Set label on media (host only)
