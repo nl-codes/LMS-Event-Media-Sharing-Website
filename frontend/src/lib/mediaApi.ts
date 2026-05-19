@@ -28,10 +28,23 @@ async function request<T>(path: string, options: RequestInit = {}) {
     return json;
 }
 
+export type PendingVideo = {
+    jobId: string;
+    originalName: string;
+    mediaType: "video";
+    status: "processing";
+};
+
+export type UploadMediaResult = {
+    media: Media[];
+    pending: PendingVideo[];
+    hasVideos: boolean;
+};
+
 export async function uploadMedia(
     formData: FormData,
     eventSlug?: string,
-): Promise<Media[]> {
+): Promise<UploadMediaResult> {
     const headers: Record<string, string> = {};
     if (eventSlug) {
         headers["x-event-slug"] = eventSlug;
@@ -43,11 +56,18 @@ export async function uploadMedia(
         headers,
         body: formData,
     });
-    const json = (await res.json()) as ApiResponse<Media[]>;
+    const json = (await res.json()) as ApiResponse<Media[]> & {
+        pending?: PendingVideo[];
+    };
     if (!res.ok || !json.success) {
         throw new Error(json.message || "Upload failed");
     }
-    return json.data || [];
+    const pending = json.pending ?? [];
+    return {
+        media: json.data ?? [],
+        pending,
+        hasVideos: pending.length > 0,
+    };
 }
 
 export type EventUsage = {
