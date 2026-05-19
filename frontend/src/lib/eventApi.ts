@@ -152,6 +152,24 @@ export async function verifyEventAccess(eventId: string, slug?: string) {
     return json.data as { isRegistered: boolean };
 }
 
+export type Participant = {
+    id: string;
+    name: string;
+    userName: string;
+    type: "registered" | "guest";
+    profilePicture: string;
+    joinedAt: string;
+};
+
+export async function getEventParticipants(
+    eventId: string,
+): Promise<Participant[]> {
+    const json = await request<Participant[]>(
+        `/events/${eventId}/participants`,
+    );
+    return json.data ?? [];
+}
+
 export async function joinAsGuest(payload: {
     eventId: string;
     userName: string;
