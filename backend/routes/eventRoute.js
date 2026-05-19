@@ -14,6 +14,7 @@ import {
     verifyEventAccess,
     joinAsGuest,
 } from "../controllers/eventController.js";
+import { getEventInsightsController } from "../controllers/analyticsController.js";
 import { attachEventId } from "../middleware/utilsMiddleware.js";
 
 const router = express.Router();
@@ -27,6 +28,11 @@ router.post(
 );
 router.get("/details/:id", requireAuth, getEventById);
 router.get("/host-events", requireAuth, getHostEvents);
+router.get(
+    "/:eventId/insights",
+    requireAuth,
+    getEventInsightsController,
+);
 router.patch(
     "/:id",
     requireAuth,
