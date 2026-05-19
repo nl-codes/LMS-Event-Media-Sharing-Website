@@ -12,11 +12,11 @@ export const TIER_LIMITS: Record<TierKey, TierLimit> = {
     },
     premium: {
         maxFileSizeBytes: 5 * 1024 * 1024,
-        maxFiles: 500,
+        maxFiles: 200,
     },
     pro: {
         maxFileSizeBytes: 10 * 1024 * 1024,
-        maxFiles: 1000,
+        maxFiles: 500,
     },
 };
 

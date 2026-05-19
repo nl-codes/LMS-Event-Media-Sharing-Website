@@ -6,11 +6,11 @@ export const TIER_LIMITS = {
     },
     premium: {
         maxFileSizeBytes: 5 * ONE_MB,
-        maxFiles: 500,
+        maxFiles: 200,
     },
     pro: {
         maxFileSizeBytes: 10 * ONE_MB,
-        maxFiles: 1000,
+        maxFiles: 500,
     },
 };
 
