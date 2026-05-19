@@ -1,4 +1,6 @@
 import { Event } from "../models/eventModel.js";
+import { EventMembership } from "../models/eventMembershipModel.js";
+import { Guest } from "../models/guestModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
@@ -161,4 +163,60 @@ export const removeEvent = async (eventId, requesterId) => {
     } catch (error) {
         throw error;
     }
+};
+
+// Host-only: list every participant of an event (registered members + guests)
+// merged into one shape so the frontend can render them in a single list.
+export const getEventParticipants = async (eventId, requesterId) => {
+    const event = await Event.findById(eventId).select("hostId");
+    if (!event) {
+        const err = new Error("Event not found");
+        err.status = 404;
+        throw err;
+    }
+
+    if (event.hostId.toString() !== requesterId) {
+        const err = new Error("Only the event host can view participants");
+        err.status = 403;
+        throw err;
+    }
+
+    const [memberships, guests] = await Promise.all([
+        EventMembership.find({ eventId })
+            .select("userId joinedAt")
+            .populate("userId", "userName")
+            .sort({ joinedAt: -1 })
+            .lean(),
+        Guest.find({ eventId })
+            .select("guest_id userName createdAt")
+            .sort({ createdAt: -1 })
+            .lean(),
+    ]);
+
+    // attachAvatars expects mongoose-ish docs with a populated ref path.
+    const hydrated = await attachAvatars(memberships, ["userId"]);
+
+    const registered = hydrated
+        .filter((m) => m.userId && typeof m.userId === "object")
+        .map((m) => ({
+            id: String(m.userId._id),
+            name: m.userId.userName || "Unknown",
+            userName: m.userId.userName || "",
+            type: "registered",
+            profilePicture: m.userId.profilePicture || "",
+            joinedAt: m.joinedAt,
+        }));
+
+    const guestEntries = guests.map((g) => ({
+        id: g.guest_id,
+        name: g.userName || "Guest",
+        userName: g.userName || "",
+        type: "guest",
+        profilePicture: "",
+        joinedAt: g.createdAt,
+    }));
+
+    return [...registered, ...guestEntries].sort(
+        (a, b) => new Date(b.joinedAt) - new Date(a.joinedAt),
+    );
 };
