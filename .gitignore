@@ -3,6 +3,9 @@
 # http requests for React Client
 backend/http
 
+# Local video processing temp files
+backend/uploads/tmp/
+
 # Logs
 logs
 *.log
