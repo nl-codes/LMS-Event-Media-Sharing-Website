@@ -57,6 +57,9 @@ export type EventUsage = {
     remaining: number;
     maxFileSizeBytes: number;
     atCapacity: boolean;
+    allowsVideo: boolean;
+    maxVideoBytes: number;
+    maxVideoSeconds: number;
 };
 
 export async function getEventUsage(eventId: string) {
