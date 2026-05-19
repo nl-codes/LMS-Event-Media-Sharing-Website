@@ -137,7 +137,7 @@ export default function EventInsightsPage() {
                         </h1>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                         {RANGES.map((r) => {
                             const active = r.key === range;
                             return (
@@ -146,7 +146,7 @@ export default function EventInsightsPage() {
                                     type="button"
                                     onClick={() => setRange(r.key)}
                                     className={clsx(
-                                        "rounded-xl px-3 py-1.5 text-xs font-bold transition-all",
+                                        "flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-bold transition-all",
                                         active
                                             ? "bg-cusviolet text-cuscream"
                                             : "bg-white/60 text-cusviolet/70 hover:bg-white",
