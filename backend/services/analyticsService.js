@@ -1,6 +1,9 @@
+import mongoose from "mongoose";
 import { User } from "../models/userModel.js";
 import { Event } from "../models/eventModel.js";
+import { EventMembership } from "../models/eventMembershipModel.js";
 import Media from "../models/mediaModel.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 const RANGE_CONFIG = {
     last7days: { days: 7, granularity: "day" },
@@ -87,3 +90,86 @@ export const getUserGrowth = (range) =>
     aggregateCountsOverTime(User, range, { role: "user" });
 export const getEventGrowth = (range) => aggregateCountsOverTime(Event, range);
 export const getMediaGrowth = (range) => aggregateCountsOverTime(Media, range);
+
+// Per-event aggregation. Memberships use `joinedAt` as the timestamp; the
+// shared helper assumes `createdAt`, so we use a dedicated pipeline here.
+const aggregateMembershipsForEvent = async (eventId, range) => {
+    const { days, granularity } = resolveRange(range);
+    const since = startOfRange(days);
+    const eventObjectId = new mongoose.Types.ObjectId(String(eventId));
+
+    const format = granularity === "month" ? "%Y-%m" : "%Y-%m-%d";
+    const rows = await EventMembership.aggregate([
+        { $match: { eventId: eventObjectId, joinedAt: { $gte: since } } },
+        {
+            $group: {
+                _id: {
+                    $dateToString: {
+                        format,
+                        date: "$joinedAt",
+                        timezone: "UTC",
+                    },
+                },
+                count: { $sum: 1 },
+            },
+        },
+        { $project: { _id: 0, date: "$_id", count: 1 } },
+        { $sort: { date: 1 } },
+    ]);
+
+    return {
+        granularity,
+        range,
+        data: fillGaps(rows, days, granularity),
+    };
+};
+
+export const getEventInsights = async (eventId, range) => {
+    const event = await Event.findById(eventId)
+        .select("eventName hostId startTime endTime status tier")
+        .populate("hostId", "userName email");
+    if (!event) {
+        const err = new Error("Event not found");
+        err.status = 404;
+        throw err;
+    }
+
+    const eventWithAvatar = await attachAvatars(event, ["hostId"]);
+
+    const [members, media, totalMembers, totalMedia] = await Promise.all([
+        aggregateMembershipsForEvent(eventId, range),
+        aggregateCountsOverTime(Media, range, {
+            eventId: new mongoose.Types.ObjectId(String(eventId)),
+        }),
+        EventMembership.countDocuments({ eventId }),
+        Media.countDocuments({ eventId }),
+    ]);
+
+    const host =
+        eventWithAvatar.hostId && typeof eventWithAvatar.hostId === "object"
+            ? {
+                  _id: String(eventWithAvatar.hostId._id),
+                  userName: eventWithAvatar.hostId.userName,
+                  email: eventWithAvatar.hostId.email,
+                  profilePicture: eventWithAvatar.hostId.profilePicture,
+              }
+            : null;
+
+    return {
+        event: {
+            _id: String(event._id),
+            eventName: event.eventName,
+            status: event.status,
+            tier: event.tier,
+            startTime: event.startTime,
+            endTime: event.endTime,
+        },
+        host,
+        totals: {
+            members: totalMembers,
+            media: totalMedia,
+        },
+        members,
+        media,
+    };
+};
