@@ -4,6 +4,7 @@ import Interaction from "../models/interactionModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 import { getTierLimits } from "../constants/tierLimits.js";
+import { compressImageBuffer } from "../utils/imageCompression.js";
 
 const attachLikeMetadata = async (mediaDocs) => {
     const docs = Array.isArray(mediaDocs) ? mediaDocs : [mediaDocs];
@@ -121,20 +122,31 @@ export const uploadMultipleMedia = async (
                     ? "video"
                     : "image";
 
+                let uploadBuffer = file.buffer;
+                const uploadOptions = {
+                    resource_type: mediaType === "video" ? "video" : "image",
+                    folder: `events/${eventId}`,
+                    bytes_limit: tierLimits.maxFileSizeBytes,
+                };
+
+                if (mediaType === "image") {
+                    const result = await compressImageBuffer(
+                        file.buffer,
+                        file.mimetype,
+                    );
+                    uploadBuffer = result.buffer;
+                    uploadOptions.format = "webp";
+                }
+
                 const uploadResult = await new Promise((resolve, reject) => {
                     const stream = cloudinary.uploader.upload_stream(
-                        {
-                            resource_type:
-                                mediaType === "video" ? "video" : "image",
-                            folder: `events/${eventId}`,
-                            bytes_limit: tierLimits.maxFileSizeBytes,
-                        },
+                        uploadOptions,
                         (error, result) => {
                             if (error) reject(error);
                             else resolve(result);
                         },
                     );
-                    stream.end(file.buffer);
+                    stream.end(uploadBuffer);
                 });
 
                 uploadedAssets.push({
