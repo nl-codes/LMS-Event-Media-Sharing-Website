@@ -3,6 +3,7 @@ import {
     findAllEventsByHost,
     findEventById,
     findEventBySlug,
+    getEventParticipants,
     removeEvent,
     updateEvent,
     updateEventStatus,
@@ -352,6 +353,31 @@ export const joinAsGuest = async (req, res) => {
         return res.status(400).json({
             success: false,
             message: error.message,
+        });
+    }
+};
+
+export const getEventParticipantsController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const requesterId = req.user?.id;
+        if (!requesterId) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required",
+            });
+        }
+
+        const participants = await getEventParticipants(id, requesterId);
+        return res.status(200).json({
+            success: true,
+            data: participants,
+        });
+    } catch (error) {
+        const status = error.status || 500;
+        return res.status(status).json({
+            success: false,
+            message: error.message || "Failed to load participants",
         });
     }
 };
