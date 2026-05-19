@@ -138,7 +138,7 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
                 loading: `Uploading ${fileArray.length} file${fileArray.length > 1 ? "s" : ""}...`,
                 success:
                     videos.length > 0
-                        ? `Upload received. ${videos.length} video${videos.length > 1 ? "s" : ""} processing in the background — it will appear in the gallery shortly.`
+                        ? `Upload received. ${videos.length} video${videos.length > 1 ? "s" : ""} will appear in the gallery shortly.`
                         : `${fileArray.length} file${fileArray.length > 1 ? "s" : ""} uploaded!`,
                 error: (err) =>
                     err instanceof Error ? err.message : "Upload failed",
