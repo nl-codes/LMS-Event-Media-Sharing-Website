@@ -352,8 +352,9 @@ export default function EventPublicGallery() {
                             <MediaUploadButton
                                 eventId={eventId}
                                 eventSlug={slug}
-                                onUploadSuccess={() => {
-                                    void fetchGallery(eventId);
+                                onUploadSuccess={(hasVideos) => {
+                                    // Images arrive via new_media socket no refetch needed.
+                                    if (hasVideos) void fetchGallery(eventId);
                                 }}
                             />
 
