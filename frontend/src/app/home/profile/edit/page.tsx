@@ -49,7 +49,7 @@ export default function ProfileEditPage() {
 
             if (!res.ok) throw new Error();
             toast.success(`Profile ${profileExists ? "updated" : "created"}!`);
-            router.push("/home/profile");
+            router.replace("/home/profile");
             router.refresh();
         } catch {
             toast.error("Something went wrong.");
