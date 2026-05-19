@@ -50,6 +50,20 @@ export async function uploadMedia(
     return json.data || [];
 }
 
+export type EventUsage = {
+    tier: "free" | "premium" | "pro";
+    used: number;
+    maxFiles: number;
+    remaining: number;
+    maxFileSizeBytes: number;
+    atCapacity: boolean;
+};
+
+export async function getEventUsage(eventId: string) {
+    const json = await request<EventUsage>(`/media/usage/${eventId}`);
+    return json.data as EventUsage;
+}
+
 export async function getGallery(eventId: string) {
     const json = await request<Media[]>(`/media/${eventId}`);
     return json.data || [];
@@ -80,11 +94,14 @@ export async function deleteMultipleMedia(mediaIds: string[]) {
 }
 
 export async function toggleLike(mediaId: string) {
-    const json = await request<ToggleLikeResponse>(`/interactions/toggle-like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mediaId }),
-    });
+    const json = await request<ToggleLikeResponse>(
+        `/interactions/toggle-like`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mediaId }),
+        },
+    );
     return json.data as ToggleLikeResponse;
 }
 

@@ -18,7 +18,7 @@ export default function EventHostActionButtons({
     const router = useRouter();
 
     return (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between">
             <BackButton label="Back to My Events" />
             <div className="flex flex-wrap items-center gap-3">
                 {!event.isPremium && (

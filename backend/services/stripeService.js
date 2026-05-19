@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { getTierLimits } from "../constants/tierLimits.js";
 
 const getStripeClient = () => {
     const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -134,7 +135,7 @@ export const getTierUpgradeValues = (tier) => {
             tier: "premium",
             isPremium: true,
             expiresAt,
-            uploadLimit: 500,
+            uploadLimit: getTierLimits("premium").maxFiles,
         };
     }
 
@@ -145,6 +146,6 @@ export const getTierUpgradeValues = (tier) => {
         tier: "pro",
         isPremium: true,
         expiresAt,
-        uploadLimit: 10000,
+        uploadLimit: getTierLimits("pro").maxFiles,
     };
 };

@@ -7,6 +7,7 @@ import { confirmStripeCheckoutSession } from "@/lib/stripe";
 import type { Event } from "@/types/Event";
 import { useParams, useSearchParams } from "next/navigation";
 import QRModal from "@/components/events/QRModal";
+import EventCapacityAlert from "@/components/events/EventCapacityAlert";
 import toast from "react-hot-toast";
 import { Loader2, XCircle, ExternalLink } from "lucide-react";
 import Button from "@/components/buttons/Button";
@@ -94,7 +95,7 @@ export default function EventDetailsPage() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 profile-card-animate">
-            <main>
+            <main className="flex flex-col gap-12">
                 {showQR && (
                     <QRModal
                         slug={event.uniqueSlug}
@@ -104,6 +105,8 @@ export default function EventDetailsPage() {
                 )}
 
                 <EventHostActionButtons event={event} setShowQR={setShowQR} />
+
+                <EventCapacityAlert eventId={event._id} />
 
                 <EventDetailsLayout event={event}>
                     <Link

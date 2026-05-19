@@ -1,7 +1,11 @@
 import express from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { identifyUser } from "../middleware/identifyUser.js";
-import multer from "multer";
+import {
+    uploadEventMedia,
+    validateUploadTierLimits,
+    handleMulterErrors,
+} from "../middleware/uploadMiddleware.js";
 import {
     uploadMediaController,
     getGalleryController,
@@ -10,10 +14,8 @@ import {
     deleteMultipleMediaController,
     getHighlightsController,
     setMediaLabelController,
+    getEventUsageController,
 } from "../controllers/mediaController.js";
-
-// Use multer memory storage for file buffer
-const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
@@ -21,9 +23,14 @@ const router = express.Router();
 router.post(
     "/upload",
     identifyUser,
-    upload.array("files", 10),
+    uploadEventMedia.array("files", 10),
+    handleMulterErrors,
+    validateUploadTierLimits,
     uploadMediaController,
 );
+
+// GET /usage/:eventId tier + remaining capacity (public; needed by guests too)
+router.get("/usage/:eventId", getEventUsageController);
 
 // GET /item/:mediaId (public)
 router.get("/item/:mediaId", getMediaByIdController);

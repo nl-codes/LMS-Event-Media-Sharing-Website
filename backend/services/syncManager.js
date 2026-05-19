@@ -2,8 +2,7 @@ import mongoose from "mongoose";
 import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
-
-const DEFAULT_FREE_EVENT_LIMIT = 100;
+import { getTierLimits } from "../constants/tierLimits.js";
 
 const toObjectId = (value) => {
     if (!value) return null;
@@ -41,7 +40,7 @@ export const syncExpiredEventUpgrades = async (now = new Date()) => {
                 isPremium: false,
                 tier: "free",
                 expiresAt: null,
-                uploadLimit: DEFAULT_FREE_EVENT_LIMIT,
+                uploadLimit: getTierLimits("free").maxFiles,
             },
         },
     );
