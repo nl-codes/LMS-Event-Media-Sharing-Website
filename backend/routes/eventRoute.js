@@ -14,6 +14,7 @@ import {
     requestUploadSignature,
     verifyEventAccess,
     joinAsGuest,
+    updateEventPrivacyController,
 } from "../controllers/eventController.js";
 import { getEventInsightsController } from "../controllers/analyticsController.js";
 import { attachEventId } from "../middleware/utilsMiddleware.js";
@@ -39,6 +40,7 @@ router.get(
     requireAuth,
     getEventParticipantsController,
 );
+router.patch("/:eventId/privacy", requireAuth, updateEventPrivacyController);
 router.patch(
     "/:id",
     requireAuth,
