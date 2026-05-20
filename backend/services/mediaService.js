@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Media from "../models/mediaModel.js";
 import { Event } from "../models/eventModel.js";
 import Interaction from "../models/interactionModel.js";
@@ -52,6 +53,17 @@ const attachLikeMetadata = async (mediaDocs) => {
     });
 
     return Array.isArray(mediaDocs) ? enriched : enriched[0];
+};
+
+const ensureEventExists = async (eventId) => {
+    if (!mongoose.isValidObjectId(eventId)) {
+        throw new Error("Event not found");
+    }
+
+    const eventExists = await Event.exists({ _id: eventId });
+    if (!eventExists) {
+        throw new Error("Event not found");
+    }
 };
 
 // Upload multiple files to Cloudinary and save them to DB
@@ -199,6 +211,8 @@ export const uploadMultipleMedia = async (
 
 // Get all media for an event
 export const getGallery = async (eventId) => {
+    await ensureEventExists(eventId);
+
     const media = await Media.find({ eventId, isHidden: { $ne: true } })
         .sort({ createdAt: -1 })
         .populate("uploaderId", "userName")
@@ -381,6 +395,8 @@ export const deleteMultipleMedia = async (mediaIds, requesterId) => {
 
 // Get highlights for an event
 export const getHighlights = async (eventId) => {
+    await ensureEventExists(eventId);
+
     const highlights = await Media.find({ eventId, isHighlight: true })
         .sort({ createdAt: -1 })
         .populate("uploaderId", "userName")
@@ -407,6 +423,10 @@ export const deleteAllMediaForEvent = async (eventId) => {
 
 // Tier usage snapshot for an event (used by upload UI)
 export const getEventUsage = async (eventId) => {
+    if (!mongoose.isValidObjectId(eventId)) {
+        throw new Error("Event not found");
+    }
+
     const event = await Event.findById(eventId).select("tier");
     if (!event) throw new Error("Event not found");
 

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
@@ -27,6 +28,10 @@ export const createEvent = async (eventData) => {
 
 export const findEventById = async (eventId) => {
     try {
+        if (!mongoose.isValidObjectId(eventId)) {
+            throw new Error("Event not found");
+        }
+
         const event = await Event.findById(eventId).populate(
             "hostId",
             "userName email",
