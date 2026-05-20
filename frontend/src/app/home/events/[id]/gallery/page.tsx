@@ -280,8 +280,9 @@ const GalleryPage = () => {
 
                         <MediaUploadButton
                             eventId={eventId}
+                            eventEndTime={event?.endTime}
                             onUploadSuccess={(hasVideos) => {
-                                // Images arrive via new_media socket — no refetch needed.
+                                // Images arrive via new_media socket so no refetch needed.
                                 // Videos are queued; socket fires once FFmpeg finishes.
                                 // Either way, no immediate refetch required.
                                 if (hasVideos) void fetchGallery();
