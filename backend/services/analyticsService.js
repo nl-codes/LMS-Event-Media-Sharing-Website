@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { User } from "../models/userModel.js";
 import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
+import { Guest } from "../models/guestModel.js";
 import Media from "../models/mediaModel.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 
@@ -91,22 +92,20 @@ export const getUserGrowth = (range) =>
 export const getEventGrowth = (range) => aggregateCountsOverTime(Event, range);
 export const getMediaGrowth = (range) => aggregateCountsOverTime(Media, range);
 
-// Per-event aggregation. Memberships use `joinedAt` as the timestamp; the
-// shared helper assumes `createdAt`, so we use a dedicated pipeline here.
 const aggregateMembershipsForEvent = async (eventId, range) => {
     const { days, granularity } = resolveRange(range);
     const since = startOfRange(days);
     const eventObjectId = new mongoose.Types.ObjectId(String(eventId));
-
     const format = granularity === "month" ? "%Y-%m" : "%Y-%m-%d";
-    const rows = await EventMembership.aggregate([
-        { $match: { eventId: eventObjectId, joinedAt: { $gte: since } } },
+
+    const bucketStage = (dateField) => [
+        { $match: { eventId: eventObjectId, [dateField]: { $gte: since } } },
         {
             $group: {
                 _id: {
                     $dateToString: {
                         format,
-                        date: "$joinedAt",
+                        date: `$${dateField}`,
                         timezone: "UTC",
                     },
                 },
@@ -114,8 +113,18 @@ const aggregateMembershipsForEvent = async (eventId, range) => {
             },
         },
         { $project: { _id: 0, date: "$_id", count: 1 } },
-        { $sort: { date: 1 } },
+    ];
+
+    const [memberRows, guestRows] = await Promise.all([
+        EventMembership.aggregate(bucketStage("joinedAt")),
+        Guest.aggregate(bucketStage("createdAt")),
     ]);
+
+    const combined = new Map();
+    for (const row of [...memberRows, ...guestRows]) {
+        combined.set(row.date, (combined.get(row.date) || 0) + row.count);
+    }
+    const rows = Array.from(combined, ([date, count]) => ({ date, count }));
 
     return {
         granularity,
@@ -136,14 +145,17 @@ export const getEventInsights = async (eventId, range) => {
 
     const eventWithAvatar = await attachAvatars(event, ["hostId"]);
 
-    const [members, media, totalMembers, totalMedia] = await Promise.all([
-        aggregateMembershipsForEvent(eventId, range),
-        aggregateCountsOverTime(Media, range, {
-            eventId: new mongoose.Types.ObjectId(String(eventId)),
-        }),
-        EventMembership.countDocuments({ eventId }),
-        Media.countDocuments({ eventId }),
-    ]);
+    const [members, media, registeredCount, guestCount, totalMedia] =
+        await Promise.all([
+            aggregateMembershipsForEvent(eventId, range),
+            aggregateCountsOverTime(Media, range, {
+                eventId: new mongoose.Types.ObjectId(String(eventId)),
+            }),
+            EventMembership.countDocuments({ eventId }),
+            Guest.countDocuments({ eventId }),
+            Media.countDocuments({ eventId }),
+        ]);
+    const totalMembers = registeredCount + guestCount;
 
     const host =
         eventWithAvatar.hostId && typeof eventWithAvatar.hostId === "object"
