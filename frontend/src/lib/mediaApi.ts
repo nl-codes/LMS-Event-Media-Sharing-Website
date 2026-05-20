@@ -145,3 +145,29 @@ export async function setMediaLabel(
     });
     return json.data as Media;
 }
+
+export type ExplorePage = {
+    items: Media[];
+    limit: number;
+    hasMore: boolean;
+    nextCursor: string | null;
+};
+
+export async function getExploreMedia(opts: {
+    cursor?: string | null;
+    limit?: number;
+}): Promise<ExplorePage> {
+    const params = new URLSearchParams();
+    if (opts.cursor) params.set("cursor", opts.cursor);
+    if (opts.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    const json = await request<ExplorePage>(
+        `/media/explore${qs ? `?${qs}` : ""}`,
+    );
+    return (json.data as ExplorePage) ?? {
+        items: [],
+        limit: opts.limit ?? 20,
+        hasMore: false,
+        nextCursor: null,
+    };
+}
