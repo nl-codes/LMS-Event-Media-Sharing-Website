@@ -5,6 +5,7 @@ import { Profile } from "../models/profileModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
+import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
 
 export const createEvent = async (eventData) => {
     try {
@@ -166,6 +167,37 @@ export const removeEvent = async (eventId, requesterId) => {
     }
 };
 
+const MAX_PUBLIC_EVENTS = 100;
+
+export const listPublicEvents = async ({ q, limit } = {}) => {
+    const cap = Math.min(
+        Math.max(parseInt(limit, 10) || 50, 1),
+        MAX_PUBLIC_EVENTS,
+    );
+
+    const filter = {
+        privacy: "public",
+        status: { $ne: "Cancelled" },
+    };
+
+    if (q && typeof q === "string" && q.trim()) {
+        const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const rx = new RegExp(escaped, "i");
+        filter.$or = [{ eventName: rx }, { location: rx }];
+    }
+
+    const events = await Event.find(filter)
+        .select(
+            "eventName description location startTime endTime uniqueSlug status thumbnail tier privacy participantCount",
+        )
+        .populate("hostId", "userName email")
+        .sort({ startTime: -1 })
+        .limit(cap)
+        .lean();
+
+    return attachAvatars(events, ["hostId"]);
+};
+
 // Host-only: list every participant of an event (registered members + guests)
 // merged into one shape so the frontend can render them in a single list.
 export const getEventParticipants = async (eventId, requesterId) => {
@@ -245,4 +277,57 @@ export const getEventParticipants = async (eventId, requesterId) => {
     return [...registered, ...guestEntries].sort(
         (a, b) => new Date(b.joinedAt) - new Date(a.joinedAt),
     );
+};
+
+export const updateEventPrivacy = async (eventId, privacy, requesterId) => {
+    if (privacy !== "public" && privacy !== "private") {
+        const err = new Error("privacy must be 'public' or 'private'");
+        err.status = 400;
+        throw err;
+    }
+
+    const event = await Event.findById(eventId).select("hostId privacy");
+    if (!event) {
+        const err = new Error("Event not found");
+        err.status = 404;
+        throw err;
+    }
+
+    if (event.hostId.toString() !== requesterId) {
+        const err = new Error("Only the event host can change privacy");
+        err.status = 403;
+        throw err;
+    }
+
+    event.privacy = privacy;
+    await event.save();
+
+    const targetIsPublic = privacy === "public";
+
+    let jobId = null;
+    let queueError = null;
+    try {
+        const job = await enqueueEventPrivacyJob({
+            eventId: String(event._id),
+            privacy,
+            targetIsPublic,
+        });
+        jobId = job.id;
+    } catch (err) {
+        queueError = err.message || "Failed to queue privacy sync";
+        console.error(
+            `Failed to enqueue privacy job for event ${event._id}:`,
+            queueError,
+        );
+    }
+
+    return {
+        event: {
+            _id: String(event._id),
+            privacy: event.privacy,
+        },
+        jobId,
+        targetIsPublic,
+        queueError,
+    };
 };

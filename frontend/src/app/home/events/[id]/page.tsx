@@ -8,6 +8,7 @@ import type { Event } from "@/types/Event";
 import { useParams, useSearchParams } from "next/navigation";
 import QRModal from "@/components/events/QRModal";
 import EventCapacityAlert from "@/components/events/EventCapacityAlert";
+import EventPrivacyControl from "@/components/events/EventPrivacyControl";
 import toast from "react-hot-toast";
 import { Loader2, XCircle, ExternalLink } from "lucide-react";
 import Button from "@/components/buttons/Button";
@@ -107,6 +108,11 @@ export default function EventDetailsPage() {
                 <EventHostActionButtons event={event} setShowQR={setShowQR} />
 
                 <EventCapacityAlert eventId={event._id} />
+
+                <EventPrivacyControl
+                    eventId={event._id}
+                    initialPrivacy={event.privacy || "private"}
+                />
 
                 <EventDetailsLayout event={event}>
                     <Link

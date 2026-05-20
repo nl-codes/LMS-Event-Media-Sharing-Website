@@ -114,6 +114,7 @@ export const uploadMultipleMedia = async (
 
     const uploadedAssets = [];
     const createdMediaIds = [];
+    const isPublic = event.privacy === "public";
 
     const results = await Promise.all(
         files.map(async (file) => {
@@ -161,6 +162,7 @@ export const uploadMultipleMedia = async (
                     mediaUrl: uploadResult.secure_url,
                     publicId: uploadResult.public_id,
                     mediaType,
+                    isPublic,
                 });
                 await mediaDoc.save();
                 createdMediaIds.push(mediaDoc._id);
@@ -204,6 +206,61 @@ export const getGallery = async (eventId) => {
 
     const withLikes = await attachLikeMetadata(media);
     return attachAvatars(withLikes, ["uploaderId"]);
+};
+
+const MAX_EXPLORE_LIMIT = 50;
+const DEFAULT_EXPLORE_LIMIT = 20;
+
+const encodeCursor = (doc) =>
+    `${new Date(doc.createdAt).toISOString()}__${doc._id}`;
+
+const decodeCursor = (cursor) => {
+    if (!cursor || typeof cursor !== "string") return null;
+    const [iso, id] = cursor.split("__");
+    if (!iso || !id) return null;
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return null;
+    return { createdAt: date, id };
+};
+
+export const getExploreMedia = async ({ cursor, limit } = {}) => {
+    const cappedLimit = Math.min(
+        Math.max(parseInt(limit, 10) || DEFAULT_EXPLORE_LIMIT, 1),
+        MAX_EXPLORE_LIMIT,
+    );
+
+    const filter = { isPublic: true, isHidden: { $ne: true } };
+    const decoded = decodeCursor(cursor);
+    if (decoded) {
+        // Tie-break on _id when createdAt matches the cursor.
+        filter.$or = [
+            { createdAt: { $lt: decoded.createdAt } },
+            { createdAt: decoded.createdAt, _id: { $lt: decoded.id } },
+        ];
+    }
+
+    // Fetch one extra so we can tell whether more exist without a count query.
+    const docs = await Media.find(filter)
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(cappedLimit + 1)
+        .populate("uploaderId", "userName")
+        .populate("guestId", "userName guest_id")
+        .populate("eventId", "eventName uniqueSlug");
+
+    const hasMore = docs.length > cappedLimit;
+    const page = hasMore ? docs.slice(0, cappedLimit) : docs;
+    const nextCursor =
+        hasMore && page.length > 0 ? encodeCursor(page[page.length - 1]) : null;
+
+    const withLikes = await attachLikeMetadata(page);
+    const items = await attachAvatars(withLikes, ["uploaderId"]);
+
+    return {
+        items,
+        limit: cappedLimit,
+        hasMore,
+        nextCursor,
+    };
 };
 
 export const getMediaById = async (mediaId) => {

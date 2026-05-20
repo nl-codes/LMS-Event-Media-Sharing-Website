@@ -69,6 +69,11 @@ const EventSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        privacy: {
+            type: String,
+            enum: ["public", "private"],
+            default: "private",
+        },
     },
     {
         timestamps: true,

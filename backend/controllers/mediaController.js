@@ -7,6 +7,7 @@ import {
     getHighlights,
     setMediaLabel,
     getEventUsage,
+    getExploreMedia,
 } from "../services/mediaService.js";
 import Media from "../models/mediaModel.js";
 import { getIO } from "../config/socketConfig.js";
@@ -154,6 +155,20 @@ export const getEventUsageController = async (req, res) => {
         res.status(200).json({ success: true, data: usage });
     } catch (error) {
         res.status(404).json({ success: false, message: error.message });
+    }
+};
+
+// Handles GET /media/explore?cursor=...&limit=20
+export const getExploreMediaController = async (req, res) => {
+    try {
+        const { cursor, limit } = req.query;
+        const result = await getExploreMedia({ cursor, limit });
+        res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to load explore feed",
+        });
     }
 };
 

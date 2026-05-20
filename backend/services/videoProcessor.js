@@ -5,6 +5,7 @@ import path from "path";
 import ffmpegPath from "ffmpeg-static";
 import cloudinary from "../config/cloudinaryConfig.js";
 import Media from "../models/mediaModel.js";
+import { Event } from "../models/eventModel.js";
 import { getIO } from "../config/socketConfig.js";
 
 const execFileAsync = promisify(execFile);
@@ -13,13 +14,20 @@ const execFileAsync = promisify(execFile);
 //   -vcodec libx264 -crf 25 -r 30 -b:v 3M -vf scale='min(1280,iw)':-2 -movflags +faststart
 const buildFfmpegArgs = (inputPath, outputPath) => [
     "-y", // overwrite output if exists
-    "-i", inputPath,
-    "-vcodec", "libx264",
-    "-crf", "25",
-    "-r", "30",
-    "-b:v", "3M",
-    "-vf", "scale='min(1280,iw)':-2",
-    "-movflags", "+faststart",
+    "-i",
+    inputPath,
+    "-vcodec",
+    "libx264",
+    "-crf",
+    "25",
+    "-r",
+    "30",
+    "-b:v",
+    "3M",
+    "-vf",
+    "scale='min(1280,iw)':-2",
+    "-movflags",
+    "+faststart",
     outputPath,
 ];
 
@@ -57,13 +65,21 @@ export const processVideoJob = async (job) => {
     const outputPath = `${inputPath}.processed.mp4`;
 
     try {
-        await execFileAsync(ffmpegPath, buildFfmpegArgs(inputPath, outputPath), {
-            // FFmpeg writes its log to stderr even on success; cap the buffer
-            // generously so long logs don't crash the worker.
-            maxBuffer: 50 * 1024 * 1024,
-        });
+        await execFileAsync(
+            ffmpegPath,
+            buildFfmpegArgs(inputPath, outputPath),
+            {
+                // FFmpeg writes its log to stderr even on success; cap the buffer
+                // generously so long logs don't crash the worker.
+                maxBuffer: 50 * 1024 * 1024,
+            },
+        );
 
         const uploadResult = await uploadToCloudinary(outputPath, eventId);
+
+        // Re-read event privacy at completion time so a host toggling privacy while the video was being encoded doesn't leak the wrong visibility.
+        const event = await Event.findById(eventId).select("privacy").lean();
+        const isPublic = event?.privacy === "public";
 
         const mediaDoc = await Media.create({
             eventId,
@@ -72,6 +88,7 @@ export const processVideoJob = async (job) => {
             mediaUrl: uploadResult.secure_url,
             publicId: uploadResult.public_id,
             mediaType: "video",
+            isPublic,
         });
 
         const populated = await Media.findById(mediaDoc._id)

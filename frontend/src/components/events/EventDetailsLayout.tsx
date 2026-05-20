@@ -7,6 +7,7 @@ import UserAvatar from "../common/UserAvatar";
 import { HelperFormatDate, HelperFormatTime } from "@/utils/HelperFunctions";
 import Link from "next/link";
 import { Event } from "@/types/Event";
+import EventStatusLabel from "./EventStatusLabel";
 
 type EventDetailsLayoutProps = {
     event: Event;
@@ -51,17 +52,12 @@ export default function EventDetailsLayout({
 
             {/* Right column */}
             <div className="flex-1 max-w-1/2 p-8 lg:p-10 lg:pl-4 space-y-8">
-                <div>
-                    <div className="flex items-center gap-2 mb-4">
-                        <span
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${event.isLive ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
-                            <div
-                                className={`w-1.5 h-1.5 rounded-full ${event.isLive ? "bg-green-500 animate-pulse" : "bg-slate-400"}`}
-                            />
-                            {event.isLive ? "Live" : "Draft"}
-                        </span>
-                    </div>
-                    <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight mb-4 w-full wrap-break-word">
+                <div className="flex flex-col gap-4">
+                    <EventStatusLabel
+                        startTime={event.startTime}
+                        endTime={event.endTime}
+                    />
+                    <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight w-full wrap-break-word">
                         {event.eventName}
                     </h1>
                     <p className="text-slate-500 text-sm leading-relaxed max-w-xl line-clamp-4">

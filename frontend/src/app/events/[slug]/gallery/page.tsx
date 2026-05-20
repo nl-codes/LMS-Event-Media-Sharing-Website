@@ -352,6 +352,7 @@ export default function EventPublicGallery() {
                             <MediaUploadButton
                                 eventId={eventId}
                                 eventSlug={slug}
+                                eventEndTime={event?.endTime}
                                 onUploadSuccess={(hasVideos) => {
                                     // Images arrive via new_media socket no refetch needed.
                                     if (hasVideos) void fetchGallery(eventId);

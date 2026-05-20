@@ -4,8 +4,10 @@ import {
     findEventById,
     findEventBySlug,
     getEventParticipants,
+    listPublicEvents,
     removeEvent,
     updateEvent,
+    updateEventPrivacy,
     updateEventStatus,
 } from "../services/eventService.js";
 import { Event } from "../models/eventModel.js";
@@ -22,6 +24,7 @@ export const registerEvent = async (req, res) => {
             startTime,
             endTime,
             isPremium,
+            privacy,
         } = req.body;
         const thumbnail = req.file?.path || "";
 
@@ -43,6 +46,7 @@ export const registerEvent = async (req, res) => {
             endTime,
             isPremium: isPremium || false,
             thumbnail: thumbnail,
+            privacy: privacy === "public" ? "public" : "private",
         };
 
         const event = await createEvent(eventData);
@@ -378,6 +382,54 @@ export const getEventParticipantsController = async (req, res) => {
         return res.status(status).json({
             success: false,
             message: error.message || "Failed to load participants",
+        });
+    }
+};
+
+export const updateEventPrivacyController = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { privacy } = req.body;
+        const requesterId = req.user?.id;
+        if (!requesterId) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required",
+            });
+        }
+
+        const result = await updateEventPrivacy(eventId, privacy, requesterId);
+        const message = result.queueError
+            ? "Event privacy updated. Media visibility sync could not be queued, Please try toggling privacy again."
+            : "Event privacy updated. Media visibility will be updated shortly.";
+        // 202 Accepted: privacy field changed; bulk media sync is in flight.
+        return res.status(202).json({
+            success: true,
+            message,
+            data: result,
+        });
+    } catch (error) {
+        const status = error.status || 500;
+        return res.status(status).json({
+            success: false,
+            message: error.message || "Failed to update privacy",
+        });
+    }
+};
+
+export const listPublicEventsController = async (req, res) => {
+    try {
+        const { q, limit } = req.query;
+        const events = await listPublicEvents({ q, limit });
+        return res.status(200).json({
+            success: true,
+            count: events.length,
+            data: events,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to load public events",
         });
     }
 };

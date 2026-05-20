@@ -52,6 +52,7 @@ export async function createEvent(payload: {
     endTime: string;
     isPremium?: boolean;
     thumbnail?: File | null;
+    privacy?: "public" | "private";
 }) {
     const formData = new FormData();
     formData.append("eventName", payload.eventName);
@@ -60,6 +61,7 @@ export async function createEvent(payload: {
     formData.append("startTime", payload.startTime);
     formData.append("endTime", payload.endTime);
     formData.append("isPremium", String(Boolean(payload.isPremium)));
+    formData.append("privacy", payload.privacy === "public" ? "public" : "private");
     if (payload.thumbnail) {
         formData.append("thumbnail", payload.thumbnail);
     }
@@ -69,6 +71,27 @@ export async function createEvent(payload: {
         body: formData,
     });
     return json.data as Event;
+}
+
+export type UpdatePrivacyResult = {
+    event: { _id: string; privacy: "public" | "private" };
+    jobId: string | null;
+    targetIsPublic: boolean;
+    queueError: string | null;
+};
+
+export async function updateEventPrivacy(
+    eventId: string,
+    privacy: "public" | "private",
+): Promise<UpdatePrivacyResult> {
+    const json = await request<UpdatePrivacyResult>(
+        `/events/${eventId}/privacy`,
+        {
+            method: "PATCH",
+            body: JSON.stringify({ privacy }),
+        },
+    );
+    return json.data as UpdatePrivacyResult;
 }
 
 export async function updateEvent(
@@ -168,6 +191,20 @@ export async function getEventParticipants(
         `/events/${eventId}/participants`,
     );
     return json.data ?? [];
+}
+
+export async function listPublicEvents(opts: {
+    q?: string;
+    limit?: number;
+} = {}) {
+    const params = new URLSearchParams();
+    if (opts.q && opts.q.trim()) params.set("q", opts.q.trim());
+    if (opts.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    const json = await request<Event[]>(
+        `/events/public${qs ? `?${qs}` : ""}`,
+    );
+    return (json.data as Event[]) ?? [];
 }
 
 export async function joinAsGuest(payload: {
