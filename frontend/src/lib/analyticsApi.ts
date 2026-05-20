@@ -60,24 +60,26 @@ export type EventInsightsResponse = {
     };
     host: EventInsightsHost | null;
     totals: { members: number; media: number };
+    window: {
+        from: string;
+        to: string;
+        granularity: AnalyticsGranularity;
+    };
     members: {
         data: AnalyticsPoint[];
         granularity: AnalyticsGranularity;
-        range: AnalyticsRange;
     };
     media: {
         data: AnalyticsPoint[];
         granularity: AnalyticsGranularity;
-        range: AnalyticsRange;
     };
     message?: string;
 };
 
 export async function getEventInsights(
     eventId: string,
-    range: AnalyticsRange,
 ): Promise<EventInsightsResponse> {
-    const url = `${backend_url}/events/${eventId}/insights?range=${encodeURIComponent(range)}`;
+    const url = `${backend_url}/events/${eventId}/insights`;
     const res = await fetch(url, { credentials: "include" });
     const json = (await res.json().catch(() => ({}))) as EventInsightsResponse;
     if (!res.ok || !json.success) {
