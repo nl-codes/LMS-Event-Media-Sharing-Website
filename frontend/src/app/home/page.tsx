@@ -39,7 +39,7 @@ export default function Home() {
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Button>
                         <Button
-                            onClick={() => router.push("/home/explore")}
+                            onClick={() => router.push("/explore")}
                             className="group flex items-center gap-3 bg-cusblue text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-[0_10px_30px_rgba(var(--cusblue-rgb),0.3)] hover:opacity-90 transition-all active:scale-95">
                             Explore Other Events
                             <Compass className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
