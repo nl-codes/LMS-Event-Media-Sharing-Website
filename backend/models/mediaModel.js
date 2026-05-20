@@ -43,6 +43,11 @@ const mediaSchema = new Schema({
         default: false,
         index: true,
     },
+    isPublic: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
     hiddenReason: {
         type: String,
         default: "",
@@ -56,6 +61,10 @@ const mediaSchema = new Schema({
         default: Date.now,
     },
 });
+
+// Explore feed scans newest-first across all public, non-hidden media. A
+// compound index on (isPublic, createdAt) makes that scan an index-only walk.
+mediaSchema.index({ isPublic: 1, createdAt: -1 });
 
 const Media = mongoose.model("Media", mediaSchema);
 export default Media;
