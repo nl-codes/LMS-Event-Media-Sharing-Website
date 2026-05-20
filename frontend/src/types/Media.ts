@@ -16,6 +16,7 @@ export interface Media {
     /** Compatibility field calculated by the API from like interactions. */
     likedBy: string[];
     label?: string | null;
+    isPublic: boolean;
     createdAt: string;
     uploaderId?: {
         _id: string;
