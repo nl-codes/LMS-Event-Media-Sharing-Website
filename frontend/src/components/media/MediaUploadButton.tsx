@@ -10,18 +10,21 @@ const isVideoFile = (file: File) => file.type.startsWith("video/");
 interface MediaUploadButtonProps {
     eventId: string;
     eventSlug?: string;
+    eventEndTime?: string;
     onUploadSuccess: (hasVideos: boolean) => void;
 }
 
 const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
     eventId,
     eventSlug,
+    eventEndTime,
     onUploadSuccess,
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
     const [uploadCount, setUploadCount] = useState(0);
     const [usage, setUsage] = useState<EventUsage | null>(null);
+    const [now, setNow] = useState(() => Date.now());
 
     const refreshUsage = useCallback(async () => {
         try {
@@ -36,8 +39,25 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
         refreshUsage();
     }, [refreshUsage]);
 
+    useEffect(() => {
+        if (!eventEndTime) return;
+
+        const interval = window.setInterval(() => {
+            setNow(Date.now());
+        }, 30000);
+
+        return () => {
+            window.clearInterval(interval);
+        };
+    }, [eventEndTime]);
+
     const atCapacity = usage?.atCapacity ?? false;
     const fileSizeLimit = usage?.maxFileSizeBytes;
+    const eventEndTimestamp = eventEndTime
+        ? new Date(eventEndTime).getTime()
+        : Number.NaN;
+    const isEventFinished =
+        Number.isFinite(eventEndTimestamp) && eventEndTimestamp < now;
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -49,6 +69,12 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
 
         if (files.length > 10) {
             toast.error("You can upload up to 10 files at once.");
+            resetInput();
+            return;
+        }
+
+        if (isEventFinished) {
+            toast.error("This event has finished. Uploads are closed.");
             resetInput();
             return;
         }
@@ -157,8 +183,10 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
         }
     };
 
-    const disabled = loading || atCapacity;
-    const tooltip = atCapacity
+    const disabled = loading || atCapacity || isEventFinished;
+    const tooltip = isEventFinished
+        ? "This event has finished. Uploads are closed."
+        : atCapacity
         ? "Upload limit reached. Upgrade to Premium for more storage."
         : usage
           ? `${usage.used}/${usage.maxFiles} uploads used (${usage.tier})`
@@ -174,7 +202,9 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
                 title={tooltip}>
                 {loading
                     ? `Uploading ${uploadCount} file${uploadCount > 1 ? "s" : ""}...`
-                    : atCapacity
+                    : isEventFinished
+                      ? "Event ended"
+                      : atCapacity
                       ? "Limit reached"
                       : "Upload Media"}
             </button>
