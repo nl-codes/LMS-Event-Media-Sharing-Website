@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Calendar, Globe, MapPin } from "lucide-react";
 import type { Event } from "@/types/Event";
 import type { ReactNode } from "react";
+import clsx from "clsx";
 
 type EventCardBaseProps = {
     event: Event;
@@ -76,11 +77,25 @@ export default function EventCardBase({
                         <Globe className="w-3 h-3 mr-2 shrink-0" />
                         <span className="truncate">{event.uniqueSlug}</span>
                     </div>
-                    {event.isPremium && (
-                        <span className="shrink-0 bg-custeal/20 text-custeal text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md border border-custeal/30 ml-2">
-                            {event.tier}
-                        </span>
-                    )}
+                    <span
+                        className={clsx(
+                            "shrink-0 text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md border ml-2 transition-all",
+                            {
+                                // Free: Subtle, muted, professional
+                                "bg-slate-500/10 text-slate-500 border-slate-500":
+                                    event.tier === "free",
+
+                                // Premium: Deep, rich indigo/blue
+                                "bg-indigo-600/15 text-indigo-500 border-indigo-600":
+                                    event.tier === "premium",
+
+                                // Pro: Warm gold with a soft glow
+                                "bg-amber-500/15 text-amber-600 border-amber-500":
+                                    event.tier === "pro",
+                            },
+                        )}>
+                        {event.tier}
+                    </span>
                 </div>
             </div>
 
