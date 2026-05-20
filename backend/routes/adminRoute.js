@@ -9,6 +9,11 @@ import {
     suspendUserController,
     unsuspendUserController,
 } from "../controllers/adminController.js";
+import {
+    getUserGrowthController,
+    getEventGrowthController,
+    getMediaGrowthController,
+} from "../controllers/analyticsController.js";
 
 const router = express.Router();
 
@@ -50,4 +55,26 @@ router.get(
     requireRole("admin"),
     getEventDetailsController,
 );
+
+router.get(
+    "/analytics/users",
+    requireAuth,
+    requireRole("admin"),
+    getUserGrowthController,
+);
+
+router.get(
+    "/analytics/events",
+    requireAuth,
+    requireRole("admin"),
+    getEventGrowthController,
+);
+
+router.get(
+    "/analytics/media",
+    requireAuth,
+    requireRole("admin"),
+    getMediaGrowthController,
+);
+
 export default router;

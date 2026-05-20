@@ -7,14 +7,15 @@ import {
     Flag,
     LayoutDashboard,
     Shield,
+    TrendingUp,
     Users,
     MessageSquareWarning,
 } from "lucide-react";
 import clsx from "clsx";
-import LogoutButton from "@/components/buttons/LogoutButton";
 
 const navItems = [
     { href: "/admin/home", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/insights", label: "Insights", icon: TrendingUp },
     { href: "/admin/events", label: "Events", icon: CalendarDays },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/reports", label: "Reporting", icon: Flag },
@@ -68,10 +69,6 @@ export default function AdminSidebar() {
                         );
                     })}
                 </nav>
-
-                <div className="mt-4 flex items-center justify-between gap-2 lg:mt-6">
-                    <LogoutButton redirectTo="/admin/login" />
-                </div>
             </div>
         </aside>
     );

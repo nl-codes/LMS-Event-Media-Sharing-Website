@@ -5,6 +5,7 @@ import { uploadEventThumbnail } from "../middleware/uploadMiddleware.js";
 import {
     registerEvent,
     getEventById,
+    getEventParticipantsController,
     getHostEvents,
     getEventBySlug,
     editEvent,
@@ -14,6 +15,7 @@ import {
     verifyEventAccess,
     joinAsGuest,
 } from "../controllers/eventController.js";
+import { getEventInsightsController } from "../controllers/analyticsController.js";
 import { attachEventId } from "../middleware/utilsMiddleware.js";
 
 const router = express.Router();
@@ -27,6 +29,16 @@ router.post(
 );
 router.get("/details/:id", requireAuth, getEventById);
 router.get("/host-events", requireAuth, getHostEvents);
+router.get(
+    "/:eventId/insights",
+    requireAuth,
+    getEventInsightsController,
+);
+router.get(
+    "/:id/participants",
+    requireAuth,
+    getEventParticipantsController,
+);
 router.patch(
     "/:id",
     requireAuth,

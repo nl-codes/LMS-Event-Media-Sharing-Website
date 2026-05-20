@@ -2,7 +2,7 @@
 
 import Button from "@/components/buttons/Button";
 import BackButton from "@/components/navigation/BackButton";
-import { Edit3, Images, QrCode, Zap } from "lucide-react";
+import { Edit3, Images, QrCode, TrendingUp, Users, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Event } from "@/types/Event";
 
@@ -21,6 +21,20 @@ export default function EventHostActionButtons({
         <div className="flex flex-col md:flex-row md:items-center justify-between">
             <BackButton label="Back to My Events" />
             <div className="flex flex-wrap items-center gap-3">
+                <Button
+                    onClick={() =>
+                        router.push(`/home/events/${event._id}/participants`)
+                    }
+                    className="flex items-center gap-2 bg-white border border-slate-200 text-cusblue px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all font-bold text-sm shadow-sm">
+                    <Users className="w-4 h-4" /> Participants
+                </Button>
+                <Button
+                    onClick={() =>
+                        router.push(`/home/events/${event._id}/insights`)
+                    }
+                    className="flex items-center gap-2 bg-white border border-slate-200 text-cusblue px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all font-bold text-sm shadow-sm">
+                    <TrendingUp className="w-4 h-4" /> Insights
+                </Button>
                 {!event.isPremium && (
                     <Button
                         onClick={() =>
