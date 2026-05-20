@@ -15,6 +15,7 @@ import {
     verifyEventAccess,
     joinAsGuest,
     updateEventPrivacyController,
+    listPublicEventsController,
 } from "../controllers/eventController.js";
 import { getEventInsightsController } from "../controllers/analyticsController.js";
 import { attachEventId } from "../middleware/utilsMiddleware.js";
@@ -30,16 +31,8 @@ router.post(
 );
 router.get("/details/:id", requireAuth, getEventById);
 router.get("/host-events", requireAuth, getHostEvents);
-router.get(
-    "/:eventId/insights",
-    requireAuth,
-    getEventInsightsController,
-);
-router.get(
-    "/:id/participants",
-    requireAuth,
-    getEventParticipantsController,
-);
+router.get("/:eventId/insights", requireAuth, getEventInsightsController);
+router.get("/:id/participants", requireAuth, getEventParticipantsController);
 router.patch("/:eventId/privacy", requireAuth, updateEventPrivacyController);
 router.patch(
     "/:id",
@@ -54,6 +47,7 @@ router.delete("/:id", requireAuth, deleteEvent);
 // Public routes (for QR code access)
 router.get("/verify/:eventId", identifyUser, verifyEventAccess);
 router.post("/join-as-guest", joinAsGuest);
+router.get("/public", listPublicEventsController);
 router.get("/:slug", getEventBySlug);
 router.post("/:slug/upload-check", requestUploadSignature);
 
