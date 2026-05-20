@@ -7,44 +7,34 @@ import { useUser } from "@/context/UserContext";
 import { useIdentity } from "@/context/IdentityContext";
 import { getEventBySlug } from "@/lib/eventApi";
 import { getScopedGuestUserName } from "@/lib/guestIdentity";
-import {
-    deleteMedia,
-    deleteMultipleMedia,
-    getGallery,
-    toggleLike,
-} from "@/lib/mediaApi";
-import { useGallerySocket } from "@/hooks/useGallerySocket";
 import { useSelection } from "@/hooks/useSelection";
-import MediaUploadButton from "@/components/media/MediaUploadButton";
-import HighlightsGrid from "@/components/media/HighlightsGrid";
+import { useGalleryState } from "@/hooks/useGalleryState";
+import {
+    bulkDeleteWithConfirm,
+    downloadGalleryMedia,
+    loadGallery,
+} from "@/lib/galleryHelpers";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
-import GalleryGrid from "@/components/events/GalleryGrid";
-import SelectionActionBar from "@/components/events/SelectionActionBar";
+import HighlightsGrid from "@/components/media/HighlightsGrid";
 import ChatContainer from "@/components/chat/ChatContainer";
-import type { Media } from "@/types/Media";
-import type { Event } from "@/types/Event";
 import BackButton from "@/components/navigation/BackButton";
 import UserAvatar from "@/components/common/UserAvatar";
-import {
-    downloadAsZip,
-    normalizeLikedByIds,
-    normalizeMediaLikes,
-} from "@/utils/HelperFunctions";
-import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
-
-const MAX_BULK_DELETE_ITEMS = 20;
+import GalleryToolbar from "@/components/gallery/GalleryToolbar";
+import GalleryListSection from "@/components/gallery/GalleryListSection";
+import type { Event } from "@/types/Event";
 
 export default function EventPublicGallery() {
     const params = useParams();
     const slug = typeof params?.slug === "string" ? params.slug : "";
     const { user } = useUser();
     const { displayName } = useIdentity();
+    const currentUserId = user?._id || "";
 
     const [eventId, setEventId] = useState("");
     const [event, setEvent] = useState<Event | null>(null);
-    const [gallery, setGallery] = useState<Media[]>([]);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [loadingGallery, setLoadingGallery] = useState(false);
+
     const {
         isActive: isSelectionActive,
         selectedIds,
@@ -54,238 +44,106 @@ export default function EventPublicGallery() {
         remove: handleRemoveFromSelection,
     } = useSelection();
 
-    const isHost = event?.hostId === eventId;
-    const currentUserId = user?._id || "";
+    const isHost =
+        event?.hostId &&
+        typeof event.hostId === "object" &&
+        "_id" in event.hostId
+            ? event.hostId._id === currentUserId
+            : event?.hostId === currentUserId;
+
+    const { gallery, setGallery, handleDelete, handleLike } = useGalleryState({
+        eventId,
+        currentUserId,
+        canLike: Boolean(user),
+        onMediaDeleted: handleRemoveFromSelection,
+    });
+
     const scopedGuestDisplayName = slug ? getScopedGuestUserName(slug) : null;
     const uploaderDisplayName =
         user?.userName || scopedGuestDisplayName || displayName;
 
-    useGallerySocket({
-        eventId,
-        onNewMedia: (media) => {
-            setGallery((prev) =>
-                prev.find((m) => m._id === media._id)
-                    ? prev
-                    : [normalizeMediaLikes(media), ...prev],
-            );
+    const fetchGallery = useCallback(
+        async (resolvedEventId: string) => {
+            setLoadingGallery(true);
+            try {
+                const data = await loadGallery(resolvedEventId);
+                setGallery(data);
+            } catch (err) {
+                toast.error(
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to load gallery",
+                );
+            } finally {
+                setLoadingGallery(false);
+            }
         },
-        onMediaDeleted: (mediaId) => {
-            setGallery((prev) => prev.filter((m) => m._id !== mediaId));
-            handleRemoveFromSelection(mediaId);
-        },
-        onMediaLiked: ({ mediaId, likesCount, userId, liked }) => {
-            setGallery((prev) =>
-                prev.map((media) => {
-                    if (media._id !== mediaId) return media;
+        [setGallery],
+    );
 
-                    const likedBy = normalizeLikedByIds(media.likedBy);
-                    const nextLikedBy =
-                        typeof liked === "boolean" && userId
-                            ? liked
-                                ? [...new Set([...likedBy, userId])]
-                                : likedBy.filter((id) => id !== userId)
-                            : likedBy;
-
-                    return {
-                        ...media,
-                        likedBy: nextLikedBy,
-                        likesCount,
-                    };
-                }),
-            );
-        },
-    });
-
-    const fetchGallery = useCallback(async (resolvedEventId: string) => {
-        setLoadingGallery(true);
-        try {
-            const data = await getGallery(resolvedEventId);
-            setGallery(data.map(normalizeMediaLikes));
-        } catch (err) {
-            const errorMessage =
-                err instanceof Error ? err.message : "Failed to load gallery";
-            toast.error(errorMessage);
-        } finally {
-            setLoadingGallery(false);
-        }
-    }, []);
     useEffect(() => {
         let isMounted = true;
 
         async function resolveEventAndLoadGallery() {
             if (!slug) {
-                if (isMounted) {
-                    setLoadingEvent(false);
-                }
+                if (isMounted) setLoadingEvent(false);
                 return;
             }
 
             setLoadingEvent(true);
             try {
-                const event = await getEventBySlug(slug);
-
-                if (!event?._id) {
-                    throw new Error("Event not found");
-                }
-
+                const resolved = await getEventBySlug(slug);
+                if (!resolved?._id) throw new Error("Event not found");
                 if (!isMounted) return;
-
-                setEventId(event._id);
-                setEvent(event);
-                await fetchGallery(event._id);
+                setEventId(resolved._id);
+                setEvent(resolved);
+                await fetchGallery(resolved._id);
             } catch (err) {
                 if (isMounted) {
                     setEventId("");
                     setEvent(null);
                     setGallery([]);
                     handleClearSelection();
-                    const errorMessage =
+                    toast.error(
                         err instanceof Error
                             ? err.message
-                            : "Failed to load event";
-                    toast.error(errorMessage);
+                            : "Failed to load event",
+                    );
                 }
             } finally {
-                if (isMounted) {
-                    setLoadingEvent(false);
-                }
+                if (isMounted) setLoadingEvent(false);
             }
         }
 
         resolveEventAndLoadGallery();
-
         return () => {
             isMounted = false;
         };
-    }, [slug, fetchGallery, handleClearSelection]);
+    }, [slug, fetchGallery, handleClearSelection, setGallery]);
 
-    const handleDelete = async (mediaId: string) => {
-        try {
-            await deleteMedia(mediaId);
-            toast.success("Media deleted");
-        } catch (err) {
-            const errorMessage =
-                err instanceof Error ? err.message : "Delete failed";
-            toast.error(errorMessage);
-        }
-    };
-
-    // Inside EventPublicGallery component
-
-    const handleBulkDelete = async () => {
-        if (!selectedIds.length) return;
-
-        const selectedMedia = gallery.filter((m) =>
-            selectedIds.includes(m._id),
-        );
-
-        if (!isHost) {
-            const hasUnauthorizedMedia = selectedMedia.some(
-                (m) => m.uploaderId?._id !== currentUserId,
-            );
-
-            if (hasUnauthorizedMedia) {
-                toast.error("User can only delete media they have uploaded");
-                return;
-            }
-        }
-
-        const selectedCount = selectedIds.length;
-
-        if (selectedCount > MAX_BULK_DELETE_ITEMS) {
-            toast.error("You can only delete 20 items at a time");
-            return;
-        }
-        const idsToDelete = [...selectedIds];
-
-        try {
-            openConfirmationDialog({
-                title: "Delete selected media?",
-                message: `This will permanently delete ${selectedCount} media item${selectedCount > 1 ? "s" : ""}. This action cannot be undone.`,
-                confirmText: "Delete",
-                cancelText: "Cancel",
-                isDanger: true,
-                onConfirm: async () => {
-                    await toast.promise(deleteMultipleMedia(idsToDelete), {
-                        loading: "Deleting selected media...",
-                        success: `Deleted ${selectedCount} item${selectedCount > 1 ? "s" : ""}`,
-                        error: (err) =>
-                            err instanceof Error
-                                ? err.message
-                                : "Bulk delete failed",
-                    });
-
-                    setGallery((prev) =>
-                        prev.filter(
-                            (media) => !idsToDelete.includes(media._id),
-                        ),
-                    );
-                    handleClearSelection();
-                },
-            });
-        } catch {
-            toast.error("Failed to delete selected media");
-        }
-    };
-
-    const handleDownloadMedia = () => {
-        const mediaToDownload = isSelectionActive
-            ? gallery.filter((media) => selectedIds.includes(media._id))
+    const handleDownload = () => {
+        const media = isSelectionActive
+            ? gallery.filter((m) => selectedIds.includes(m._id))
             : gallery;
-
-        if (!mediaToDownload.length) return;
-
-        const zipName = isSelectionActive
-            ? `${event?.eventName || "event-gallery"}-selected-media`
-            : `${event?.eventName || "event-gallery"}-all-media`;
-
-        void downloadAsZip(mediaToDownload, zipName);
+        downloadGalleryMedia({
+            media,
+            eventName: event?.eventName || "event-gallery",
+            isSelection: isSelectionActive,
+        });
     };
 
-    const handleLike = async (mediaId: string) => {
-        if (!user) return;
-
-        const previousGallery = gallery;
-        setGallery((prev) =>
-            prev.map((media) => {
-                if (media._id !== mediaId) return media;
-
-                const likedBy = Array.isArray(media.likedBy)
-                    ? normalizeLikedByIds(media.likedBy)
-                    : [];
-                const alreadyLiked = likedBy.includes(currentUserId);
-                const nextLikedBy = alreadyLiked
-                    ? likedBy.filter((id) => id !== currentUserId)
-                    : [...likedBy, currentUserId];
-
-                return {
-                    ...media,
-                    likedBy: nextLikedBy,
-                    likesCount: alreadyLiked
-                        ? Math.max(0, media.likesCount - 1)
-                        : media.likesCount + 1,
-                };
-            }),
-        );
-
-        try {
-            const result = await toggleLike(mediaId);
-            setGallery((prev) =>
-                prev.map((media) =>
-                    media._id === mediaId
-                        ? {
-                              ...media,
-                              likesCount: result.likesCount,
-                          }
-                        : media,
-                ),
-            );
-        } catch (err) {
-            setGallery(previousGallery);
-            const errorMessage =
-                err instanceof Error ? err.message : "Like failed";
-            toast.error(errorMessage);
-        }
+    const handleBulkDelete = () => {
+        bulkDeleteWithConfirm({
+            selectedIds,
+            gallery,
+            enforceUploaderId: isHost ? null : currentUserId,
+            onSuccess: (deletedIds) => {
+                setGallery((prev) =>
+                    prev.filter((m) => !deletedIds.includes(m._id)),
+                );
+                handleClearSelection();
+            },
+        });
     };
 
     if (loadingEvent) {
@@ -317,63 +175,36 @@ export default function EventPublicGallery() {
                 />
             )}
 
-            <div className="w-full lg:w-auto">
-                <div className="rounded-4xl border border-white/40 bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md flex flex-col gap-6">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2 text-xs text-cusviolet/70">
-                            <UserAvatar
-                                src={user?.profilePicture}
-                                name={uploaderDisplayName}
-                                size="small"
-                            />
-                            <span>Uploading as {uploaderDisplayName}</span>
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={
-                                    isSelectionActive
-                                        ? handleClearSelection
-                                        : handleStartSelection
-                                }
-                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50">
-                                {isSelectionActive
-                                    ? "Unselect Media"
-                                    : "Select Media"}
-                            </button>
-
-                            <MediaUploadButton
-                                eventId={eventId}
-                                eventSlug={slug}
-                                eventEndTime={event?.endTime}
-                                onUploadSuccess={(hasVideos) => {
-                                    // Images arrive via new_media socket no refetch needed.
-                                    if (hasVideos) void fetchGallery(eventId);
-                                }}
-                            />
-
-                            <button
-                                type="button"
-                                onClick={handleDownloadMedia}
-                                disabled={!gallery.length}
-                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
-                                Download All
-                            </button>
-                        </div>
-                    </div>
-
-                    {isSelectionActive && (
-                        <SelectionActionBar
-                            selectedCount={selectedIds.length}
-                            totalCount={gallery.length}
-                            onDownload={handleDownloadMedia}
-                            onDelete={handleBulkDelete}
-                            isUser={isHost || Boolean(user)}
+            <GalleryToolbar
+                eventId={eventId}
+                eventSlug={slug}
+                eventEndTime={event?.endTime}
+                identityStrip={
+                    <>
+                        <UserAvatar
+                            src={user?.profilePicture}
+                            name={uploaderDisplayName}
+                            size="small"
                         />
-                    )}
-                </div>
-            </div>
+                        <span>Uploading as {uploaderDisplayName}</span>
+                    </>
+                }
+                isSelectionActive={isSelectionActive}
+                selectedCount={selectedIds.length}
+                galleryCount={gallery.length}
+                canShowSelectionBar={isHost || Boolean(user)}
+                onToggleSelection={
+                    isSelectionActive
+                        ? handleClearSelection
+                        : handleStartSelection
+                }
+                onUploadSuccess={(hasVideos) => {
+                    if (hasVideos) void fetchGallery(eventId);
+                }}
+                onDownload={handleDownload}
+                onBulkDelete={handleBulkDelete}
+                disableDownloadWhenEmpty
+            />
 
             <HighlightsGrid
                 eventId={eventId}
@@ -381,31 +212,19 @@ export default function EventPublicGallery() {
                 currentUserId={Boolean(user) ? currentUserId : ""}
             />
 
-            <h2 className="text-xl font-semibold mt-8 mb-2">All Media</h2>
+            <GalleryListSection
+                mediaItems={gallery}
+                isLoading={loadingGallery}
+                isHost={false}
+                currentUserId={Boolean(user) ? currentUserId : ""}
+                userExists={Boolean(user)}
+                isSelectionActive={isSelectionActive}
+                selectedIds={selectedIds}
+                onSelectionToggle={handleSelectToggle}
+                onLike={handleLike}
+                onDelete={handleDelete}
+            />
 
-            {loadingGallery ? (
-                <div className="py-10 text-center">Loading gallery...</div>
-            ) : !gallery.length ? (
-                <div className="py-10 text-center text-gray-500">
-                    No media uploaded yet.
-                </div>
-            ) : (
-                <GalleryGrid
-                    mediaItems={gallery}
-                    isHost={false}
-                    currentUserId={Boolean(user) ? currentUserId : ""}
-                    isSelectionActive={isSelectionActive}
-                    selectedIds={selectedIds}
-                    onSelectionToggle={handleSelectToggle}
-                    onLike={handleLike}
-                    onDelete={handleDelete}
-                    userExists={Boolean(user)}
-                />
-            )}
-
-            {/* Chat Section */}
-
-            {/* Floating Chat Component */}
             {event && (
                 <ChatContainer
                     eventId={eventId}
