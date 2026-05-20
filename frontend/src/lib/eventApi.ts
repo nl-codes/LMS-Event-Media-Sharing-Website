@@ -73,21 +73,25 @@ export async function createEvent(payload: {
     return json.data as Event;
 }
 
+export type UpdatePrivacyResult = {
+    event: { _id: string; privacy: "public" | "private" };
+    jobId: string | null;
+    targetIsPublic: boolean;
+    queueError: string | null;
+};
+
 export async function updateEventPrivacy(
     eventId: string,
     privacy: "public" | "private",
-) {
-    const json = await request<{
-        event: { _id: string; privacy: "public" | "private" };
-        mediaUpdatedCount: number;
-    }>(`/events/${eventId}/privacy`, {
-        method: "PATCH",
-        body: JSON.stringify({ privacy }),
-    });
-    return json.data as {
-        event: { _id: string; privacy: "public" | "private" };
-        mediaUpdatedCount: number;
-    };
+): Promise<UpdatePrivacyResult> {
+    const json = await request<UpdatePrivacyResult>(
+        `/events/${eventId}/privacy`,
+        {
+            method: "PATCH",
+            body: JSON.stringify({ privacy }),
+        },
+    );
+    return json.data as UpdatePrivacyResult;
 }
 
 export async function updateEvent(
