@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Compass, Sparkles } from "lucide-react";
 import RecentJoinedEvents from "@/components/events/RecentJoinedEvents";
 import Button from "@/components/buttons/Button";
 import { useRouter } from "next/navigation";
@@ -37,6 +37,12 @@ export default function Home() {
                             className="group flex items-center gap-3 bg-cusblue text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-[0_10px_30px_rgba(var(--cusblue-rgb),0.3)] hover:opacity-90 transition-all active:scale-95">
                             Go to My Events
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                        <Button
+                            onClick={() => router.push("/home/explore")}
+                            className="group flex items-center gap-3 bg-cusblue text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-[0_10px_30px_rgba(var(--cusblue-rgb),0.3)] hover:opacity-90 transition-all active:scale-95">
+                            Explore Other Events
+                            <Compass className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Button>
                     </div>
                 </div>
