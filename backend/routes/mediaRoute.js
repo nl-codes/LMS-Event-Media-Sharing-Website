@@ -38,6 +38,9 @@ router.get("/explore", getExploreMediaController);
 // GET /item/:mediaId (public)
 router.get("/item/:mediaId", getMediaByIdController);
 
+// GET /:eventId/highlights (public)
+router.get("/:eventId/highlights", getHighlightsController);
+
 // GET /:eventId (public)
 router.get("/:eventId", getGalleryController);
 
@@ -46,9 +49,6 @@ router.delete("/", requireAuth, deleteMultipleMediaController);
 
 // DELETE /:mediaId (auth required)
 router.delete("/:mediaId", requireAuth, deleteMediaController);
-
-// GET /:eventId/highlights (public)
-router.get("/:eventId/highlights", getHighlightsController);
 
 // PATCH /:mediaId/label (auth required)
 router.patch("/:mediaId/label", requireAuth, setMediaLabelController);
