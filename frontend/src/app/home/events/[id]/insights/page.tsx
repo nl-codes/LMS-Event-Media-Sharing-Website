@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Loader2, ShieldAlert, Users, Images } from "lucide-react";
 import toast from "react-hot-toast";
-import clsx from "clsx";
 import BackButton from "@/components/navigation/BackButton";
 import UserAvatar from "@/components/common/UserAvatar";
 import InsightsChart from "@/components/admin/InsightsChart";
@@ -12,28 +11,30 @@ import { useUser } from "@/context/UserContext";
 import { getEventById } from "@/lib/eventApi";
 import {
     getEventInsights,
-    type AnalyticsRange,
     type EventInsightsResponse,
 } from "@/lib/analyticsApi";
 
 type GateState = "checking" | "authorized" | "unauthorized" | "not_found";
 
-const RANGES: { key: AnalyticsRange; label: string }[] = [
-    { key: "last7days", label: "Last 7 days" },
-    { key: "last30days", label: "Last 30 days" },
-    { key: "last90days", label: "Last 90 days" },
-    { key: "lastYear", label: "Last year" },
-];
+const formatWindow = (fromIso: string, toIso: string) => {
+    const opts: Intl.DateTimeFormatOptions = {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+    };
+    const f = new Date(fromIso).toLocaleString("en-US", opts);
+    const t = new Date(toIso).toLocaleString("en-US", opts);
+    return `${f} → ${t}`;
+};
 
 export default function EventInsightsPage() {
     const params = useParams<{ id: string }>();
     const eventId = params?.id ?? "";
     const { user, isInitialized } = useUser();
     const [gate, setGate] = useState<GateState>("checking");
-    const [range, setRange] = useState<AnalyticsRange>("last30days");
     const [data, setData] = useState<EventInsightsResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    console.log(data);
 
     // Check host ownership before fetching anything sensitive. Admins/super-
     // admins are also allowed (matches the server's authorization rule).
@@ -65,7 +66,7 @@ export default function EventInsightsPage() {
         if (!eventId || gate !== "authorized") return;
         setIsLoading(true);
         try {
-            const res = await getEventInsights(eventId, range);
+            const res = await getEventInsights(eventId);
             setData(res);
         } catch (err) {
             toast.error(
@@ -77,7 +78,7 @@ export default function EventInsightsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [eventId, range, gate]);
+    }, [eventId, gate]);
 
     useEffect(() => {
         void load();
@@ -127,35 +128,18 @@ export default function EventInsightsPage() {
             <div className="mx-auto max-w-5xl">
                 <BackButton label="Back to Event" />
 
-                <header className="mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                    <div>
-                        <p className="text-xs font-black uppercase tracking-widest text-cusviolet/70">
-                            Event insights
+                <header className="mt-5">
+                    <p className="text-xs font-black uppercase tracking-widest text-cusviolet/70">
+                        Event insights
+                    </p>
+                    <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-cusblue sm:text-4xl">
+                        {data?.event.eventName ?? "Loading..."}
+                    </h1>
+                    {data?.window && (
+                        <p className="mt-2 text-sm font-bold text-cusviolet/70">
+                            {formatWindow(data.window.from, data.window.to)}
                         </p>
-                        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-cusblue sm:text-4xl">
-                            {data?.event.eventName ?? "Loading..."}
-                        </h1>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                        {RANGES.map((r) => {
-                            const active = r.key === range;
-                            return (
-                                <button
-                                    key={r.key}
-                                    type="button"
-                                    onClick={() => setRange(r.key)}
-                                    className={clsx(
-                                        "flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-bold transition-all",
-                                        active
-                                            ? "bg-cusviolet text-cuscream"
-                                            : "bg-white/60 text-cusviolet/70 hover:bg-white",
-                                    )}>
-                                    {r.label}
-                                </button>
-                            );
-                        })}
-                    </div>
+                    )}
                 </header>
 
                 <section className="mt-6 grid gap-4 md:grid-cols-3">
