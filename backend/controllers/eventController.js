@@ -398,7 +398,15 @@ export const updateEventPrivacyController = async (req, res) => {
         }
 
         const result = await updateEventPrivacy(eventId, privacy, requesterId);
-        return res.status(200).json({ success: true, data: result });
+        const message = result.queueError
+            ? "Event privacy updated. Media visibility sync could not be queued, Please try toggling privacy again."
+            : "Event privacy updated. Media visibility will be updated shortly.";
+        // 202 Accepted: privacy field changed; bulk media sync is in flight.
+        return res.status(202).json({
+            success: true,
+            message,
+            data: result,
+        });
     } catch (error) {
         const status = error.status || 500;
         return res.status(status).json({
