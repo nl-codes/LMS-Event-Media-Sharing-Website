@@ -2,10 +2,10 @@ import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
 import { Profile } from "../models/profileModel.js";
-import Media from "../models/mediaModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
+import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
 
 export const createEvent = async (eventData) => {
     try {
@@ -271,17 +271,32 @@ export const updateEventPrivacy = async (eventId, privacy, requesterId) => {
     event.privacy = privacy;
     await event.save();
 
-    const isPublic = privacy === "public";
-    const mediaUpdate = await Media.updateMany(
-        { eventId },
-        { $set: { isPublic } },
-    );
+    const targetIsPublic = privacy === "public";
+
+    let jobId = null;
+    let queueError = null;
+    try {
+        const job = await enqueueEventPrivacyJob({
+            eventId: String(event._id),
+            privacy,
+            targetIsPublic,
+        });
+        jobId = job.id;
+    } catch (err) {
+        queueError = err.message || "Failed to queue privacy sync";
+        console.error(
+            `Failed to enqueue privacy job for event ${event._id}:`,
+            queueError,
+        );
+    }
 
     return {
         event: {
             _id: String(event._id),
             privacy: event.privacy,
         },
-        mediaUpdatedCount: mediaUpdate.modifiedCount || 0,
+        jobId,
+        targetIsPublic,
+        queueError,
     };
 };
