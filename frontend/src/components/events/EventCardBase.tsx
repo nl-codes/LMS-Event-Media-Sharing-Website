@@ -7,8 +7,6 @@ import type { ReactNode } from "react";
 
 type EventCardBaseProps = {
     event: Event;
-    /** "xl" matches the MyEventCard heading; "lg" matches JoinedEventCard. */
-    titleSize?: "lg" | "xl";
     /** Optional row below the title (e.g. host pill). */
     host?: ReactNode;
     /** Action buttons rendered at the bottom — typically a grid. */
