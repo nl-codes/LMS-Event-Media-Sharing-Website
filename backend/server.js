@@ -21,6 +21,7 @@ import notificationRoutes from "./routes/notificationRoute.js";
 import appealRoutes from "./routes/appealRoute.js";
 import { runStartupSync } from "./services/syncManager.js";
 import { startVideoWorker } from "./queues/videoQueue.js";
+import { startEventPrivacyWorker } from "./queues/eventPrivacyQueue.js";
 
 import { setIO } from "./config/socketConfig.js";
 import { saveChatMessage } from "./services/chatService.js";
@@ -190,6 +191,13 @@ const startServer = async () => {
     } catch (err) {
         // Non-fatal: API can still serve everything except video uploads. Operators see this in logs; video uploads will 503 until Redis/ffmpeg are healthy.
         console.error("Failed to start video worker:", err.message);
+    }
+
+    try {
+        await startEventPrivacyWorker();
+        console.log("🔒 Event privacy worker started");
+    } catch (err) {
+        console.error("Failed to start event privacy worker:", err.message);
     }
 
     server.listen(port, () => {
