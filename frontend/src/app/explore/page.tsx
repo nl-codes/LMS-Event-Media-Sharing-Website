@@ -10,6 +10,15 @@ import BackButton from "@/components/navigation/BackButton";
 
 const PAGE_SIZE = 20;
 
+// Fisher-Yates. We shuffle each incoming page rather than the whole list so the user's existing scroll context doesn't reshuffle out from under them on every append.
+const shuffleInPlace = <T,>(arr: T[]): T[] => {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+};
+
 export default function ExplorePage() {
     const [items, setItems] = useState<Media[]>([]);
     // const [cursor, setCursor] = useState<string | null>(null);
@@ -40,11 +49,12 @@ export default function ExplorePage() {
                 limit: PAGE_SIZE,
             });
             setItems((prev) => {
-                if (firstPage) return res.items;
+                if (firstPage) return shuffleInPlace([...res.items]);
                 // De-dupe defensively: the cursor should prevent overlap but
                 // a races-with-new-uploads could occasionally include one.
                 const seen = new Set(prev.map((m) => m._id));
-                return [...prev, ...res.items.filter((m) => !seen.has(m._id))];
+                const fresh = res.items.filter((m) => !seen.has(m._id));
+                return [...prev, ...shuffleInPlace(fresh)];
             });
             cursorRef.current = res.nextCursor;
             hasMoreRef.current = res.hasMore;
