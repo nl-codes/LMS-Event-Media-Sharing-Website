@@ -6,6 +6,7 @@ import {
     getEventParticipants,
     removeEvent,
     updateEvent,
+    updateEventPrivacy,
     updateEventStatus,
 } from "../services/eventService.js";
 import { Event } from "../models/eventModel.js";
@@ -22,6 +23,7 @@ export const registerEvent = async (req, res) => {
             startTime,
             endTime,
             isPremium,
+            privacy,
         } = req.body;
         const thumbnail = req.file?.path || "";
 
@@ -43,6 +45,7 @@ export const registerEvent = async (req, res) => {
             endTime,
             isPremium: isPremium || false,
             thumbnail: thumbnail,
+            privacy: privacy === "public" ? "public" : "private",
         };
 
         const event = await createEvent(eventData);
@@ -378,6 +381,29 @@ export const getEventParticipantsController = async (req, res) => {
         return res.status(status).json({
             success: false,
             message: error.message || "Failed to load participants",
+        });
+    }
+};
+
+export const updateEventPrivacyController = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { privacy } = req.body;
+        const requesterId = req.user?.id;
+        if (!requesterId) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required",
+            });
+        }
+
+        const result = await updateEventPrivacy(eventId, privacy, requesterId);
+        return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        const status = error.status || 500;
+        return res.status(status).json({
+            success: false,
+            message: error.message || "Failed to update privacy",
         });
     }
 };
