@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Calendar, Globe, MapPin } from "lucide-react";
+import { Calendar, Globe, ImageOff, MapPin } from "lucide-react";
 import type { Event } from "@/types/Event";
 import type { ReactNode } from "react";
 import clsx from "clsx";
@@ -35,8 +35,8 @@ export default function EventCardBase({
                             className="object-cover"
                         />
                     ) : (
-                        <div className="h-full w-full bg-linear-to-r from-cusblue/10 to-cusviolet/10 flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-cusblue/70">
-                            No Thumbnail
+                        <div className="h-full w-full flex items-center justify-center text-cusblue">
+                            <ImageOff className="h-6 w-6" />
                         </div>
                     )}
                 </div>
