@@ -7,6 +7,7 @@ import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
 import UserAvatar from "@/components/common/UserAvatar";
+import { useUser } from "@/context/UserContext";
 
 interface GalleryEventHeaderProps {
     event: Pick<
@@ -57,6 +58,8 @@ export default function GalleryEventHeader({
 }: GalleryEventHeaderProps) {
     const [now, setNow] = useState(() => Date.now());
     const [expandedDescription, setExpandedDescription] = useState(false);
+
+    const { user } = useUser();
 
     useEffect(() => {
         const interval = window.setInterval(() => {
@@ -124,6 +127,29 @@ export default function GalleryEventHeader({
     const shouldTruncate = description.length > DESCRIPTION_TRUNCATE_LENGTH;
     const shortDescription = `${description.slice(0, DESCRIPTION_TRUNCATE_LENGTH).trim()}...`;
 
+    const hostClassName = clsx(
+        "inline-flex items-center gap-2 rounded-full border border-cusblue bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur-md transition",
+        user ? "hover:bg-white cursor-pointer" : "cursor-default",
+    );
+
+    const host =
+        typeof event.hostId === "object" && event.hostId !== null
+            ? event.hostId
+            : null;
+    if (!host) return null;
+    const HostContent = (
+        <>
+            <UserAvatar
+                src={host.profilePicture}
+                name={host.userName}
+                size="small"
+            />
+            <span className="text-xs font-bold text-cusblue">
+                Hosted by {host.userName || "Anonymous"}
+            </span>
+        </>
+    );
+
     return (
         <section className="rounded-3xl bg-cuscream p-6 md:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -148,28 +174,18 @@ export default function GalleryEventHeader({
                         <p className="text-sm text-cusviolet/80">{subtitle}</p>
 
                         {/* Host */}
-                        {(() => {
-                            const host =
-                                typeof event.hostId === "object" &&
-                                event.hostId !== null
-                                    ? event.hostId
-                                    : null;
-                            if (!host) return null;
-                            return (
+                        {host &&
+                            (user ? (
                                 <Link
                                     href={`/home/profile/${host._id}/others`}
-                                    className="inline-flex items-center gap-2 rounded-full border border-cusblue bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur-md transition hover:bg-white">
-                                    <UserAvatar
-                                        src={host.profilePicture}
-                                        name={host.userName}
-                                        size="small"
-                                    />
-                                    <span className="text-xs font-bold text-cusblue">
-                                        Hosted by {host.userName || "Anonymous"}
-                                    </span>
+                                    className={hostClassName}>
+                                    {HostContent}
                                 </Link>
-                            );
-                        })()}
+                            ) : (
+                                <div className={hostClassName}>
+                                    {HostContent}
+                                </div>
+                            ))}
                     </div>
 
                     <p className="max-w-2xl text-base leading-relaxed text-cusviolet/85">
