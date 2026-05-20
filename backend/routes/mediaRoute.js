@@ -15,6 +15,7 @@ import {
     getHighlightsController,
     setMediaLabelController,
     getEventUsageController,
+    getExploreMediaController,
 } from "../controllers/mediaController.js";
 
 const router = express.Router();
@@ -31,6 +32,8 @@ router.post(
 
 // GET /usage/:eventId tier + remaining capacity (public; needed by guests too)
 router.get("/usage/:eventId", getEventUsageController);
+
+router.get("/explore", getExploreMediaController);
 
 // GET /item/:mediaId (public)
 router.get("/item/:mediaId", getMediaByIdController);
