@@ -193,6 +193,20 @@ export async function getEventParticipants(
     return json.data ?? [];
 }
 
+export async function listPublicEvents(opts: {
+    q?: string;
+    limit?: number;
+} = {}) {
+    const params = new URLSearchParams();
+    if (opts.q && opts.q.trim()) params.set("q", opts.q.trim());
+    if (opts.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    const json = await request<Event[]>(
+        `/events/public${qs ? `?${qs}` : ""}`,
+    );
+    return (json.data as Event[]) ?? [];
+}
+
 export async function joinAsGuest(payload: {
     eventId: string;
     userName: string;
