@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Flag, MoreVertical } from "lucide-react";
 import ReportModal from "./ReportModal";
 import type { ReportTargetType } from "@/types/Report";
@@ -20,21 +21,50 @@ export default function ReportMenu({
 }: ReportMenuProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
+    const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
 
-    useEffect(() => {
-        if (!menuOpen) return;
-        const handler = (e: MouseEvent) => {
-            if (
-                wrapperRef.current &&
-                !wrapperRef.current.contains(e.target as Node)
-            ) {
-                setMenuOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handler);
-        return () => document.removeEventListener("mousedown", handler);
-    }, [menuOpen]);
+    const toggleMenu = () => {
+        const rect = triggerRef.current?.getBoundingClientRect();
+        if (rect) {
+            setMenuPosition({
+                top: rect.bottom + 8,
+                right: window.innerWidth - rect.right,
+            });
+        }
+        setMenuOpen((prev) => !prev);
+    };
+
+    const menuPortal =
+        menuOpen && typeof document !== "undefined"
+            ? createPortal(
+                  <div
+                      className="fixed inset-0 z-50"
+                      onClick={() => setMenuOpen(false)}
+                      role="presentation">
+                      <div
+                          className="fixed w-40 overflow-hidden rounded-2xl border border-cusblue/10 bg-white shadow-xl"
+                          style={{
+                              top: menuPosition.top,
+                              right: menuPosition.right,
+                          }}
+                          onClick={(e) => e.stopPropagation()}>
+                          <button
+                              type="button"
+                              onClick={() => {
+                                  setMenuOpen(false);
+                                  setModalOpen(true);
+                              }}
+                              className="flex w-full items-center gap-2 px-4 py-3 text-sm font-bold text-rose-600 transition hover:bg-rose-50">
+                              <Flag className="h-4 w-4" />
+                              Report
+                          </button>
+                      </div>
+                  </div>,
+                  document.body,
+              )
+            : null;
 
     return (
         <div
@@ -42,8 +72,9 @@ export default function ReportMenu({
             className="relative"
             onClick={(e) => e.stopPropagation()}>
             <button
+                ref={triggerRef}
                 type="button"
-                onClick={() => setMenuOpen((prev) => !prev)}
+                onClick={toggleMenu}
                 className={
                     triggerClassName ??
                     "rounded-full bg-white/80 p-2 text-slate-600 shadow-sm transition hover:bg-white hover:text-cusblue"
@@ -52,20 +83,7 @@ export default function ReportMenu({
                 <MoreVertical className="h-4 w-4" />
             </button>
 
-            {menuOpen && (
-                <div className="absolute right-0 z-30 mt-2 w-40 overflow-hidden rounded-2xl border border-cusblue/10 bg-white shadow-xl">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setMenuOpen(false);
-                            setModalOpen(true);
-                        }}
-                        className="flex w-full items-center gap-2 px-4 py-3 text-sm font-bold text-rose-600 transition hover:bg-rose-50">
-                        <Flag className="h-4 w-4" />
-                        Report
-                    </button>
-                </div>
-            )}
+            {menuPortal}
 
             <ReportModal
                 isOpen={modalOpen}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import toast from "react-hot-toast";
 import { createReport } from "@/lib/reportApi";
@@ -50,7 +51,7 @@ export default function ReportModal({
         }
     }, [isOpen]);
 
-    if (!isOpen) return null;
+    if (!isOpen || typeof document === "undefined") return null;
 
     const handleSubmit = async () => {
         if (!reason.trim()) {
@@ -76,7 +77,7 @@ export default function ReportModal({
         }
     };
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm"
             onClick={onClose}
@@ -149,6 +150,7 @@ export default function ReportModal({
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 }
