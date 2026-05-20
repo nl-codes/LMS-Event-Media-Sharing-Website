@@ -7,10 +7,10 @@ import Link from "next/link";
 
 export default function JoinedEventSmallCard({ event }: { event: Event }) {
     const { user } = useUser();
-    console.log(user?._id);
-    console.log(event.hostId);
+    const hostId =
+        typeof event.hostId === "string" ? event.hostId : event.hostId._id;
     const targetHref =
-        event.hostId == user?._id
+        hostId === user?._id
             ? `/home/events/${event._id}`
             : `/events/${event.uniqueSlug}`;
 
