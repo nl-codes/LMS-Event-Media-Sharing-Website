@@ -40,19 +40,28 @@ const buildGroupStage = (granularity) => {
 };
 
 // Fill missing buckets with zero so the chart line doesn't visually skip days.
-const fillGaps = (buckets, days, granularity) => {
+const fillGaps = (buckets, daysOrWindow, granularity) => {
     const map = new Map(buckets.map((b) => [b.date, b.count]));
     const out = [];
-    const cursor = startOfRange(days);
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+
+    let from;
+    let to;
+    if (typeof daysOrWindow === "number") {
+        from = startOfRange(daysOrWindow);
+        to = new Date();
+        to.setUTCHours(0, 0, 0, 0);
+    } else {
+        from = new Date(daysOrWindow.from);
+        from.setUTCHours(0, 0, 0, 0);
+        to = new Date(daysOrWindow.to);
+        to.setUTCHours(0, 0, 0, 0);
+    }
 
     if (granularity === "month") {
-        // Walk by month from the start until we pass "today".
         const c = new Date(
-            Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), 1),
+            Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1),
         );
-        while (c <= today) {
+        while (c <= to) {
             const key = `${c.getUTCFullYear()}-${String(c.getUTCMonth() + 1).padStart(2, "0")}`;
             out.push({ date: key, count: map.get(key) || 0 });
             c.setUTCMonth(c.getUTCMonth() + 1);
@@ -60,8 +69,8 @@ const fillGaps = (buckets, days, granularity) => {
         return out;
     }
 
-    const c = new Date(cursor);
-    while (c <= today) {
+    const c = new Date(from);
+    while (c <= to) {
         const key = c.toISOString().slice(0, 10);
         out.push({ date: key, count: map.get(key) || 0 });
         c.setUTCDate(c.getUTCDate() + 1);
@@ -92,14 +101,25 @@ export const getUserGrowth = (range) =>
 export const getEventGrowth = (range) => aggregateCountsOverTime(Event, range);
 export const getMediaGrowth = (range) => aggregateCountsOverTime(Media, range);
 
-const aggregateMembershipsForEvent = async (eventId, range) => {
-    const { days, granularity } = resolveRange(range);
-    const since = startOfRange(days);
+// Pick daily buckets for short windows, monthly for long ones (>90 days),
+// matching the thresholds used by the platform-wide ranges.
+const pickGranularityForWindow = (fromDate, toDate) => {
+    const ms = toDate.getTime() - fromDate.getTime();
+    const days = Math.max(1, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+    return days > 90 ? "month" : "day";
+};
+
+const aggregateMembershipsInWindow = async (eventId, from, to, granularity) => {
     const eventObjectId = new mongoose.Types.ObjectId(String(eventId));
     const format = granularity === "month" ? "%Y-%m" : "%Y-%m-%d";
 
     const bucketStage = (dateField) => [
-        { $match: { eventId: eventObjectId, [dateField]: { $gte: since } } },
+        {
+            $match: {
+                eventId: eventObjectId,
+                [dateField]: { $gte: from, $lte: to },
+            },
+        },
         {
             $group: {
                 _id: {
@@ -128,12 +148,44 @@ const aggregateMembershipsForEvent = async (eventId, range) => {
 
     return {
         granularity,
-        range,
-        data: fillGaps(rows, days, granularity),
+        data: fillGaps(rows, { from, to }, granularity),
     };
 };
 
-export const getEventInsights = async (eventId, range) => {
+const aggregateMediaInWindow = async (eventId, from, to, granularity) => {
+    const eventObjectId = new mongoose.Types.ObjectId(String(eventId));
+    const format = granularity === "month" ? "%Y-%m" : "%Y-%m-%d";
+
+    const rows = await Media.aggregate([
+        {
+            $match: {
+                eventId: eventObjectId,
+                createdAt: { $gte: from, $lte: to },
+            },
+        },
+        {
+            $group: {
+                _id: {
+                    $dateToString: {
+                        format,
+                        date: "$createdAt",
+                        timezone: "UTC",
+                    },
+                },
+                count: { $sum: 1 },
+            },
+        },
+        { $project: { _id: 0, date: "$_id", count: 1 } },
+        { $sort: { date: 1 } },
+    ]);
+
+    return {
+        granularity,
+        data: fillGaps(rows, { from, to }, granularity),
+    };
+};
+
+export const getEventInsights = async (eventId) => {
     const event = await Event.findById(eventId)
         .select("eventName hostId startTime endTime status tier")
         .populate("hostId", "userName email");
@@ -145,12 +197,26 @@ export const getEventInsights = async (eventId, range) => {
 
     const eventWithAvatar = await attachAvatars(event, ["hostId"]);
 
+    // Chart window: event.startTime → min(event.endTime, now).
+    // If the event hasn't started yet, the upper bound clamps to startTime so
+    // we still return a valid (single-bucket) window.
+    const now = new Date();
+    const start = new Date(event.startTime);
+    const end = new Date(event.endTime);
+    const from = start;
+    const to = end <= now ? end : now;
+    const effectiveTo = to < from ? from : to;
+    const granularity = pickGranularityForWindow(from, effectiveTo);
+
     const [members, media, registeredCount, guestCount, totalMedia] =
         await Promise.all([
-            aggregateMembershipsForEvent(eventId, range),
-            aggregateCountsOverTime(Media, range, {
-                eventId: new mongoose.Types.ObjectId(String(eventId)),
-            }),
+            aggregateMembershipsInWindow(
+                eventId,
+                from,
+                effectiveTo,
+                granularity,
+            ),
+            aggregateMediaInWindow(eventId, from, effectiveTo, granularity),
             EventMembership.countDocuments({ eventId }),
             Guest.countDocuments({ eventId }),
             Media.countDocuments({ eventId }),
@@ -180,6 +246,11 @@ export const getEventInsights = async (eventId, range) => {
         totals: {
             members: totalMembers,
             media: totalMedia,
+        },
+        window: {
+            from: from.toISOString(),
+            to: effectiveTo.toISOString(),
+            granularity,
         },
         members,
         media,
