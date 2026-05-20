@@ -15,6 +15,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
 import { enqueueVideoJob } from "../queues/videoQueue.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 const TMP_DIR = path.resolve("uploads/tmp");
 
@@ -100,6 +101,7 @@ export const uploadMediaController = async (req, res) => {
                     likedBy: [],
                 };
             });
+            mediaPayload = await attachAvatars(mediaPayload, ["uploaderId"]);
 
             const io = getIO();
             mediaPayload.forEach((item) => {

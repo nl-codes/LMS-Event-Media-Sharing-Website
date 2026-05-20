@@ -7,6 +7,7 @@ import cloudinary from "../config/cloudinaryConfig.js";
 import Media from "../models/mediaModel.js";
 import { Event } from "../models/eventModel.js";
 import { getIO } from "../config/socketConfig.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -95,11 +96,11 @@ export const processVideoJob = async (job) => {
             .populate("uploaderId", "userName")
             .populate("guestId", "userName guest_id");
 
-        const payload = {
+        const payload = await attachAvatars({
             ...(populated ? populated.toObject() : mediaDoc.toObject()),
             likesCount: 0,
             likedBy: [],
-        };
+        }, ["uploaderId"]);
 
         try {
             const io = getIO();
