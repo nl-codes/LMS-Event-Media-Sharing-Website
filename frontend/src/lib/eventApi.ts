@@ -52,6 +52,7 @@ export async function createEvent(payload: {
     endTime: string;
     isPremium?: boolean;
     thumbnail?: File | null;
+    privacy?: "public" | "private";
 }) {
     const formData = new FormData();
     formData.append("eventName", payload.eventName);
@@ -60,6 +61,7 @@ export async function createEvent(payload: {
     formData.append("startTime", payload.startTime);
     formData.append("endTime", payload.endTime);
     formData.append("isPremium", String(Boolean(payload.isPremium)));
+    formData.append("privacy", payload.privacy === "public" ? "public" : "private");
     if (payload.thumbnail) {
         formData.append("thumbnail", payload.thumbnail);
     }
@@ -69,6 +71,23 @@ export async function createEvent(payload: {
         body: formData,
     });
     return json.data as Event;
+}
+
+export async function updateEventPrivacy(
+    eventId: string,
+    privacy: "public" | "private",
+) {
+    const json = await request<{
+        event: { _id: string; privacy: "public" | "private" };
+        mediaUpdatedCount: number;
+    }>(`/events/${eventId}/privacy`, {
+        method: "PATCH",
+        body: JSON.stringify({ privacy }),
+    });
+    return json.data as {
+        event: { _id: string; privacy: "public" | "private" };
+        mediaUpdatedCount: number;
+    };
 }
 
 export async function updateEvent(
