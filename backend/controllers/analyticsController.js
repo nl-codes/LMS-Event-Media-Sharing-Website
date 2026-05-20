@@ -28,7 +28,6 @@ export const getMediaGrowthController = makeHandler(getMediaGrowth);
 export const getEventInsightsController = async (req, res) => {
     try {
         const { eventId } = req.params;
-        const { range } = req.query;
         const requesterId = req.user?.id;
         const role = req.user?.role;
 
@@ -54,7 +53,7 @@ export const getEventInsightsController = async (req, res) => {
             });
         }
 
-        const result = await getEventInsights(eventId, range);
+        const result = await getEventInsights(eventId);
         res.status(200).json({ success: true, ...result });
     } catch (err) {
         const status = err.status || 500;
