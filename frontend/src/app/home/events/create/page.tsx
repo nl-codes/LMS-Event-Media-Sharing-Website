@@ -30,6 +30,7 @@ export default function CreateEventPage() {
         endTime: "",
         isPremium: false,
         thumbnail: null as File | null,
+        privacy: "private" as "public" | "private",
     });
 
     const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
@@ -70,6 +71,7 @@ export default function CreateEventPage() {
                 endTime: new Date(form.endTime).toISOString(),
                 isPremium: form.isPremium,
                 thumbnail: form.thumbnail,
+                privacy: form.privacy,
             });
 
             toast.success("Event created successfully!");
@@ -283,6 +285,54 @@ export default function CreateEventPage() {
                                                 />
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                        Privacy
+                                    </label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {(
+                                            [
+                                                {
+                                                    value: "private",
+                                                    title: "Private",
+                                                    desc: "Media stays inside the event. Not shown on Explore.",
+                                                },
+                                                {
+                                                    value: "public",
+                                                    title: "Public",
+                                                    desc: "Media from this event can appear on Explore.",
+                                                },
+                                            ] as const
+                                        ).map((opt) => {
+                                            const selected =
+                                                form.privacy === opt.value;
+                                            return (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setForm({
+                                                            ...form,
+                                                            privacy: opt.value,
+                                                        })
+                                                    }
+                                                    className={`text-left rounded-2xl border px-5 py-4 transition-all ${
+                                                        selected
+                                                            ? "border-cusblue bg-cusblue/5 ring-2 ring-cusblue/20"
+                                                            : "border-slate-200 bg-white hover:border-cusblue/40"
+                                                    }`}>
+                                                    <p className="text-sm font-extrabold text-cusblue">
+                                                        {opt.title}
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-cusviolet/70">
+                                                        {opt.desc}
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
