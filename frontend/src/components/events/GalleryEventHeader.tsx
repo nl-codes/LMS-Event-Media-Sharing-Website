@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import UserAvatar from "@/components/common/UserAvatar";
 import { useUser } from "@/context/UserContext";
+import EventStatusLabel from "./EventStatusLabel";
 
 interface GalleryEventHeaderProps {
     event: Pick<
@@ -77,8 +78,6 @@ export default function GalleryEventHeader({
 
         if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
             return {
-                statusText: "Schedule unavailable",
-                statusClass: "bg-gray-400",
                 countdownLabel: "",
                 countdownText: "--:--:--",
             };
@@ -93,8 +92,6 @@ export default function GalleryEventHeader({
                 formatCountdownParts(remainingSeconds);
 
             return {
-                statusText: "Upcoming Event",
-                statusClass: "bg-gray-400",
                 countdownLabel: "Starts in",
                 countdownText: `${days}d ${hours}h ${minutes}m ${seconds}s`,
             };
@@ -106,16 +103,12 @@ export default function GalleryEventHeader({
                 formatCountdownParts(remainingSeconds);
 
             return {
-                statusText: "Live Event",
-                statusClass: "bg-green-500 animate-pulse",
                 countdownLabel: "Ends in",
                 countdownText: `${days}d ${hours}h ${minutes}m ${seconds}s`,
             };
         }
 
         return {
-            statusText: "Event Ended",
-            statusClass: "bg-gray-400",
             countdownLabel: "",
             countdownText: "Ended",
         };
@@ -153,24 +146,17 @@ export default function GalleryEventHeader({
     return (
         <section className="rounded-3xl bg-cuscream p-6 md:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-120">
-                    <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cusblue/5 bg-white px-4 py-1.5 shadow-sm">
-                        <span
-                            className={clsx(
-                                "h-2 w-2 rounded-full",
-                                timeline.statusClass,
-                            )}
-                        />
-                        <span className="text-xs font-bold uppercase tracking-widest text-cusblue">
-                            {timeline.statusText}
-                        </span>
-                    </div>
+                <div className="max-w-120 flex flex-col gap-4">
+                    <EventStatusLabel
+                        startTime={event.startTime}
+                        endTime={event.endTime}
+                    />
 
-                    <h1 className="mb-2 text-3xl font-bold tracking-tight leading-tight w-full wrap-break-word text-cusblue md:text-4xl">
+                    <h1 className="text-3xl font-bold tracking-tight leading-tight w-full wrap-break-word text-cusblue md:text-4xl">
                         {event.eventName || "Event Gallery"}
                     </h1>
 
-                    <div className="my-4 flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm text-cusviolet/80">{subtitle}</p>
 
                         {/* Host */}
@@ -200,7 +186,7 @@ export default function GalleryEventHeader({
                             onClick={() =>
                                 setExpandedDescription((prev) => !prev)
                             }
-                            className="mt-2 text-sm font-semibold text-cusblue hover:text-custeal transition-colors">
+                            className="text-sm font-semibold text-cusblue hover:text-custeal transition-colors">
                             {expandedDescription ? "Read less" : "Read more"}
                         </button>
                     )}
