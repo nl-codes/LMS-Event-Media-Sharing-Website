@@ -27,11 +27,15 @@ export default function EventPrivacyControl({
             setSubmitting(true);
             const result = await updateEventPrivacy(eventId, next);
             setPrivacy(result.event.privacy);
-            toast.success(
-                result.mediaUpdatedCount > 0
-                    ? `Privacy updated. ${result.mediaUpdatedCount} media item${result.mediaUpdatedCount === 1 ? "" : "s"} now ${next}.`
-                    : `Privacy set to ${next}.`,
-            );
+            if (result.queueError) {
+                toast.error(
+                    "Privacy updated, but the media visibility sync could not be queued. Please toggle again to retry.",
+                );
+            } else {
+                toast.success(
+                    "Event privacy updated. Media visibility is syncing in the background.",
+                );
+            }
         } catch (err) {
             toast.error(
                 err instanceof Error ? err.message : "Failed to update privacy",
