@@ -4,6 +4,7 @@ import {
     findEventById,
     findEventBySlug,
     getEventParticipants,
+    listPublicEvents,
     removeEvent,
     updateEvent,
     updateEventPrivacy,
@@ -412,6 +413,23 @@ export const updateEventPrivacyController = async (req, res) => {
         return res.status(status).json({
             success: false,
             message: error.message || "Failed to update privacy",
+        });
+    }
+};
+
+export const listPublicEventsController = async (req, res) => {
+    try {
+        const { q, limit } = req.query;
+        const events = await listPublicEvents({ q, limit });
+        return res.status(200).json({
+            success: true,
+            count: events.length,
+            data: events,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to load public events",
         });
     }
 };
