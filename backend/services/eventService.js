@@ -2,6 +2,7 @@ import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
 import { Profile } from "../models/profileModel.js";
+import Media from "../models/mediaModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
@@ -245,4 +246,42 @@ export const getEventParticipants = async (eventId, requesterId) => {
     return [...registered, ...guestEntries].sort(
         (a, b) => new Date(b.joinedAt) - new Date(a.joinedAt),
     );
+};
+
+export const updateEventPrivacy = async (eventId, privacy, requesterId) => {
+    if (privacy !== "public" && privacy !== "private") {
+        const err = new Error("privacy must be 'public' or 'private'");
+        err.status = 400;
+        throw err;
+    }
+
+    const event = await Event.findById(eventId).select("hostId privacy");
+    if (!event) {
+        const err = new Error("Event not found");
+        err.status = 404;
+        throw err;
+    }
+
+    if (event.hostId.toString() !== requesterId) {
+        const err = new Error("Only the event host can change privacy");
+        err.status = 403;
+        throw err;
+    }
+
+    event.privacy = privacy;
+    await event.save();
+
+    const isPublic = privacy === "public";
+    const mediaUpdate = await Media.updateMany(
+        { eventId },
+        { $set: { isPublic } },
+    );
+
+    return {
+        event: {
+            _id: String(event._id),
+            privacy: event.privacy,
+        },
+        mediaUpdatedCount: mediaUpdate.modifiedCount || 0,
+    };
 };
