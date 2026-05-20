@@ -317,12 +317,6 @@ export default function EventPublicGallery() {
                 />
             )}
 
-            <HighlightsGrid
-                eventId={eventId}
-                isHost={Boolean(user) ? isHost : false}
-                currentUserId={Boolean(user) ? currentUserId : ""}
-            />
-
             <div className="w-full lg:w-auto">
                 <div className="rounded-4xl border border-white/40 bg-white/60 p-4 shadow-xl shadow-cusblue/5 backdrop-blur-md flex flex-col gap-6">
                     <div className="flex items-center justify-between gap-4">
@@ -380,6 +374,12 @@ export default function EventPublicGallery() {
                     )}
                 </div>
             </div>
+
+            <HighlightsGrid
+                eventId={eventId}
+                isHost={Boolean(user) ? isHost : false}
+                currentUserId={Boolean(user) ? currentUserId : ""}
+            />
 
             <h2 className="text-xl font-semibold mt-8 mb-2">All Media</h2>
 
