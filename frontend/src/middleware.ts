@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
     "/pricing",
     "/media",
     "/request",
+    "/explore",
 ];
 
 // Routes that authenticated users should NOT access (redirect to /home)
