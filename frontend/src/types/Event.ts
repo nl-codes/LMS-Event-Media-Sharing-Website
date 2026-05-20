@@ -20,6 +20,7 @@ export interface Event {
     status: EventStatus;
     isPremium: boolean;
     tier?: "free" | "premium" | "pro";
+    privacy?: "public" | "private";
     expiresAt?: string | null;
     uploadLimit?: number;
     participantCount?: number;
