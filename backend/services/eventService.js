@@ -167,6 +167,37 @@ export const removeEvent = async (eventId, requesterId) => {
     }
 };
 
+const MAX_PUBLIC_EVENTS = 100;
+
+export const listPublicEvents = async ({ q, limit } = {}) => {
+    const cap = Math.min(
+        Math.max(parseInt(limit, 10) || 50, 1),
+        MAX_PUBLIC_EVENTS,
+    );
+
+    const filter = {
+        privacy: "public",
+        status: { $ne: "Cancelled" },
+    };
+
+    if (q && typeof q === "string" && q.trim()) {
+        const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const rx = new RegExp(escaped, "i");
+        filter.$or = [{ eventName: rx }, { location: rx }];
+    }
+
+    const events = await Event.find(filter)
+        .select(
+            "eventName description location startTime endTime uniqueSlug status thumbnail tier privacy participantCount",
+        )
+        .populate("hostId", "userName email")
+        .sort({ startTime: -1 })
+        .limit(cap)
+        .lean();
+
+    return attachAvatars(events, ["hostId"]);
+};
+
 // Host-only: list every participant of an event (registered members + guests)
 // merged into one shape so the frontend can render them in a single list.
 export const getEventParticipants = async (eventId, requesterId) => {
