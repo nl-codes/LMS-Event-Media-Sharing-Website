@@ -22,6 +22,7 @@ import UserAvatar from "@/components/common/UserAvatar";
 import GalleryToolbar from "@/components/gallery/GalleryToolbar";
 import GalleryListSection from "@/components/gallery/GalleryListSection";
 import type { Event } from "@/types/Event";
+import EventNotFoundCard from "@/components/events/EventNotFoundCard";
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -151,11 +152,7 @@ export default function EventPublicGallery() {
     }
 
     if (!eventId) {
-        return (
-            <div className="p-8 text-center text-gray-600">
-                Event not found or unavailable.
-            </div>
-        );
+        return <EventNotFoundCard />;
     }
 
     return (
