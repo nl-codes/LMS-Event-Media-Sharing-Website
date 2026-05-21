@@ -2,6 +2,7 @@ import { type Report } from "@/types/Report";
 import EventPrivacyStatus from "@/components/events/EventPrivacyStatus";
 import EventStatusLabel from "@/components/events/EventStatusLabel";
 import EventTierStatus from "@/components/events/EventTierStatus";
+import type { EventStatus } from "@/types/Event";
 
 type EventMeta = {
     eventName?: string;
@@ -11,6 +12,17 @@ type EventMeta = {
     endTime?: string;
     status?: string;
 };
+
+const KNOWN_EVENT_STATUSES: ReadonlyArray<EventStatus> = [
+    "Active",
+    "Completed",
+    "Cancelled",
+];
+
+const asEventStatus = (value: string | undefined): EventStatus | undefined =>
+    value && (KNOWN_EVENT_STATUSES as readonly string[]).includes(value)
+        ? (value as EventStatus)
+        : undefined;
 
 type Props = {
     report: Report;
@@ -54,6 +66,7 @@ export default function ReportHeader({ report, event }: Props) {
                             <EventStatusLabel
                                 startTime={event.startTime}
                                 endTime={event.endTime}
+                                status={asEventStatus(event.status)}
                             />
                         )}
                         {event.privacy && (
