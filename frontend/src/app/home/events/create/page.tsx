@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createEvent } from "@/lib/eventApi";
+import { startEventCreationCheckout } from "@/lib/stripe";
 import BackButton from "@/components/buttons/BackButton";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import Button from "@/components/buttons/Button";
 import {
     calculateEventEndTime,
+    type EventTier,
     TIER_DURATION_LABEL,
 } from "@/lib/eventDuration";
 import { HelperFormatDateTime } from "@/utils/HelperFunctions";
@@ -21,13 +23,45 @@ import {
     Sparkles,
     Clock,
     Plus,
+    Zap,
 } from "lucide-react";
 
-const CREATE_TIER = "free" as const;
+type TierOption = {
+    key: EventTier;
+    name: string;
+    price: string;
+    blurb: string;
+};
+
+const TIER_OPTIONS: TierOption[] = [
+    {
+        key: "free",
+        name: "Free",
+        price: "$0",
+        blurb: "24h upload window, 100 uploads.",
+    },
+    {
+        key: "premium",
+        name: "Premium",
+        price: "$19.50",
+        blurb: "7d window, 200 uploads, video support.",
+    },
+    {
+        key: "pro",
+        name: "Pro",
+        price: "$49.50",
+        blurb: "1 month window, 500 uploads, longer videos.",
+    },
+];
 
 export default function CreateEventPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [submitting, setSubmitting] = useState(false);
+    const lastHandledPaymentRef = useRef<string | null>(null);
+    const paymentStatus = searchParams.get("payment");
+
+    const [tier, setTier] = useState<EventTier>("free");
 
     const [form, setForm] = useState({
         eventName: "",
@@ -51,11 +85,11 @@ export default function CreateEventPage() {
     const computedEndTime = useMemo(() => {
         if (!form.startTime) return null;
         try {
-            return calculateEventEndTime(form.startTime, CREATE_TIER);
+            return calculateEventEndTime(form.startTime, tier);
         } catch {
             return null;
         }
-    }, [form.startTime]);
+    }, [form.startTime, tier]);
 
     useEffect(() => {
         return () => {
@@ -65,26 +99,53 @@ export default function CreateEventPage() {
         };
     }, [thumbnailPreview]);
 
+    // Stripe routes the user back here when they cancel a paid-tier checkout.
+    useEffect(() => {
+        if (!paymentStatus || paymentStatus === lastHandledPaymentRef.current) {
+            return;
+        }
+        if (paymentStatus === "cancelled") {
+            toast.error("Payment cancelled. Your event was not created.");
+        }
+        lastHandledPaymentRef.current = paymentStatus;
+    }, [paymentStatus]);
+
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             setSubmitting(true);
 
-            const event = await createEvent({
+            if (tier === "free") {
+                const event = await createEvent({
+                    eventName: form.eventName,
+                    description: form.description,
+                    location: form.location,
+                    startTime: new Date(form.startTime).toISOString(),
+                    isPremium: form.isPremium,
+                    thumbnail: form.thumbnail,
+                    privacy: form.privacy,
+                });
+
+                toast.success("Event created successfully!");
+                router.replace(`/home/events/${event._id}`);
+                return;
+            }
+
+            // Paid tier: hand off to Stripe. The Event is NOT created until
+            // /home/events/create/success confirms payment with the backend.
+            await startEventCreationCheckout({
                 eventName: form.eventName,
                 description: form.description,
                 location: form.location,
                 startTime: new Date(form.startTime).toISOString(),
-                isPremium: form.isPremium,
-                thumbnail: form.thumbnail,
                 privacy: form.privacy,
+                tier,
+                thumbnail: form.thumbnail,
             });
-
-            toast.success("Event created successfully!");
-            router.replace(`/home/events/${event._id}`);
+            // window.location.assign happens inside the helper; the page
+            // unloads before this line runs in the happy path.
         } catch (err) {
             toast.error((err as Error).message || "Failed to create event");
-        } finally {
             setSubmitting(false);
         }
     };
@@ -279,10 +340,11 @@ export default function CreateEventPage() {
                                                     : "Pick a start time"}
                                             </div>
                                             <p className="text-[10px] text-cusviolet/60 ml-1 font-bold uppercase tracking-wider">
-                                                Free tier events run for{" "}
-                                                {TIER_DURATION_LABEL.free} from
-                                                the start time. Upgrade later to
-                                                extend.
+                                                {tier.charAt(0).toUpperCase() +
+                                                    tier.slice(1)}{" "}
+                                                tier — runs for{" "}
+                                                {TIER_DURATION_LABEL[tier]} from
+                                                the start time.
                                             </p>
                                         </div>
                                     </div>
@@ -336,6 +398,51 @@ export default function CreateEventPage() {
                                     </div>
                                 </div>
 
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                        <Zap size={16} />
+                                        Tier
+                                    </label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        {TIER_OPTIONS.map((opt) => {
+                                            const selected = tier === opt.key;
+                                            return (
+                                                <button
+                                                    key={opt.key}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setTier(opt.key)
+                                                    }
+                                                    className={`text-left rounded-2xl border px-5 py-4 transition-all ${
+                                                        selected
+                                                            ? "border-cusblue bg-cusblue/5 ring-2 ring-cusblue/20"
+                                                            : "border-slate-200 bg-white hover:border-cusblue/40"
+                                                    }`}>
+                                                    <div className="flex items-baseline justify-between gap-2">
+                                                        <p className="text-sm font-extrabold text-cusblue">
+                                                            {opt.name}
+                                                        </p>
+                                                        <p className="text-xs font-bold text-cusviolet/80">
+                                                            {opt.price}
+                                                        </p>
+                                                    </div>
+                                                    <p className="mt-1 text-xs text-cusviolet/70">
+                                                        {opt.blurb}
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {tier !== "free" && (
+                                        <p className="text-[11px] text-cusviolet/70 ml-1 font-semibold">
+                                            Paid events require Stripe
+                                            checkout. Your event will only be
+                                            created after the payment
+                                            succeeds.
+                                        </p>
+                                    )}
+                                </div>
+
                                 <div className="pt-4">
                                     <Button
                                         type="submit"
@@ -343,8 +450,12 @@ export default function CreateEventPage() {
                                         className="bg-green-600 hover:bg-green-700 text-white w-full py-5 rounded-3xl text-lg font-bold shadow-xl shadow-green-600/20">
                                         <Calendar className="w-5 h-5" />
                                         {submitting
-                                            ? "Publishing..."
-                                            : "Publish Event"}
+                                            ? tier === "free"
+                                                ? "Publishing..."
+                                                : "Redirecting to checkout..."
+                                            : tier === "free"
+                                              ? "Publish Event"
+                                              : "Continue to Payment"}
                                     </Button>
                                 </div>
                             </div>
