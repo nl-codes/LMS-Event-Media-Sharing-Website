@@ -37,8 +37,9 @@ export default function NotificationBell() {
                 await listNotifications();
             setNotifications(list);
             setUnreadCount(count);
-        } catch (err) {
-            console.error("Failed to load notifications", err);
+        } catch {
+            setNotifications([]);
+            setUnreadCount(0);
         } finally {
             setLoading(false);
         }
@@ -104,7 +105,7 @@ export default function NotificationBell() {
                 type="button"
                 onClick={() => {
                     setOpen((prev) => !prev);
-                    if (!open) load();
+            if (!open) void load();
                 }}
                 className="relative flex h-10 w-10 items-center justify-center rounded-full text-cusblue shadow-sm transition"
                 aria-label="Notifications">
