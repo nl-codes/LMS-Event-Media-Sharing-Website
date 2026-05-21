@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createEvent } from "@/lib/eventApi";
 import BackButton from "@/components/buttons/BackButton";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import Button from "@/components/buttons/Button";
+import {
+    calculateEventEndTime,
+    TIER_DURATION_LABEL,
+} from "@/lib/eventDuration";
+import { HelperFormatDateTime } from "@/utils/HelperFunctions";
 import {
     Calendar,
     MapPin,
@@ -18,6 +23,8 @@ import {
     Plus,
 } from "lucide-react";
 
+const CREATE_TIER = "free" as const;
+
 export default function CreateEventPage() {
     const router = useRouter();
     const [submitting, setSubmitting] = useState(false);
@@ -27,7 +34,6 @@ export default function CreateEventPage() {
         description: "",
         location: "",
         startTime: "",
-        endTime: "",
         isPremium: false,
         thumbnail: null as File | null,
         privacy: "private" as "public" | "private",
@@ -42,6 +48,15 @@ export default function CreateEventPage() {
         return now.toISOString().slice(0, 16);
     };
 
+    const computedEndTime = useMemo(() => {
+        if (!form.startTime) return null;
+        try {
+            return calculateEventEndTime(form.startTime, CREATE_TIER);
+        } catch {
+            return null;
+        }
+    }, [form.startTime]);
+
     useEffect(() => {
         return () => {
             if (thumbnailPreview) {
@@ -49,14 +64,6 @@ export default function CreateEventPage() {
             }
         };
     }, [thumbnailPreview]);
-
-    useEffect(() => {
-        if (form.startTime) {
-            if (form.endTime && form.endTime < form.startTime) {
-                setForm((prev) => ({ ...prev, endTime: form.startTime }));
-            }
-        }
-    }, [form.startTime, form.endTime]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,7 +75,6 @@ export default function CreateEventPage() {
                 description: form.description,
                 location: form.location,
                 startTime: new Date(form.startTime).toISOString(),
-                endTime: new Date(form.endTime).toISOString(),
                 isPremium: form.isPremium,
                 thumbnail: form.thumbnail,
                 privacy: form.privacy,
@@ -256,34 +262,28 @@ export default function CreateEventPage() {
                                             </div>
                                         </div>
 
-                                        {/* END TIME */}
+                                        {/* END TIME (computed by tier — read-only) */}
                                         <div className="space-y-2 group">
                                             <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
                                                 <Clock
                                                     size={16}
                                                     className="group-focus-within:text-cusblue transition-colors"
                                                 />
-                                                Ends
+                                                Ends (auto)
                                             </label>
-                                            <div className="relative">
-                                                <input
-                                                    type="datetime-local"
-                                                    min={
-                                                        form.startTime ||
-                                                        getCurrentDateTime()
-                                                    }
-                                                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all text-sm cursor-pointer"
-                                                    value={form.endTime}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            endTime:
-                                                                e.target.value,
-                                                        })
-                                                    }
-                                                    required
-                                                />
+                                            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm text-cusblue/80">
+                                                {computedEndTime
+                                                    ? HelperFormatDateTime(
+                                                          computedEndTime.toISOString(),
+                                                      )
+                                                    : "Pick a start time"}
                                             </div>
+                                            <p className="text-[10px] text-cusviolet/60 ml-1 font-bold uppercase tracking-wider">
+                                                Free tier events run for{" "}
+                                                {TIER_DURATION_LABEL.free} from
+                                                the start time. Upgrade later to
+                                                extend.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
