@@ -3,11 +3,13 @@
 import React from "react";
 import type { Media } from "@/types/Media";
 import MediaCard from "./MediaCard";
+import HighlightsCarousel from "./HighlightsCarousel";
 
 interface HighlightsGridProps {
     highlights: Media[];
     isHost: boolean;
     currentUserId: string;
+
     onToggleHighlight?: (mediaId: string, nextIsHighlight: boolean) => void;
 }
 
@@ -18,6 +20,10 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
     onToggleHighlight,
 }) => {
     if (!highlights.length) return null;
+
+    if (!isHost) {
+        return <HighlightsCarousel highlights={highlights} />;
+    }
 
     return (
         <div className="mb-8">
