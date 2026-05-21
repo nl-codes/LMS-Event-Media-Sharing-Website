@@ -56,8 +56,8 @@ export const PRICING_TIERS_CONST: PricingTier[] = [
         features: [
             "Unlimited uploads",
             "Unlimited guests",
-            "Upload Window for 3 months",
-            "Saved for 1 year",
+            "Upload Window for 1 month",
+            "Saved for 3 months",
             "Large File supports",
             "Priority HQ processing",
             "Download All feature",
