@@ -29,10 +29,6 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
 
     if (!highlights.length) return null;
 
-    if (!isHost) {
-        return <HighlightsCarousel highlights={highlights} />;
-    }
-
     const highlightLabel = highlights.length === 1 ? "highlight" : "highlights";
 
     return (
@@ -52,10 +48,12 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
                     </p>
                 </div>
 
-                <div className="flex  flex-col gap-4 items-center">
-                    <Button handleClick={toggleShowMore}>
-                        {showMore ? "Hide Highlights" : "Show Highlights"}
-                    </Button>
+                <div className="flex flex-col gap-4 items-center">
+                    {isHost && (
+                        <Button handleClick={toggleShowMore}>
+                            {showMore ? "Hide Highlights" : "Show Highlights"}
+                        </Button>
+                    )}
                     <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-cusblue/10 bg-white px-4 py-3 text-sm font-black text-cusblue shadow-sm">
                         <Images className="h-4 w-4 text-cusviolet" />
                         {highlights.length} {highlightLabel}
@@ -63,26 +61,30 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
                 </div>
             </div>
 
-            <div
-                className={`grid gap-4 transition-all duration-500 ease-in-out ${
-                    showMore
-                        ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 opacity-100 translate-y-0"
-                        : "max-h-0 opacity-0 translate-y-4 pointer-events-none"
-                }`}>
-                {showMore &&
-                    highlights.map((media) => (
-                        <MediaCard
-                            key={media._id}
-                            media={media}
-                            isHost={isHost}
-                            currentUserId={currentUserId}
-                            onLike={onLike}
-                            disableLike={disableLike}
-                            eventEnded={true}
-                            onToggleHighlight={onToggleHighlight}
-                        />
-                    ))}
-            </div>
+            {!isHost ? (
+                <HighlightsCarousel highlights={highlights} />
+            ) : (
+                <div
+                    className={`grid gap-4 transition-all duration-500 ease-in-out ${
+                        showMore
+                            ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 opacity-100 translate-y-0"
+                            : "max-h-0 opacity-0 translate-y-4 pointer-events-none"
+                    }`}>
+                    {showMore &&
+                        highlights.map((media) => (
+                            <MediaCard
+                                key={media._id}
+                                media={media}
+                                isHost={isHost}
+                                currentUserId={currentUserId}
+                                onLike={onLike}
+                                disableLike={disableLike}
+                                eventEnded={true}
+                                onToggleHighlight={onToggleHighlight}
+                            />
+                        ))}
+                </div>
+            )}
         </section>
     );
 };
