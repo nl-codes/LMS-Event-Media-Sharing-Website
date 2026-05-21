@@ -21,6 +21,7 @@ import GalleryListSection from "@/components/gallery/GalleryListSection";
 import type { Event } from "@/types/Event";
 import EventNotFoundCard from "@/components/events/EventNotFoundCard";
 import { isEventFinished } from "@/lib/eventDuration";
+import EventMediaDeletionWarning from "@/app/components/events/EventMediaDeletionWarning";
 
 export default function HostGalleryPage() {
     const params = useParams();
@@ -177,6 +178,15 @@ export default function HostGalleryPage() {
                 <GalleryEventHeader event={event} subtitle={gallerySubtitle} />
             )}
 
+            {event && (
+                <EventMediaDeletionWarning
+                    deleteAt={event.mediaRetentionDeleteAt}
+                    warningStartsAt={event.mediaRetentionWarningStartsAt}
+                    mediaDeletedAt={event.mediaDeletedAt}
+                    mediaDeletionStatus={event.mediaDeletionStatus}
+                />
+            )}
+
             <GalleryToolbar
                 eventId={eventId}
                 eventEndTime={event?.endTime}
@@ -219,6 +229,9 @@ export default function HostGalleryPage() {
                 onDelete={handleDelete}
                 onToggleHighlight={handleToggleHighlight}
                 eventEnded={eventEnded}
+                mediaRetentionCompleted={
+                    event?.mediaDeletionStatus === "completed"
+                }
             />
 
             {event && (

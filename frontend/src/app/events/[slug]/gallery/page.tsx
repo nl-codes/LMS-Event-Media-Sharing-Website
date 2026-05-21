@@ -24,6 +24,7 @@ import GalleryListSection from "@/components/gallery/GalleryListSection";
 import type { Event } from "@/types/Event";
 import EventNotFoundCard from "@/components/events/EventNotFoundCard";
 import { isEventFinished } from "@/lib/eventDuration";
+import EventMediaDeletionWarning from "@/app/components/events/EventMediaDeletionWarning";
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -182,6 +183,16 @@ export default function EventPublicGallery() {
                 />
             )}
 
+            {event?.mediaDeletionStatus === "completed" && (
+                <EventMediaDeletionWarning
+                    deleteAt={event.mediaRetentionDeleteAt}
+                    warningStartsAt={event.mediaRetentionWarningStartsAt}
+                    mediaDeletedAt={event.mediaDeletedAt}
+                    mediaDeletionStatus={event.mediaDeletionStatus}
+                    deletedOnly
+                />
+            )}
+
             <GalleryToolbar
                 eventId={eventId}
                 eventSlug={slug}
@@ -236,6 +247,9 @@ export default function EventPublicGallery() {
                 onDelete={handleDelete}
                 onToggleHighlight={handleToggleHighlight}
                 eventEnded={eventEnded}
+                mediaRetentionCompleted={
+                    event?.mediaDeletionStatus === "completed"
+                }
             />
 
             {event && (
