@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { Event } from "@/types/Event";
 import MyEventCard from "@/components/events/MyEventCard";
 import JoinedEventsList from "@/components/events/JoinedEventsList";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import { deleteEvent, getHostEvents } from "@/lib/eventApi";
 import { Plus, CalendarDays, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";

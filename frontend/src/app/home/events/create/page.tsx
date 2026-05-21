@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createEvent } from "@/lib/eventApi";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import Button from "@/components/buttons/Button";

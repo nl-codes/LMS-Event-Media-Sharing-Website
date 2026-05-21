@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import ExploreMediaCard from "@/components/media/ExploreMediaCard";
 import { getExploreMedia } from "@/lib/mediaApi";
 import type { Media } from "@/types/Media";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 
 const PAGE_SIZE = 20;
 

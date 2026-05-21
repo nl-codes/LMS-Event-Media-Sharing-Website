@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { toast } from "react-hot-toast";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import Button from "@/components/buttons/Button";
 
 export default function ForgotPasswordClient() {

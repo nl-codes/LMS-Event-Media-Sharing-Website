@@ -1,5 +1,5 @@
 import Image from "next/image";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import pageNotFoundImage from "../../public/Page-Not-Found.png";
 
 export default function NotFound() {

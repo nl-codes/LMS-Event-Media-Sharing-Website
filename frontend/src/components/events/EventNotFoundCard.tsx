@@ -1,4 +1,4 @@
-import BackButton from "../navigation/BackButton";
+import BackButton from "../buttons/BackButton";
 
 export default function EventNotFoundCard() {
     return (

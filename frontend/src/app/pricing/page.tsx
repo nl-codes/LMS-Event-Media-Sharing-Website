@@ -5,7 +5,7 @@ import { useUser } from "@/context/UserContext";
 import { PricingTier, TierKey } from "@/types/Pricing";
 import { useRouter } from "next/navigation";
 import { Sparkles, Zap } from "lucide-react";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 
 export const PRICING_TIERS_CONST: PricingTier[] = [
     {

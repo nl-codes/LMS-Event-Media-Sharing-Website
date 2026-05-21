@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import ProfileCard from "./ProfileCard";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 
 export const metadata: Metadata = {
     title: "View Profile | LMS 24",

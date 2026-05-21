@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Loader2, ShieldAlert, Users, Images } from "lucide-react";
 import toast from "react-hot-toast";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import UserAvatar from "@/components/common/UserAvatar";
 import InsightsChart from "@/components/admin/InsightsChart";
 import { useUser } from "@/context/UserContext";

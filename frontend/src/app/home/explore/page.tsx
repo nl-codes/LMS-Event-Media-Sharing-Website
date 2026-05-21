@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Compass, Images, Loader2, Search } from "lucide-react";
 import toast from "react-hot-toast";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import SearchExploreEventCard from "@/components/events/SearchExploreEventCard";
 import { listPublicEvents } from "@/lib/eventApi";
 import type { Event } from "@/types/Event";

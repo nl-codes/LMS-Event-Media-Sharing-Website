@@ -17,7 +17,7 @@ import {
 import GalleryEventHeader from "@/components/gallery/GalleryEventHeader";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import ChatContainer from "@/components/chat/ChatContainer";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import UserAvatar from "@/components/common/UserAvatar";
 import GalleryToolbar from "@/components/gallery/GalleryToolbar";
 import GalleryListSection from "@/components/gallery/GalleryListSection";

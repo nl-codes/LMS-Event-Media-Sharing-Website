@@ -8,7 +8,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 
 const tiers = PRICING_TIERS_CONST;
 
