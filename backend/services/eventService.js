@@ -7,9 +7,31 @@ import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 import { calculateEventEndTime } from "../utils/eventDuration.js";
+import { getMediaRetentionDeleteAt } from "../utils/mediaRetention.js";
 import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
 import { enqueueEventCleanupJob } from "../queues/eventCleanupQueue.js";
+import { enqueueMediaRetentionJob } from "../queues/mediaRetentionQueue.js";
 import { triggerEventSync } from "../queues/eventSyncQueue.js";
+
+const MAX_DELAY_MS = 24 * 24 * 60 * 60 * 1000;
+
+const scheduleRetentionForEvent = async (event) => {
+    try {
+        const deleteAt = getMediaRetentionDeleteAt(event);
+        if (!deleteAt) return;
+        const delayMs = deleteAt.getTime() - Date.now();
+        if (delayMs > MAX_DELAY_MS) return;
+        await enqueueMediaRetentionJob(
+            { eventId: String(event._id) },
+            { delayMs: Math.max(0, delayMs) },
+        );
+    } catch (err) {
+        console.warn(
+            `[media-retention] failed to schedule retention for ${event?._id}:`,
+            err.message,
+        );
+    }
+};
 
 export const createEvent = async (eventData) => {
     try {
@@ -28,6 +50,8 @@ export const createEvent = async (eventData) => {
             endTime: computedEndTime,
         });
         await event.save();
+
+        await scheduleRetentionForEvent(event);
 
         // Populate host information
         await event.populate("hostId", "userName email");
