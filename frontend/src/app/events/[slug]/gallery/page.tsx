@@ -23,6 +23,7 @@ import GalleryToolbar from "@/components/gallery/GalleryToolbar";
 import GalleryListSection from "@/components/gallery/GalleryListSection";
 import type { Event } from "@/types/Event";
 import EventNotFoundCard from "@/components/events/EventNotFoundCard";
+import { isEventFinished } from "@/lib/eventDuration";
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -65,9 +66,7 @@ export default function EventPublicGallery() {
         onMediaDeleted: handleRemoveFromSelection,
     });
 
-    const eventEnded = event
-        ? new Date(event.endTime).getTime() < Date.now()
-        : false;
+    const eventEnded = isEventFinished(event);
     const highlights = gallery.filter((m) => m.isHighlight);
 
     const scopedGuestDisplayName = slug ? getScopedGuestUserName(slug) : null;
@@ -187,6 +186,7 @@ export default function EventPublicGallery() {
                 eventId={eventId}
                 eventSlug={slug}
                 eventEndTime={event?.endTime}
+                eventStatus={event?.status}
                 identityStrip={
                     <>
                         <UserAvatar

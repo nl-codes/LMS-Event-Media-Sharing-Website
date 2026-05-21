@@ -20,6 +20,7 @@ import GalleryToolbar from "@/components/gallery/GalleryToolbar";
 import GalleryListSection from "@/components/gallery/GalleryListSection";
 import type { Event } from "@/types/Event";
 import EventNotFoundCard from "@/components/events/EventNotFoundCard";
+import { isEventFinished } from "@/lib/eventDuration";
 
 export default function HostGalleryPage() {
     const params = useParams();
@@ -54,9 +55,7 @@ export default function HostGalleryPage() {
         onMediaDeleted: handleRemoveFromSelection,
     });
 
-    const eventEnded = event
-        ? new Date(event.endTime).getTime() < Date.now()
-        : false;
+    const eventEnded = isEventFinished(event);
     const highlights = gallery.filter((m) => m.isHighlight);
 
     const fetchGallery = useCallback(async () => {
@@ -181,6 +180,7 @@ export default function HostGalleryPage() {
             <GalleryToolbar
                 eventId={eventId}
                 eventEndTime={event?.endTime}
+                eventStatus={event?.status}
                 isSelectionActive={isSelectionActive}
                 selectedCount={selectedIds.length}
                 galleryCount={gallery.length}
