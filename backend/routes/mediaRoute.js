@@ -14,6 +14,7 @@ import {
     deleteMultipleMediaController,
     getHighlightsController,
     setMediaLabelController,
+    updateMediaHighlightController,
     getEventUsageController,
     getExploreMediaController,
 } from "../controllers/mediaController.js";
@@ -52,5 +53,12 @@ router.delete("/:mediaId", requireAuth, deleteMediaController);
 
 // PATCH /:mediaId/label (auth required)
 router.patch("/:mediaId/label", requireAuth, setMediaLabelController);
+
+// PATCH /:mediaId/highlight (host-only, enforced in service)
+router.patch(
+    "/:mediaId/highlight",
+    requireAuth,
+    updateMediaHighlightController,
+);
 
 export default router;
