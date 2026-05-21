@@ -105,7 +105,11 @@ export default function EventDetailsPage() {
                     />
                 )}
 
-                <EventHostActionButtons event={event} setShowQR={setShowQR} />
+                <EventHostActionButtons
+                    event={event}
+                    setShowQR={setShowQR}
+                    onEventUpdated={setEvent}
+                />
 
                 <EventCapacityAlert eventId={event._id} />
 
