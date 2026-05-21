@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import type { Media } from "@/types/Media";
 import MediaCard from "./MediaCard";
 import HighlightsCarousel from "./HighlightsCarousel";
 import { Images, Sparkles } from "lucide-react";
+import Button from "../buttons/Button";
 
 interface HighlightsGridProps {
     highlights: Media[];
@@ -23,6 +24,9 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
     disableLike,
     onToggleHighlight,
 }) => {
+    const [showMore, setShowMore] = useState(false);
+    const toggleShowMore = () => setShowMore(!showMore);
+
     if (!highlights.length) return null;
 
     if (!isHost) {
@@ -48,15 +52,25 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
                     </p>
                 </div>
 
-                <div className="inline-flex w-fit items-center gap-2 rounded-2xl border border-cusblue/10 bg-white px-4 py-3 text-sm font-black text-cusblue shadow-sm">
-                    <Images className="h-4 w-4 text-cusviolet" />
-                    {highlights.length} {highlightLabel}
+                <div className="flex  flex-col gap-4 items-center">
+                    <Button handleClick={toggleShowMore}>
+                        {showMore ? "Hide Highlights" : "Show Highlights"}
+                    </Button>
+                    <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-cusblue/10 bg-white px-4 py-3 text-sm font-black text-cusblue shadow-sm">
+                        <Images className="h-4 w-4 text-cusviolet" />
+                        {highlights.length} {highlightLabel}
+                    </div>
                 </div>
             </div>
 
-            <div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {highlights.map((media) => (
+            <div
+                className={`grid gap-4 transition-all duration-500 ease-in-out ${
+                    showMore
+                        ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 opacity-100 translate-y-0"
+                        : "max-h-0 opacity-0 translate-y-4 pointer-events-none"
+                }`}>
+                {showMore &&
+                    highlights.map((media) => (
                         <MediaCard
                             key={media._id}
                             media={media}
@@ -68,7 +82,6 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
                             onToggleHighlight={onToggleHighlight}
                         />
                     ))}
-                </div>
             </div>
         </section>
     );
