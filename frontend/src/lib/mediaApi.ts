@@ -146,6 +146,21 @@ export async function setMediaLabel(
     return json.data as Media;
 }
 
+export async function updateMediaHighlight(
+    mediaId: string,
+    isHighlight: boolean,
+) {
+    const json = await request<{ _id: string; isHighlight: boolean }>(
+        `/media/${mediaId}/highlight`,
+        {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isHighlight }),
+        },
+    );
+    return json.data as { _id: string; isHighlight: boolean };
+}
+
 export type ExplorePage = {
     items: Media[];
     limit: number;
