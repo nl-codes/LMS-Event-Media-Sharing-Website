@@ -89,9 +89,7 @@ export const processHighlightJob = async (job) => {
 
     const { eligible, reason, event } = await checkEventEligibility(eventId);
     if (!eligible) {
-        console.log(
-            `[highlight] skipping event ${eventId}: ${reason}`,
-        );
+        console.log(`[highlight] skipping event ${eventId}: ${reason}`);
         return { eventId, skipped: true, reason };
     }
 
