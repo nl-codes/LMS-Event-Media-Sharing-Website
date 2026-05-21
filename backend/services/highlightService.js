@@ -76,10 +76,11 @@ export const loadEventImageMedia = (eventId) =>
         .select("_id mediaUrl mediaType")
         .lean();
 
-// Top 10% rounded up, minimum 1 when there's at least one image.
+const HIGHLIGHT_PERCENTAGE = 0.2;
+// Top HIGHLIGHT_PERCENTAGE rounded up, minimum 1 when there's at least one image.
 export const pickHighlightCount = (totalImages) => {
     if (totalImages <= 0) return 0;
-    return Math.max(1, Math.ceil(totalImages * 0.1));
+    return Math.max(1, Math.ceil(totalImages * HIGHLIGHT_PERCENTAGE));
 };
 
 // Atomically clear old highlights for this event and set the new ones. We
