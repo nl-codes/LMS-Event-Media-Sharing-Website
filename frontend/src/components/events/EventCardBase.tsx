@@ -45,7 +45,7 @@ export default function EventCardBase({
 
             {/* Title + optional badge */}
 
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-start">
                 <h3 className="text-xl font-bold text-cusblue leading-tight line-clamp-2 min-h-12">
                     {event.eventName}
                 </h3>
@@ -53,24 +53,28 @@ export default function EventCardBase({
 
             {host}
 
-            {/* Event Details */}
-            <div className="space-y-2 mb-6 grow text-sm">
-                <div className="flex items-center text-cusviolet/80">
-                    <MapPin className="w-4 h-4 mr-2 shrink-0" />
-                    <span className="truncate">{event.location}</span>
+            <div className="my-2 py-2 space-y-2 border-t border-b border-cusviolet/20">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center text-cusviolet/80 min-w-0">
+                        <MapPin className="w-4 h-4 shrink-0 mr-1.5" />
+                        <span className="truncate text-xs">
+                            {event.location}
+                        </span>
+                    </div>
+                    <div className="shrink-0">
+                        <EventPrivacyStatus
+                            isPublic={event.privacy === "public"}
+                            size={15}
+                        />
+                    </div>
                 </div>
+
                 <div className="flex items-center justify-between text-cusviolet/80">
+                    <EventTierStatus tier={event.tier || "Free"} />
                     <EventStatusLabel
                         startTime={event.startTime}
                         endTime={event.endTime}
                     />
-                    <EventPrivacyStatus
-                        isPublic={event.privacy === "public"}
-                        size={15}
-                    />
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-cusblue/5">
-                    <EventTierStatus tier={event.tier || "Free"} />
                 </div>
             </div>
 
