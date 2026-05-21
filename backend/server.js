@@ -22,6 +22,7 @@ import appealRoutes from "./routes/appealRoute.js";
 import { runStartupSync } from "./services/syncManager.js";
 import { startVideoWorker } from "./queues/videoQueue.js";
 import { startEventPrivacyWorker } from "./queues/eventPrivacyQueue.js";
+import { startHighlightWorker } from "./queues/highlightQueue.js";
 
 import { setIO } from "./config/socketConfig.js";
 import { saveChatMessage } from "./services/chatService.js";
@@ -198,6 +199,15 @@ const startServer = async () => {
         console.log("🔒 Event privacy worker started");
     } catch (err) {
         console.error("Failed to start event privacy worker:", err.message);
+    }
+
+    try {
+        await startHighlightWorker();
+        console.log("✨ Highlight worker started");
+    } catch (err) {
+        // Non-fatal: API stays online, paid events queue but won't process
+        // until the worker (and its AI deps) come up.
+        console.error("Failed to start highlight worker:", err.message);
     }
 
     server.listen(port, () => {
