@@ -28,13 +28,23 @@ export const getMediaRetentionQueue = () => {
 // register the job ahead of the deletion deadline (BullMQ delayed jobs)
 // while the startup scanner enqueues with delay 0 for events already past
 // their retention.
+//
+// We intentionally do NOT use a per-event jobId here. BullMQ keeps completed
+// jobs around for `removeOnComplete.age`, so a stable jobId would cause every
+// re-enqueue (scanner tick, startup sync, etc.) to silently de-dup against
+// the old job and never schedule a new one. The processor itself short-
+// circuits on `mediaDeletionStatus === "completed"`, so duplicate work is
+// already prevented at the application layer.
 export const enqueueMediaRetentionJob = async (payload, { delayMs } = {}) => {
     const q = getMediaRetentionQueue();
-    // Per-event jobId so a double-enqueue de-dupes naturally.
-    const opts = { jobId: `media_retention_${payload.eventId}` };
+    const opts = {};
     if (typeof delayMs === "number" && delayMs > 0) {
         opts.delay = delayMs;
     }
+    // Add to Redis first so we never leave the event stuck in `queued`
+    // status with no actual job behind it (which would block the scanner
+    // from picking it up again on the next tick).
+    const job = await q.add("delete-event-media", payload, opts);
     try {
         await markRetentionStatus(payload.eventId, "queued");
     } catch (err) {
@@ -43,7 +53,7 @@ export const enqueueMediaRetentionJob = async (payload, { delayMs } = {}) => {
             err.message,
         );
     }
-    return q.add("delete-event-media", payload, opts);
+    return job;
 };
 
 export const startMediaRetentionWorker = async () => {
