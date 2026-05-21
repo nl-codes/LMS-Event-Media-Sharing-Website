@@ -8,6 +8,8 @@ import {
 export const EVENT_SYNC_QUEUE_NAME = "event-sync";
 export const EVENT_SYNC_JOB_NAME = "tick";
 
+export const EVENT_SYNC_SCHEDULER_ID = "event-sync-tick";
+
 const TICK_INTERVAL_MS = 5 * 60 * 1000;
 
 let queue = null;
@@ -57,18 +59,29 @@ export const startEventSyncWorker = async () => {
         }
     });
 
-    // Schedule the repeating tick. BullMQ uses jobId-based de-dupe on
-    // repeatable jobs, so calling this on every boot is safe — it won't
-    // create a second schedule.
     const q = getEventSyncQueue();
-    await q.add(
-        EVENT_SYNC_JOB_NAME,
-        {},
+    await q.upsertJobScheduler(
+        EVENT_SYNC_SCHEDULER_ID,
+        { every: TICK_INTERVAL_MS },
         {
-            repeat: { every: TICK_INTERVAL_MS },
-            jobId: "event-sync-tick",
+            name: EVENT_SYNC_JOB_NAME,
+            data: {},
         },
     );
+
+    try {
+        const legacyKeys = await q.getRepeatableJobs();
+        await Promise.all(
+            legacyKeys
+                .filter((k) => k.id !== EVENT_SYNC_SCHEDULER_ID)
+                .map((k) => q.removeRepeatableByKey(k.key)),
+        );
+    } catch (err) {
+        console.warn(
+            "[event-sync] legacy repeatable cleanup failed:",
+            err.message,
+        );
+    }
 
     return worker;
 };
