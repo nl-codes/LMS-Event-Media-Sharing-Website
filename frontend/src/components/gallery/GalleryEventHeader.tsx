@@ -21,6 +21,7 @@ interface GalleryEventHeaderProps {
         | "isLive"
         | "thumbnail"
         | "hostId"
+        | "status"
     >;
     subtitle?: string;
 }
@@ -83,6 +84,16 @@ export default function GalleryEventHeader({
             };
         }
 
+        const finishedByStatus =
+            event.status === "Completed" || event.status === "Cancelled";
+
+        if (finishedByStatus) {
+            return {
+                countdownLabel: "",
+                countdownText: "Ended",
+            };
+        }
+
         const isOngoing = now >= start.getTime() && now <= end.getTime();
         const shouldShowLive = Boolean(event.isLive) || isOngoing;
 
@@ -112,7 +123,7 @@ export default function GalleryEventHeader({
             countdownLabel: "",
             countdownText: "Ended",
         };
-    }, [event.endTime, event.isLive, event.startTime, now]);
+    }, [event.endTime, event.isLive, event.startTime, event.status, now]);
 
     const description =
         event.description?.trim() ||
@@ -150,6 +161,7 @@ export default function GalleryEventHeader({
                     <EventStatusLabel
                         startTime={event.startTime}
                         endTime={event.endTime}
+                        status={event.status}
                     />
 
                     <h1 className="text-3xl font-bold tracking-tight leading-tight w-full wrap-break-word text-cusblue md:text-4xl">
