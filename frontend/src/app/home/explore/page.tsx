@@ -77,7 +77,7 @@ export default function ExploreEventsPage() {
                     </div>
 
                     <Button
-                        onClick={() => router.push("/explore/media")}
+                        onClick={() => router.push("/home/explore/media")}
                         className="inline-flex items-center gap-2 rounded-xl border border-cusblue/15 bg-white px-4 py-2 text-sm font-bold text-cusblue transition hover:bg-cuscream">
                         <Images className="h-4 w-4" />
                         Browse media
