@@ -25,6 +25,7 @@ import { startEventPrivacyWorker } from "./queues/eventPrivacyQueue.js";
 import { startHighlightWorker } from "./queues/highlightQueue.js";
 import { startEventCleanupWorker } from "./queues/eventCleanupQueue.js";
 import { startEventSyncWorker } from "./queues/eventSyncQueue.js";
+import { startMediaRetentionWorker } from "./queues/mediaRetentionQueue.js";
 
 import { setIO } from "./config/socketConfig.js";
 import {
@@ -232,6 +233,18 @@ const startServer = async () => {
         // Non-fatal: events still flip to Completed on next server restart
         // via runStartupSync; the scheduler is the live-detection path.
         console.error("Failed to start event sync scheduler:", err.message);
+    }
+
+    try {
+        await startMediaRetentionWorker();
+        console.log("🗑️  Media retention worker started");
+    } catch (err) {
+        // Non-fatal: deletion still happens once the worker recovers and
+        // the startup/periodic scanner re-enqueues outstanding events.
+        console.error(
+            "Failed to start media retention worker:",
+            err.message,
+        );
     }
 
     server.listen(port, () => {
