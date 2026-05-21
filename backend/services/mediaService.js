@@ -447,6 +447,51 @@ export const getEventUsage = async (eventId) => {
     };
 };
 
+export const updateMediaHighlight = async (
+    mediaId,
+    isHighlight,
+    requesterId,
+) => {
+    const media = await Media.findById(mediaId);
+    if (!media) {
+        const err = new Error("Media not found");
+        err.status = 404;
+        throw err;
+    }
+
+    const event = await Event.findById(media.eventId).select("hostId endTime");
+    if (!event) {
+        const err = new Error("Event not found");
+        err.status = 404;
+        throw err;
+    }
+
+    if (event.hostId.toString() !== String(requesterId)) {
+        const err = new Error("Only the event host can change highlights");
+        err.status = 403;
+        throw err;
+    }
+
+    if (new Date(event.endTime) > new Date()) {
+        const err = new Error(
+            "Highlights can only be updated after the event has ended.",
+        );
+        err.status = 400;
+        throw err;
+    }
+
+    const type = (media.mediaType || "").toLowerCase();
+    if (type !== "image" && type !== "photo") {
+        const err = new Error("Only images can be marked as highlights.");
+        err.status = 400;
+        throw err;
+    }
+
+    media.isHighlight = Boolean(isHighlight);
+    await media.save();
+    return { _id: String(media._id), isHighlight: media.isHighlight };
+};
+
 // Set label on media (host only)
 export const setMediaLabel = async (mediaId, label, hostId, eventId) => {
     // Verify hostId is the host of eventId
