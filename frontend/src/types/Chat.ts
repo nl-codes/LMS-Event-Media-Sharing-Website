@@ -2,6 +2,7 @@ export interface ChatSenderRef {
     _id: string;
     userName?: string;
     email?: string;
+    profilePicture?: string;
 }
 
 export interface ChatMessage {
