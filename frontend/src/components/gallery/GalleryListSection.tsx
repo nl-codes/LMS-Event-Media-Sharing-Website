@@ -1,6 +1,6 @@
 "use client";
 
-import GalleryGrid from "@/components/events/GalleryGrid";
+import GalleryGrid from "@/components/gallery/GalleryGrid";
 import type { Media } from "@/types/Media";
 
 interface GalleryListSectionProps {

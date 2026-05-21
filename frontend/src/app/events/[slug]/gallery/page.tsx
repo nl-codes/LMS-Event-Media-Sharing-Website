@@ -14,7 +14,7 @@ import {
     downloadGalleryMedia,
     loadGallery,
 } from "@/lib/galleryHelpers";
-import GalleryEventHeader from "@/components/events/GalleryEventHeader";
+import GalleryEventHeader from "@/components/gallery/GalleryEventHeader";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import ChatContainer from "@/components/chat/ChatContainer";
 import BackButton from "@/components/navigation/BackButton";
