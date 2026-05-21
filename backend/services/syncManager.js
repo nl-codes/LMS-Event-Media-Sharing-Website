@@ -5,6 +5,8 @@ import { Guest } from "../models/guestModel.js";
 import { getTierLimits } from "../constants/tierLimits.js";
 import { findEventsNeedingHighlights } from "./highlightService.js";
 import { enqueueHighlightJob } from "../queues/highlightQueue.js";
+import { findEventsNeedingMediaDeletion } from "./mediaRetentionService.js";
+import { enqueueMediaRetentionJob } from "../queues/mediaRetentionQueue.js";
 
 const toObjectId = (value) => {
     if (!value) return null;
@@ -137,6 +139,31 @@ export const enqueueHighlightBacklog = async () => {
     }
 };
 
+// Enqueue media-retention cleanup for any event whose deletion deadline has
+// passed and whose cleanup hasn't completed yet. Idempotent thanks to
+// mediaDeletionStatus + the BullMQ jobId based on eventId.
+export const enqueueMediaRetentionBacklog = async () => {
+    try {
+        const events = await findEventsNeedingMediaDeletion();
+        let queued = 0;
+        for (const ev of events) {
+            try {
+                await enqueueMediaRetentionJob({ eventId: String(ev._id) });
+                queued++;
+            } catch (err) {
+                console.warn(
+                    `[media-retention] failed to enqueue ${ev._id}:`,
+                    err.message,
+                );
+            }
+        }
+        return { name: "mediaRetentionBacklog", matched: events.length, queued };
+    } catch (err) {
+        console.warn("[media-retention] backlog scan failed:", err.message);
+        return { name: "mediaRetentionBacklog", error: err.message };
+    }
+};
+
 export const runStartupSync = async () => {
     const now = new Date();
     const results = [];
@@ -145,6 +172,7 @@ export const runStartupSync = async () => {
     results.push(await syncExpiredEventUpgrades(now));
     results.push(await syncEventParticipantCounts());
     results.push(await enqueueHighlightBacklog());
+    results.push(await enqueueMediaRetentionBacklog());
 
     console.table(results);
     return results;
