@@ -23,6 +23,7 @@ import { runStartupSync } from "./services/syncManager.js";
 import { startVideoWorker } from "./queues/videoQueue.js";
 import { startEventPrivacyWorker } from "./queues/eventPrivacyQueue.js";
 import { startHighlightWorker } from "./queues/highlightQueue.js";
+import { startEventCleanupWorker } from "./queues/eventCleanupQueue.js";
 
 import { setIO } from "./config/socketConfig.js";
 import { saveChatMessage } from "./services/chatService.js";
@@ -208,6 +209,15 @@ const startServer = async () => {
         // Non-fatal: API stays online, paid events queue but won't process
         // until the worker (and its AI deps) come up.
         console.error("Failed to start highlight worker:", err.message);
+    }
+
+    try {
+        await startEventCleanupWorker();
+        console.log("🧹 Event cleanup worker started");
+    } catch (err) {
+        // Non-fatal: deletions still succeed at the Event level, cleanup
+        // queues up and runs once the worker recovers.
+        console.error("Failed to start event cleanup worker:", err.message);
     }
 
     server.listen(port, () => {
