@@ -2,6 +2,7 @@
 
 import { Images, LayoutGrid } from "lucide-react";
 import GalleryGrid from "@/components/gallery/GalleryGrid";
+import GalleryAwards from "@/components/gallery/GalleryAwards";
 import type { Media } from "@/types/Media";
 
 interface GalleryListSectionProps {
@@ -57,6 +58,12 @@ export default function GalleryListSection({
                     {mediaItems.length} {itemLabel}
                 </div>
             </div>
+
+            {!isLoading && mediaItems.length > 0 && (
+                <div className="mb-5">
+                    <GalleryAwards mediaItems={mediaItems} />
+                </div>
+            )}
 
             {isLoading ? (
                 <div className="py-10 text-center text-sm font-bold text-cusviolet/60">
