@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { backend_url } from "@/config/backend";
 import ProfileForm, { ProfileFormData } from "../ProfileForm";
 import Button from "@/components/buttons/Button";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import { Profile } from "@/types/Profile";
 import { Save, UserPlus } from "lucide-react";
 

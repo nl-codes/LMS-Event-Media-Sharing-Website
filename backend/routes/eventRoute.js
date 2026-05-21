@@ -11,6 +11,7 @@ import {
     editEvent,
     editEventStatus,
     deleteEvent,
+    finishEvent,
     requestUploadSignature,
     verifyEventAccess,
     joinAsGuest,
@@ -42,6 +43,7 @@ router.patch(
     editEvent,
 );
 router.patch("/:id/status", requireAuth, editEventStatus);
+router.patch("/:id/finish", requireAuth, finishEvent);
 router.delete("/:id", requireAuth, deleteEvent);
 
 // Public routes (for QR code access)

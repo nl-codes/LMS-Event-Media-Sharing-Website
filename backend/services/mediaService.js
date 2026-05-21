@@ -6,6 +6,7 @@ import cloudinary from "../config/cloudinaryConfig.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 import { getTierLimits } from "../constants/tierLimits.js";
 import { compressImageBuffer } from "../utils/imageCompression.js";
+import { isEventFinished } from "../utils/eventDuration.js";
 
 const attachLikeMetadata = async (mediaDocs) => {
     const docs = Array.isArray(mediaDocs) ? mediaDocs : [mediaDocs];
@@ -459,7 +460,9 @@ export const updateMediaHighlight = async (
         throw err;
     }
 
-    const event = await Event.findById(media.eventId).select("hostId endTime");
+    const event = await Event.findById(media.eventId).select(
+        "hostId endTime status",
+    );
     if (!event) {
         const err = new Error("Event not found");
         err.status = 404;
@@ -472,7 +475,9 @@ export const updateMediaHighlight = async (
         throw err;
     }
 
-    if (new Date(event.endTime) > new Date()) {
+    // A host who manually finishes an event should be able to curate
+    // highlights immediately — without waiting for the calculated endTime.
+    if (!isEventFinished(event)) {
         const err = new Error(
             "Highlights can only be updated after the event has ended.",
         );

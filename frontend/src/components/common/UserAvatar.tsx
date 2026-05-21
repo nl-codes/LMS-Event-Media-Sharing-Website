@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-export type AvatarSize = "small" | "medium" | "large";
+export type AvatarSize = "extraSmall" | "small" | "medium" | "large";
 
 type UserAvatarProps = {
     src?: string | null;
@@ -13,6 +13,7 @@ type UserAvatarProps = {
 };
 
 const SIZE_PX: Record<AvatarSize, number> = {
+    extraSmall: 24,
     small: 32,
     medium: 64,
     large: 128,

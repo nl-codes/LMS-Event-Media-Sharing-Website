@@ -34,16 +34,13 @@ const HighlightsCarousel: React.FC<HighlightsCarouselProps> = ({
     if (!highlights.length) return null;
 
     return (
-        <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 text-amber-500">
-                ⭐ Highlights
-            </h2>
+        <div>
             <Marquee
                 pauseOnHover
                 speed={SCROLL_SPEED_PX_PER_SEC}
                 gradient
                 gradientColor="#fffdd0"
-                gradientWidth={24}>
+                gradientWidth={8}>
                 {display.map((media) => (
                     <div key={media._id} className="mr-4">
                         <HighlightCard media={media} heightPx={ROW_HEIGHT_PX} />

@@ -49,7 +49,6 @@ export async function createEvent(payload: {
     description?: string;
     location: string;
     startTime: string;
-    endTime: string;
     isPremium?: boolean;
     thumbnail?: File | null;
     privacy?: "public" | "private";
@@ -59,9 +58,11 @@ export async function createEvent(payload: {
     formData.append("description", payload.description || "");
     formData.append("location", payload.location);
     formData.append("startTime", payload.startTime);
-    formData.append("endTime", payload.endTime);
     formData.append("isPremium", String(Boolean(payload.isPremium)));
-    formData.append("privacy", payload.privacy === "public" ? "public" : "private");
+    formData.append(
+        "privacy",
+        payload.privacy === "public" ? "public" : "private",
+    );
     if (payload.thumbnail) {
         formData.append("thumbnail", payload.thumbnail);
     }
@@ -101,7 +102,6 @@ export async function updateEvent(
         description: string;
         location: string;
         startTime: string;
-        endTime: string;
         isPremium: boolean;
         thumbnail: File | null;
     }>,
@@ -119,9 +119,6 @@ export async function updateEvent(
     }
     if (typeof payload.startTime !== "undefined") {
         formData.append("startTime", payload.startTime);
-    }
-    if (typeof payload.endTime !== "undefined") {
-        formData.append("endTime", payload.endTime);
     }
     if (typeof payload.isPremium !== "undefined") {
         formData.append("isPremium", String(payload.isPremium));
@@ -141,6 +138,13 @@ export async function updateEventStatus(id: string, status: EventStatus) {
     const json = await request<Event>(`/events/${id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
+    });
+    return json.data as Event;
+}
+
+export async function finishEvent(id: string) {
+    const json = await request<Event>(`/events/${id}/finish`, {
+        method: "PATCH",
     });
     return json.data as Event;
 }
@@ -193,17 +197,17 @@ export async function getEventParticipants(
     return json.data ?? [];
 }
 
-export async function listPublicEvents(opts: {
-    q?: string;
-    limit?: number;
-} = {}) {
+export async function listPublicEvents(
+    opts: {
+        q?: string;
+        limit?: number;
+    } = {},
+) {
     const params = new URLSearchParams();
     if (opts.q && opts.q.trim()) params.set("q", opts.q.trim());
     if (opts.limit) params.set("limit", String(opts.limit));
     const qs = params.toString();
-    const json = await request<Event[]>(
-        `/events/public${qs ? `?${qs}` : ""}`,
-    );
+    const json = await request<Event[]>(`/events/public${qs ? `?${qs}` : ""}`);
     return (json.data as Event[]) ?? [];
 }
 

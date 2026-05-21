@@ -1,6 +1,7 @@
 import { ChatMessage } from "../models/chatMessageModel.js";
 import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 /**
  * Save a chat message to the database
@@ -40,6 +41,19 @@ export const saveChatMessage = async (
 };
 
 /**
+ * Reload a saved message with the sender populated and profilePicture attached,
+ * matching the shape returned by the REST history endpoints. Used by the
+ * realtime broadcast path so live messages render the same as historical ones.
+ */
+export const findPopulatedMessage = async (messageId) => {
+    const message = await ChatMessage.findById(messageId)
+        .populate("senderId", "userName email _id")
+        .lean();
+    if (!message) return null;
+    return attachAvatars(message, ["senderId"]);
+};
+
+/**
  * Get chat history for a specific event
  * @param {string} eventId - The event ID
  * @param {number} limit - Maximum number of messages (default: 50)
@@ -51,12 +65,13 @@ export const getChatHistory = async (eventId, limit = 50, skip = 0) => {
         throw new Error("eventId is required");
     }
 
-    return await ChatMessage.find({ eventId })
+    const messages = await ChatMessage.find({ eventId })
         .populate("senderId", "userName email _id")
         .sort({ createdAt: -1 })
         .limit(limit)
         .skip(skip)
         .lean();
+    return attachAvatars(messages, ["senderId"]);
 };
 
 /**
@@ -75,9 +90,10 @@ export const getRecentMessages = async (eventId, limit = 20) => {
         .sort({ createdAt: -1 })
         .limit(limit)
         .lean();
+    const withAvatars = await attachAvatars(messages, ["senderId"]);
 
     // Return in chronological order (oldest first)
-    return messages.reverse();
+    return withAvatars.reverse();
 };
 
 /**

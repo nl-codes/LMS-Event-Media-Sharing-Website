@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Event, EventStatus } from "@/types/Event";
 import { getEventById, updateEvent, updateEventStatus } from "@/lib/eventApi";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import Button from "@/components/buttons/Button";
-import { formatToLocalDatetime } from "@/utils/HelperFunctions";
+import {
+    formatToLocalDatetime,
+    HelperFormatDateTime,
+} from "@/utils/HelperFunctions";
+import {
+    calculateEventEndTime,
+    type EventTier,
+    TIER_DURATION_LABEL,
+} from "@/lib/eventDuration";
 import {
     MapPin,
     Type,
@@ -17,6 +25,7 @@ import {
     Sparkles,
     Clock,
     Loader2,
+    Lock,
     Settings2,
     ChevronDown,
     Save,
@@ -36,14 +45,31 @@ export default function EditEventPage() {
         description: "",
         location: "",
         startTime: "",
-        endTime: "",
         isPremium: false,
         status: "Active" as EventStatus,
         thumbnail: null as File | null,
     });
 
+    const [originalStartTime, setOriginalStartTime] = useState<string>("");
+    const [tier, setTier] = useState<EventTier>("free");
+    const [currentEndTime, setCurrentEndTime] = useState<string>("");
     const [currentThumbnail, setCurrentThumbnail] = useState("");
     const [thumbnailPreview, setThumbnailPreview] = useState("");
+
+    const eventHasStarted = useMemo(() => {
+        if (!originalStartTime) return false;
+        return new Date(originalStartTime).getTime() <= Date.now();
+    }, [originalStartTime]);
+
+    const previewEndTime = useMemo(() => {
+        if (eventHasStarted) return null;
+        if (!form.startTime) return null;
+        try {
+            return calculateEventEndTime(form.startTime, tier);
+        } catch {
+            return null;
+        }
+    }, [form.startTime, tier, eventHasStarted]);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -54,11 +80,13 @@ export default function EditEventPage() {
                     description: event.description || "",
                     location: event.location,
                     startTime: formatToLocalDatetime(event.startTime),
-                    endTime: formatToLocalDatetime(event.endTime),
                     isPremium: !!event.isPremium,
                     status: event.status,
                     thumbnail: null,
                 });
+                setOriginalStartTime(event.startTime);
+                setTier((event.tier as EventTier) || "free");
+                setCurrentEndTime(event.endTime);
                 setCurrentThumbnail(event.thumbnail || "");
             } catch {
                 toast.error("Failed to load event data");
@@ -80,15 +108,19 @@ export default function EditEventPage() {
         const loadingToast = toast.loading("Updating event...");
         try {
             setSaving(true);
-            await updateEvent(eventId, {
+            // Only forward startTime if it's still editable. The backend
+            // rejects startTime edits after the event has begun.
+            const payload: Parameters<typeof updateEvent>[1] = {
                 eventName: form.eventName,
                 description: form.description,
                 location: form.location,
-                startTime: new Date(form.startTime).toISOString(),
-                endTime: new Date(form.endTime).toISOString(),
                 isPremium: form.isPremium,
                 thumbnail: form.thumbnail,
-            });
+            };
+            if (!eventHasStarted && form.startTime) {
+                payload.startTime = new Date(form.startTime).toISOString();
+            }
+            await updateEvent(eventId, payload);
 
             await updateEventStatus(eventId, form.status);
             toast.success("Event updated successfully", { id: loadingToast });
@@ -297,36 +329,60 @@ export default function EditEventPage() {
                                             <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
                                                 <Clock size={16} /> Starts
                                             </label>
-                                            <input
-                                                type="datetime-local"
-                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all text-sm"
-                                                value={form.startTime}
-                                                onChange={(e) =>
-                                                    setForm({
-                                                        ...form,
-                                                        startTime:
-                                                            e.target.value,
-                                                    })
-                                                }
-                                                required
-                                            />
+                                            {eventHasStarted ? (
+                                                <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm text-cusblue/80 flex items-center gap-2">
+                                                    <Lock
+                                                        size={14}
+                                                        className="text-cusviolet/60"
+                                                    />
+                                                    {HelperFormatDateTime(
+                                                        originalStartTime,
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <input
+                                                    type="datetime-local"
+                                                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all text-sm"
+                                                    value={form.startTime}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            startTime:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                    required
+                                                />
+                                            )}
+                                            {eventHasStarted && (
+                                                <p className="text-[10px] text-cusviolet/60 ml-1 font-bold uppercase tracking-wider">
+                                                    Start time is locked once
+                                                    the event has begun.
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="space-y-2 group">
                                             <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
-                                                <Clock size={16} /> Ends
+                                                <Clock size={16} /> Ends (auto)
                                             </label>
-                                            <input
-                                                type="datetime-local"
-                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all text-sm"
-                                                value={form.endTime}
-                                                onChange={(e) =>
-                                                    setForm({
-                                                        ...form,
-                                                        endTime: e.target.value,
-                                                    })
-                                                }
-                                                required
-                                            />
+                                            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm text-cusblue/80 flex items-center gap-2">
+                                                <Lock
+                                                    size={14}
+                                                    className="text-cusviolet/60"
+                                                />
+                                                {HelperFormatDateTime(
+                                                    (previewEndTime
+                                                        ? previewEndTime.toISOString()
+                                                        : currentEndTime) || "",
+                                                )}
+                                            </div>
+                                            <p className="text-[10px] text-cusviolet/60 ml-1 font-bold uppercase tracking-wider">
+                                                {tier.charAt(0).toUpperCase() +
+                                                    tier.slice(1)}{" "}
+                                                tier — runs for{" "}
+                                                {TIER_DURATION_LABEL[tier]} from
+                                                start.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

@@ -1,5 +1,12 @@
 export type EventStatus = "Active" | "Completed" | "Cancelled";
 
+export type MediaDeletionStatus =
+    | "active"
+    | "queued"
+    | "processing"
+    | "completed"
+    | "failed";
+
 export interface Event {
     _id: string;
     hostId:
@@ -26,6 +33,10 @@ export interface Event {
     participantCount?: number;
     isLive?: boolean;
     isUpcoming?: boolean;
+    mediaRetentionDeleteAt?: string | null;
+    mediaRetentionWarningStartsAt?: string | null;
+    mediaDeletedAt?: string | null;
+    mediaDeletionStatus?: MediaDeletionStatus;
     createdAt?: string;
     updatedAt?: string;
 }

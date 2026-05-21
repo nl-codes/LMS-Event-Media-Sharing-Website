@@ -3,6 +3,7 @@
 import { ImageIcon, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Event } from "@/types/Event";
+import { isEventFinished } from "@/lib/eventDuration";
 
 interface GalleryAccessHandlerProps {
     event: Event;
@@ -19,8 +20,7 @@ export default function GalleryAccessHandler({
 }: GalleryAccessHandlerProps) {
     const router = useRouter();
 
-    // Logic extracted from the parent component
-    const isFinished = new Date(event.endTime) < new Date();
+    const isFinished = isEventFinished(event);
 
     return (
         <div className="pt-4">

@@ -3,6 +3,7 @@ import { getEventUsage, uploadMedia, type EventUsage } from "@/lib/mediaApi";
 import { compressImageIfNeeded } from "@/lib/compressImage";
 import { probeVideoDuration } from "@/lib/probeVideo";
 import { formatBytes } from "@/constants/tierLimits";
+import type { EventStatus } from "@/types/Event";
 import toast from "react-hot-toast";
 
 const isVideoFile = (file: File) => file.type.startsWith("video/");
@@ -11,6 +12,7 @@ interface MediaUploadButtonProps {
     eventId: string;
     eventSlug?: string;
     eventEndTime?: string;
+    eventStatus?: EventStatus;
     onUploadSuccess: (hasVideos: boolean) => void;
 }
 
@@ -18,6 +20,7 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
     eventId,
     eventSlug,
     eventEndTime,
+    eventStatus,
     onUploadSuccess,
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -57,7 +60,9 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
         ? new Date(eventEndTime).getTime()
         : Number.NaN;
     const isEventFinished =
-        Number.isFinite(eventEndTimestamp) && eventEndTimestamp < now;
+        eventStatus === "Completed" ||
+        eventStatus === "Cancelled" ||
+        (Number.isFinite(eventEndTimestamp) && eventEndTimestamp < now);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;

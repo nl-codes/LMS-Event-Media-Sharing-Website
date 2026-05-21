@@ -1,22 +1,28 @@
 "use client";
 
+import type { EventStatus } from "@/types/Event";
+
 interface EventStatusLabelProps {
     startTime: string | Date;
     endTime: string | Date;
+    status?: EventStatus;
     className?: string;
 }
 
 export default function EventStatusLabel({
     startTime,
     endTime,
+    status,
     className,
 }: EventStatusLabelProps) {
     const now = new Date();
     const startDate = new Date(startTime);
     const endDate = new Date(endTime);
 
-    const isFinished = now > endDate;
-    const isLive = now >= startDate && now <= endDate;
+    const finishedByStatus =
+        status === "Completed" || status === "Cancelled";
+    const isFinished = finishedByStatus || now > endDate;
+    const isLive = !finishedByStatus && now >= startDate && now <= endDate;
 
     let statusLabel = "Upcoming Soon";
     let statusConfig = "bg-slate-100 text-slate-500";
@@ -27,7 +33,7 @@ export default function EventStatusLabel({
         statusConfig = "bg-green-100 text-green-700";
         dotConfig = "bg-green-500 animate-pulse";
     } else if (isFinished) {
-        statusLabel = "Finished";
+        statusLabel = status === "Cancelled" ? "Cancelled" : "Finished";
         statusConfig = "bg-red-100 text-red-700";
         dotConfig = "bg-red-500";
     }

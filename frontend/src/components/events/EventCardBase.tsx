@@ -74,6 +74,7 @@ export default function EventCardBase({
                     <EventStatusLabel
                         startTime={event.startTime}
                         endTime={event.endTime}
+                        status={event.status}
                     />
                 </div>
             </div>

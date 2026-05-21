@@ -3,6 +3,7 @@ import {
     findAllEventsByHost,
     findEventById,
     findEventBySlug,
+    finishEventByHost,
     getEventParticipants,
     listPublicEvents,
     removeEvent,
@@ -22,18 +23,15 @@ export const registerEvent = async (req, res) => {
             description,
             location,
             startTime,
-            endTime,
             isPremium,
             privacy,
         } = req.body;
         const thumbnail = req.file?.path || "";
 
-        // Validation
-        if (!eventName || !location || !startTime || !endTime) {
+        if (!eventName || !location || !startTime) {
             return res.status(400).json({
                 success: false,
-                message:
-                    "Event name, location, start time, and end time are required",
+                message: "Event name, location, and start time are required",
             });
         }
         const eventData = {
@@ -43,7 +41,6 @@ export const registerEvent = async (req, res) => {
             description,
             location,
             startTime,
-            endTime,
             isPremium: isPremium || false,
             thumbnail: thumbnail,
             privacy: privacy === "public" ? "public" : "private",
@@ -138,6 +135,30 @@ export const editEvent = async (req, res) => {
               : 400;
 
         res.status(statusCode).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const finishEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedEvent = await finishEventByHost(id, req.user.id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Event marked as completed",
+            data: updatedEvent,
+        });
+    } catch (error) {
+        const statusCode = error.message.includes("Unauthorized")
+            ? 403
+            : error.message.includes("not found")
+              ? 404
+              : 400;
+
+        return res.status(statusCode).json({
             success: false,
             message: error.message,
         });

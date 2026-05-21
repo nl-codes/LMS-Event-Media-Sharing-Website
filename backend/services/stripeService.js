@@ -51,6 +51,29 @@ export const findStripePriceByLookupKey = async (lookupKey) => {
     return { price, tier: normalized };
 };
 
+const buildLineItem = async (tier, productLabel) => {
+    try {
+        const { price } = await findStripePriceByLookupKey(tier);
+        return { price: price.id, quantity: 1 };
+    } catch (error) {
+        const message = String(error?.message || "");
+        const notFoundLookup = message.includes("No Stripe price found");
+
+        if (!notFoundLookup) {
+            throw error;
+        }
+
+        return {
+            price_data: {
+                currency: "usd",
+                unit_amount: FALLBACK_TIER_AMOUNT[tier],
+                product_data: { name: productLabel },
+            },
+            quantity: 1,
+        };
+    }
+};
+
 export const createStripeCheckoutSession = async ({
     eventId,
     userId,
@@ -60,42 +83,52 @@ export const createStripeCheckoutSession = async ({
     const tier = normalizeTier(lookupKey);
     const frontendUrl = process.env.FRONTEND_URL;
 
-    let lineItem;
-
-    try {
-        const { price } = await findStripePriceByLookupKey(tier);
-        lineItem = { price: price.id, quantity: 1 };
-    } catch (error) {
-        const message = String(error?.message || "");
-        const notFoundLookup = message.includes("No Stripe price found");
-
-        if (!notFoundLookup) {
-            throw error;
-        }
-
-        lineItem = {
-            price_data: {
-                currency: "usd",
-                unit_amount: FALLBACK_TIER_AMOUNT[tier],
-                product_data: {
-                    name:
-                        tier === "premium" ? "Premium Upgrade" : "Pro Upgrade",
-                },
-            },
-            quantity: 1,
-        };
-    }
+    const lineItem = await buildLineItem(
+        tier,
+        tier === "premium" ? "Premium Upgrade" : "Pro Upgrade",
+    );
 
     const session = await stripe.checkout.sessions.create({
         mode: "payment",
         line_items: [lineItem],
         metadata: {
+            purpose: "event_upgrade",
             eventId,
             userId,
             tier,
         },
         success_url: `${frontendUrl}/home/events/${eventId}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${frontendUrl}/home/events/${eventId}/upgrade?payment=cancel`,
+    });
+
+    return session;
+};
+
+export const createEventCreateCheckoutSession = async ({
+    userId,
+    lookupKey,
+    pendingCheckoutId,
+}) => {
+    const stripe = getStripeClient();
+    const tier = normalizeTier(lookupKey);
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    const lineItem = await buildLineItem(
+        tier,
+        tier === "premium" ? "Premium Event" : "Pro Event",
+    );
+
+    const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [lineItem],
+        metadata: {
+            purpose: "event_create",
+            userId,
+            tier,
+            pendingCheckoutId: String(pendingCheckoutId),
+        },
+        success_url: `${frontendUrl}/home/events/create/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${frontendUrl}/home/events/create?payment=cancelled`,
     });
 
     return session;

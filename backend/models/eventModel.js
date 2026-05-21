@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
+import {
+    getMediaRetentionDeleteAt,
+    getMediaRetentionWarningStartsAt,
+} from "../utils/mediaRetention.js";
 
 const EventSchema = new mongoose.Schema(
     {
@@ -83,6 +87,17 @@ const EventSchema = new mongoose.Schema(
             enum: ["pending", "processing", "completed", "failed"],
             default: "pending",
         },
+
+        mediaDeletionStatus: {
+            type: String,
+            enum: ["active", "queued", "processing", "completed", "failed"],
+            default: "active",
+            index: true,
+        },
+        mediaDeletedAt: {
+            type: Date,
+            default: null,
+        },
     },
     {
         timestamps: true,
@@ -117,6 +132,21 @@ EventSchema.virtual("isLive").get(function () {
  */
 EventSchema.virtual("isUpcoming").get(function () {
     return new Date() < this.startTime;
+});
+
+/**
+ * VIRTUAL: Computed deletion deadline for this event's media. Derived from
+ * tier + endTime so changing either flows through without a migration.
+ */
+EventSchema.virtual("mediaRetentionDeleteAt").get(function () {
+    return getMediaRetentionDeleteAt(this);
+});
+
+/**
+ * VIRTUAL: When the host-facing deletion-warning UI should start showing.
+ */
+EventSchema.virtual("mediaRetentionWarningStartsAt").get(function () {
+    return getMediaRetentionWarningStartsAt(this);
 });
 
 export const Event = mongoose.model("Event", EventSchema);

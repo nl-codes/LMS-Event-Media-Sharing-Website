@@ -18,7 +18,7 @@ import default_profile from "public/profile-male.png";
 import { getPublicProfile, type PublicProfile } from "@/lib/profileApi";
 import type { Event } from "@/types/Event";
 import clsx from "clsx";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import {
     HelperFormatDate,
     HelperFormatMonthYear,
@@ -174,7 +174,8 @@ export default function OthersProfilePage() {
                             </div>
                             {/* Member since badge */}
                             <span className="mb-1 rounded-2xl border border-cusblue/10 bg-cusblue/5 px-4 py-1.5 text-xs font-bold text-cusblue/70">
-                                Member since {HelperFormatMonthYear(user.createdAt)}
+                                Member since{" "}
+                                {HelperFormatMonthYear(user.createdAt)}
                             </span>
                         </div>
 

@@ -3,11 +3,13 @@
 import type { ReactNode } from "react";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import SelectionActionBar from "@/components/events/SelectionActionBar";
+import type { EventStatus } from "@/types/Event";
 
 interface GalleryToolbarProps {
     eventId: string;
     eventSlug?: string;
     eventEndTime?: string;
+    eventStatus?: EventStatus;
     /** Optional left-side slot (e.g. "Uploading as X" pill on the public page). */
     identityStrip?: ReactNode;
     isSelectionActive: boolean;
@@ -26,6 +28,7 @@ export default function GalleryToolbar({
     eventId,
     eventSlug,
     eventEndTime,
+    eventStatus,
     identityStrip,
     isSelectionActive,
     selectedCount,
@@ -63,6 +66,7 @@ export default function GalleryToolbar({
                             eventId={eventId}
                             eventSlug={eventSlug}
                             eventEndTime={eventEndTime}
+                            eventStatus={eventStatus}
                             onUploadSuccess={onUploadSuccess}
                         />
 

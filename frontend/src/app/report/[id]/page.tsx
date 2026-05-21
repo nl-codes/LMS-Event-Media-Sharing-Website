@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import AdminVerdict from "@/components/report/AdminVerdict";
 import ReportHeader from "@/components/report/ReportHeader";
 import ReportedContent, {

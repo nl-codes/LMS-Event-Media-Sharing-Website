@@ -15,12 +15,9 @@ export default function MediaMetaData({
 }: MediaMetaDataProps) {
     return (
         <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cusviolet/80">
+            <p className="text-xl font-black text-cusblue tracking-tight">
                 {eventTitle}
             </p>
-            <h1 className="text-2xl font-black text-cusblue sm:text-3xl tracking-tight">
-                {media.label || "Event media"}
-            </h1>
 
             {/* Improved Uploaded By Section */}
             <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">

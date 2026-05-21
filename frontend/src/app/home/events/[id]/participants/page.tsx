@@ -2,15 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-    Loader2,
-    Search,
-    ShieldAlert,
-    UserCircle2,
-    Users,
-} from "lucide-react";
+import { Loader2, Search, ShieldAlert, UserCircle2, Users } from "lucide-react";
 import toast from "react-hot-toast";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import UserAvatar from "@/components/common/UserAvatar";
 import { useUser } from "@/context/UserContext";
 import {
@@ -151,7 +145,8 @@ export default function ParticipantsPage() {
                     {!loading && (
                         <p className="mt-2 text-sm text-cusviolet/70">
                             {registeredCount} registered
-                            {guestCount > 0 && ` · ${guestCount} guest${guestCount === 1 ? "" : "s"}`}
+                            {guestCount > 0 &&
+                                ` · ${guestCount} guest${guestCount === 1 ? "" : "s"}`}
                         </p>
                     )}
                 </header>

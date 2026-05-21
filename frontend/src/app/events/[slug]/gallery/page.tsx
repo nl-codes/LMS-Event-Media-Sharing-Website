@@ -14,15 +14,17 @@ import {
     downloadGalleryMedia,
     loadGallery,
 } from "@/lib/galleryHelpers";
-import GalleryEventHeader from "@/components/events/GalleryEventHeader";
+import GalleryEventHeader from "@/components/gallery/GalleryEventHeader";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
 import ChatContainer from "@/components/chat/ChatContainer";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import UserAvatar from "@/components/common/UserAvatar";
 import GalleryToolbar from "@/components/gallery/GalleryToolbar";
 import GalleryListSection from "@/components/gallery/GalleryListSection";
 import type { Event } from "@/types/Event";
 import EventNotFoundCard from "@/components/events/EventNotFoundCard";
+import { isEventFinished } from "@/lib/eventDuration";
+import EventMediaDeletionWarning from "@/app/components/events/EventMediaDeletionWarning";
 
 export default function EventPublicGallery() {
     const params = useParams();
@@ -65,9 +67,7 @@ export default function EventPublicGallery() {
         onMediaDeleted: handleRemoveFromSelection,
     });
 
-    const eventEnded = event
-        ? new Date(event.endTime).getTime() < Date.now()
-        : false;
+    const eventEnded = isEventFinished(event);
     const highlights = gallery.filter((m) => m.isHighlight);
 
     const scopedGuestDisplayName = slug ? getScopedGuestUserName(slug) : null;
@@ -183,10 +183,21 @@ export default function EventPublicGallery() {
                 />
             )}
 
+            {event?.mediaDeletionStatus === "completed" && (
+                <EventMediaDeletionWarning
+                    deleteAt={event.mediaRetentionDeleteAt}
+                    warningStartsAt={event.mediaRetentionWarningStartsAt}
+                    mediaDeletedAt={event.mediaDeletedAt}
+                    mediaDeletionStatus={event.mediaDeletionStatus}
+                    deletedOnly
+                />
+            )}
+
             <GalleryToolbar
                 eventId={eventId}
                 eventSlug={slug}
                 eventEndTime={event?.endTime}
+                eventStatus={event?.status}
                 identityStrip={
                     <>
                         <UserAvatar
@@ -218,6 +229,8 @@ export default function EventPublicGallery() {
                 highlights={highlights}
                 isHost={Boolean(user) ? isHost : false}
                 currentUserId={Boolean(user) ? currentUserId : ""}
+                onLike={handleLike}
+                disableLike={!isHost}
                 onToggleHighlight={isHost ? handleToggleHighlight : undefined}
             />
 
@@ -234,6 +247,9 @@ export default function EventPublicGallery() {
                 onDelete={handleDelete}
                 onToggleHighlight={handleToggleHighlight}
                 eventEnded={eventEnded}
+                mediaRetentionCompleted={
+                    event?.mediaDeletionStatus === "completed"
+                }
             />
 
             {event && (

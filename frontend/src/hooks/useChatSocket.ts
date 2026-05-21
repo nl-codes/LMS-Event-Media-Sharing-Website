@@ -244,9 +244,10 @@ export const useChatSocket = ({
         socket.on("receive_message", handleReceiveMessage);
         socket.on("message_error", handleMessageError);
 
-        // Connect the socket
         if (!socket.connected) {
             socket.connect();
+        } else {
+            handleConnect();
         }
 
         // Clean up on unmount

@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import { Loader2, XCircle, ExternalLink } from "lucide-react";
 import Button from "@/components/buttons/Button";
 import EventDetailsLayout from "@/components/events/EventDetailsLayout";
-import EventHostActionButtons from "./EventHostActionButtons";
+import EventHostActionButtons from "../../../../components/events/EventHostActionButtons";
 
 export default function EventDetailsPage() {
     const [event, setEvent] = useState<Event | null>(null);
@@ -105,7 +105,11 @@ export default function EventDetailsPage() {
                     />
                 )}
 
-                <EventHostActionButtons event={event} setShowQR={setShowQR} />
+                <EventHostActionButtons
+                    event={event}
+                    setShowQR={setShowQR}
+                    onEventUpdated={setEvent}
+                />
 
                 <EventCapacityAlert eventId={event._id} />
 

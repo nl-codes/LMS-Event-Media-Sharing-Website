@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import { useUser } from "@/context/UserContext";
 import { addComment, getComments, getLikes } from "@/lib/interactionApi";
 import { getMediaById } from "@/lib/mediaApi";

@@ -12,13 +12,16 @@ import {
     downloadGalleryMedia,
     loadGallery,
 } from "@/lib/galleryHelpers";
-import GalleryEventHeader from "@/components/events/GalleryEventHeader";
+import GalleryEventHeader from "@/components/gallery/GalleryEventHeader";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
-import BackButton from "@/components/navigation/BackButton";
+import ChatContainer from "@/components/chat/ChatContainer";
+import BackButton from "@/components/buttons/BackButton";
 import GalleryToolbar from "@/components/gallery/GalleryToolbar";
 import GalleryListSection from "@/components/gallery/GalleryListSection";
 import type { Event } from "@/types/Event";
 import EventNotFoundCard from "@/components/events/EventNotFoundCard";
+import { isEventFinished } from "@/lib/eventDuration";
+import EventMediaDeletionWarning from "@/app/components/events/EventMediaDeletionWarning";
 
 export default function HostGalleryPage() {
     const params = useParams();
@@ -53,9 +56,7 @@ export default function HostGalleryPage() {
         onMediaDeleted: handleRemoveFromSelection,
     });
 
-    const eventEnded = event
-        ? new Date(event.endTime).getTime() < Date.now()
-        : false;
+    const eventEnded = isEventFinished(event);
     const highlights = gallery.filter((m) => m.isHighlight);
 
     const fetchGallery = useCallback(async () => {
@@ -177,9 +178,19 @@ export default function HostGalleryPage() {
                 <GalleryEventHeader event={event} subtitle={gallerySubtitle} />
             )}
 
+            {event && (
+                <EventMediaDeletionWarning
+                    deleteAt={event.mediaRetentionDeleteAt}
+                    warningStartsAt={event.mediaRetentionWarningStartsAt}
+                    mediaDeletedAt={event.mediaDeletedAt}
+                    mediaDeletionStatus={event.mediaDeletionStatus}
+                />
+            )}
+
             <GalleryToolbar
                 eventId={eventId}
                 eventEndTime={event?.endTime}
+                eventStatus={event?.status}
                 isSelectionActive={isSelectionActive}
                 selectedCount={selectedIds.length}
                 galleryCount={gallery.length}
@@ -200,6 +211,8 @@ export default function HostGalleryPage() {
                 highlights={highlights}
                 isHost={isHost}
                 currentUserId={currentUserId}
+                onLike={handleLike}
+                disableLike={!user}
                 onToggleHighlight={handleToggleHighlight}
             />
 
@@ -216,7 +229,17 @@ export default function HostGalleryPage() {
                 onDelete={handleDelete}
                 onToggleHighlight={handleToggleHighlight}
                 eventEnded={eventEnded}
+                mediaRetentionCompleted={
+                    event?.mediaDeletionStatus === "completed"
+                }
             />
+
+            {event && (
+                <ChatContainer
+                    eventId={eventId}
+                    eventName={event.eventName || "Event"}
+                />
+            )}
         </div>
     );
 }

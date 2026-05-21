@@ -77,12 +77,12 @@ export default function MediaOptionsMenu({
                                   {isHighlight ? (
                                       <>
                                           <SparklesIcon className="h-4 w-4" />
-                                          Remove from highlight
+                                          Remove highlight
                                       </>
                                   ) : (
                                       <>
                                           <Sparkles className="h-4 w-4" />
-                                          Add to highlight
+                                          Add highlight
                                       </>
                                   )}
                               </button>
