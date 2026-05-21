@@ -7,6 +7,7 @@ import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
+import { enqueueEventCleanupJob } from "../queues/eventCleanupQueue.js";
 
 export const createEvent = async (eventData) => {
     try {
@@ -166,6 +167,16 @@ export const removeEvent = async (eventId, requesterId) => {
         }
 
         await Event.findByIdAndDelete(eventId);
+
+        try {
+            await enqueueEventCleanupJob({ eventId: String(eventId) });
+        } catch (err) {
+            console.warn(
+                `[cleanup] failed to enqueue cleanup for ${eventId}:`,
+                err.message,
+            );
+        }
+
         return { message: "Event deleted successfully" };
     } catch (error) {
         throw error;
