@@ -30,7 +30,7 @@ export const getUserMemberships = async (userId) => {
     const memberships = await EventMembership.find({ userId })
         .populate({
             path: "eventId",
-            select: "eventName startTime uniqueSlug location description thumbnail hostId tier",
+            select: "eventName startTime endTime uniqueSlug location description thumbnail hostId tier",
             populate: { path: "hostId", select: "userName email" },
         })
         .sort({ lastAccessedAt: -1 });

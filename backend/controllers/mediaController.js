@@ -6,6 +6,7 @@ import {
     deleteMultipleMedia,
     getHighlights,
     setMediaLabel,
+    updateMediaHighlight,
     getEventUsage,
     getExploreMedia,
 } from "../services/mediaService.js";
@@ -15,6 +16,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
 import { enqueueVideoJob } from "../queues/videoQueue.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 const TMP_DIR = path.resolve("uploads/tmp");
 
@@ -100,6 +102,7 @@ export const uploadMediaController = async (req, res) => {
                     likedBy: [],
                 };
             });
+            mediaPayload = await attachAvatars(mediaPayload, ["uploaderId"]);
 
             const io = getIO();
             mediaPayload.forEach((item) => {
@@ -289,5 +292,37 @@ export const setMediaLabelController = async (req, res) => {
         res.status(200).json({ success: true, data: media });
     } catch (error) {
         res.status(403).json({ success: false, message: error.message });
+    }
+};
+
+// Handles PATCH /media/:mediaId/highlight
+export const updateMediaHighlightController = async (req, res) => {
+    try {
+        const { mediaId } = req.params;
+        const { isHighlight } = req.body;
+        const requesterId = req.user?.id;
+        if (!requesterId) {
+            return res
+                .status(401)
+                .json({ success: false, message: "Authentication required" });
+        }
+        if (typeof isHighlight !== "boolean") {
+            return res.status(400).json({
+                success: false,
+                message: "isHighlight must be a boolean",
+            });
+        }
+        const result = await updateMediaHighlight(
+            mediaId,
+            isHighlight,
+            requesterId,
+        );
+        return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        const status = error.status || 500;
+        return res.status(status).json({
+            success: false,
+            message: error.message || "Failed to update highlight",
+        });
     }
 };

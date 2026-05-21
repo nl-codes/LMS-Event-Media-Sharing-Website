@@ -4,6 +4,7 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import { Download } from "lucide-react";
 import { type Report } from "@/types/Report";
+import UserAvatar from "@/components/common/UserAvatar";
 
 export type ReportedTarget = {
     _id?: string;
@@ -11,8 +12,21 @@ export type ReportedTarget = {
     mediaType?: string;
     label?: string;
     isHidden?: boolean;
-    uploaderId?: { userName?: string; email?: string };
-    eventId?: { eventName?: string };
+    uploaderId?: {
+        userName?: string;
+        email?: string;
+        profilePicture?: string;
+        isGuest?: boolean;
+    };
+    eventId?: {
+        _id?: string;
+        eventName?: string;
+        tier?: string;
+        privacy?: "public" | "private";
+        startTime?: string;
+        endTime?: string;
+        status?: string;
+    };
     content?: string;
     author?: { userName?: string; email?: string };
     userName?: string;
@@ -91,16 +105,32 @@ export default function ReportedContent({ report, target }: Props) {
                             />
                         )}
                     </div>
-                    <p className="text-sm text-slate-600">
-                        Uploaded by{" "}
-                        <strong>
-                            {target.uploaderId?.userName || "Unknown"}
-                        </strong>{" "}
-                        in event{" "}
-                        <strong>
-                            {target.eventId?.eventName || "Unknown"}
-                        </strong>
-                    </p>
+                    <div className="flex items-center gap-3 text-sm text-slate-600">
+                        <span>Reported by: </span>
+                        <UserAvatar
+                            src={target.uploaderId?.profilePicture}
+                            name={target.uploaderId?.userName}
+                            size="small"
+                        />
+                        <div className="min-w-0">
+                            <p className="flex items-center gap-2">
+                                <strong className="text-cusblue">
+                                    {target.uploaderId?.userName || "Unknown"}
+                                </strong>
+                                <span className="rounded-full bg-cusviolet/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-cusviolet">
+                                    {target.uploaderId?.isGuest
+                                        ? "Guest"
+                                        : "User"}
+                                </span>
+                            </p>
+                            <p className="text-xs text-slate-500">
+                                in event{" "}
+                                <strong>
+                                    {target.eventId?.eventName || "Unknown"}
+                                </strong>
+                            </p>
+                        </div>
+                    </div>
                     {target.isHidden && (
                         <p className="rounded-2xl bg-red-50 border border-red-200 px-4 py-2 text-sm font-bold text-red-600">
                             This media is currently hidden.

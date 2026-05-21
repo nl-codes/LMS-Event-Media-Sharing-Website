@@ -22,6 +22,9 @@ import appealRoutes from "./routes/appealRoute.js";
 import { runStartupSync } from "./services/syncManager.js";
 import { startVideoWorker } from "./queues/videoQueue.js";
 import { startEventPrivacyWorker } from "./queues/eventPrivacyQueue.js";
+import { startHighlightWorker } from "./queues/highlightQueue.js";
+import { startEventCleanupWorker } from "./queues/eventCleanupQueue.js";
+import { startEventSyncWorker } from "./queues/eventSyncQueue.js";
 
 import { setIO } from "./config/socketConfig.js";
 import { saveChatMessage } from "./services/chatService.js";
@@ -198,6 +201,33 @@ const startServer = async () => {
         console.log("🔒 Event privacy worker started");
     } catch (err) {
         console.error("Failed to start event privacy worker:", err.message);
+    }
+
+    try {
+        await startHighlightWorker();
+        console.log("✨ Highlight worker started");
+    } catch (err) {
+        // Non-fatal: API stays online, paid events queue but won't process
+        // until the worker (and its AI deps) come up.
+        console.error("Failed to start highlight worker:", err.message);
+    }
+
+    try {
+        await startEventCleanupWorker();
+        console.log("🧹 Event cleanup worker started");
+    } catch (err) {
+        // Non-fatal: deletions still succeed at the Event level, cleanup
+        // queues up and runs once the worker recovers.
+        console.error("Failed to start event cleanup worker:", err.message);
+    }
+
+    try {
+        await startEventSyncWorker();
+        console.log("⏰ Event sync scheduler started (every 5 min)");
+    } catch (err) {
+        // Non-fatal: events still flip to Completed on next server restart
+        // via runStartupSync; the scheduler is the live-detection path.
+        console.error("Failed to start event sync scheduler:", err.message);
     }
 
     server.listen(port, () => {

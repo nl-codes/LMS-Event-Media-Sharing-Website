@@ -7,6 +7,7 @@ import { makeError } from "../utils/helperFunctions.js";
 import { createNotification } from "./notificationService.js";
 import { suspendUser } from "./adminService.js";
 import sendEmail from "../utils/sendEmail.js";
+import { attachAvatars } from "../utils/attachAvatars.js";
 
 const TARGET_MODELS = {
     Media,
@@ -106,7 +107,28 @@ export async function getReportById(reportId) {
         if (report.targetType === "Media") {
             targetDoc = await Model.findById(report.targetId)
                 .populate("uploaderId", "userName email")
-                .populate("eventId", "eventName");
+                .populate("guestId", "userName guest_id")
+                .populate(
+                    "eventId",
+                    "eventName tier privacy startTime endTime status",
+                );
+
+            if (targetDoc) {
+                if (targetDoc.uploaderId) {
+                    await attachAvatars(targetDoc, ["uploaderId"]);
+                }
+
+                if (!targetDoc.uploaderId && targetDoc.guestId) {
+                    const plain = targetDoc.toObject();
+                    plain.uploaderId = {
+                        _id: targetDoc.guestId._id,
+                        userName: targetDoc.guestId.userName,
+                        profilePicture: "",
+                        isGuest: true,
+                    };
+                    targetDoc = plain;
+                }
+            }
         } else if (report.targetType === "Interaction") {
             targetDoc = await Model.findById(report.targetId).populate(
                 "author",
@@ -228,12 +250,7 @@ const ACTION_HANDLERS = {
     suspendUser: performSuspendUser,
 };
 
-export async function verifyReport({
-    reportId,
-    adminId,
-    reasoning,
-    action,
-}) {
+export async function verifyReport({ reportId, adminId, reasoning, action }) {
     validateObjectId(reportId, "report id");
     validateObjectId(adminId, "admin id");
 

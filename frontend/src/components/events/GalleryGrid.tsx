@@ -12,6 +12,8 @@ interface GalleryGridProps {
     onSelectionToggle: (id: string) => void;
     onLike: (id: string) => void;
     onDelete: (id: string) => void;
+    onToggleHighlight?: (id: string, nextIsHighlight: boolean) => void;
+    eventEnded?: boolean;
     userExists: boolean;
 }
 
@@ -24,6 +26,8 @@ export default function GalleryGrid({
     onSelectionToggle,
     onLike,
     onDelete,
+    onToggleHighlight,
+    eventEnded,
     userExists,
 }: GalleryGridProps) {
     return (
@@ -36,6 +40,8 @@ export default function GalleryGrid({
                     currentUserId={currentUserId}
                     onDelete={onDelete}
                     onLike={onLike}
+                    onToggleHighlight={onToggleHighlight}
+                    eventEnded={eventEnded}
                     disableLike={!userExists}
                     isSelectionActive={isSelectionActive}
                     isSelected={selectedIds.includes(media._id)}

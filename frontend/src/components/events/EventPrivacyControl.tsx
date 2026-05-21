@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, Lock, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { updateEventPrivacy } from "@/lib/eventApi";
 import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
+import EventPrivacyStatus from "./EventPrivacyStatus";
 
 interface EventPrivacyControlProps {
     eventId: string;
@@ -70,18 +71,7 @@ export default function EventPrivacyControl({
         <section className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-sm backdrop-blur-md">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
-                    <span
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-                            isPublic
-                                ? "bg-emerald-50 text-emerald-600"
-                                : "bg-red-50 text-red-600"
-                        }`}>
-                        {isPublic ? (
-                            <Globe className="h-5 w-5" />
-                        ) : (
-                            <Lock className="h-5 w-5" />
-                        )}
-                    </span>
+                    <EventPrivacyStatus isPublic={isPublic} />
                     <div>
                         <p className="text-xs font-black uppercase tracking-widest text-cusviolet/70">
                             Event privacy

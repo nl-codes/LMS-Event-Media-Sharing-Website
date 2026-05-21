@@ -5,6 +5,14 @@ import {
     markNotificationRead,
 } from "../services/notificationService.js";
 
+const notificationErrorResponse = (err) => ({
+    status: err.statusCode || (err.name === "CastError" ? 400 : 500),
+    message:
+        err.statusCode || err.name === "CastError"
+            ? err.message
+            : "Notification service is temporarily unavailable",
+});
+
 export async function listNotificationsController(req, res) {
     try {
         const userId = req.user?.id;
@@ -21,9 +29,10 @@ export async function listNotificationsController(req, res) {
             data: notifications,
         });
     } catch (err) {
-        return res.status(err.statusCode || 500).json({
+        const { status, message } = notificationErrorResponse(err);
+        return res.status(status).json({
             success: false,
-            message: err.message,
+            message,
         });
     }
 }
@@ -41,9 +50,10 @@ export async function markReadController(req, res) {
             data: notification,
         });
     } catch (err) {
-        return res.status(err.statusCode || 500).json({
+        const { status, message } = notificationErrorResponse(err);
+        return res.status(status).json({
             success: false,
-            message: err.message,
+            message,
         });
     }
 }
@@ -57,9 +67,10 @@ export async function markAllReadController(req, res) {
             message: "All notifications marked read",
         });
     } catch (err) {
-        return res.status(err.statusCode || 500).json({
+        const { status, message } = notificationErrorResponse(err);
+        return res.status(status).json({
             success: false,
-            message: err.message,
+            message,
         });
     }
 }
@@ -73,9 +84,10 @@ export async function unreadCountController(req, res) {
             data: { unreadCount },
         });
     } catch (err) {
-        return res.status(err.statusCode || 500).json({
+        const { status, message } = notificationErrorResponse(err);
+        return res.status(status).json({
             success: false,
-            message: err.message,
+            message,
         });
     }
 }

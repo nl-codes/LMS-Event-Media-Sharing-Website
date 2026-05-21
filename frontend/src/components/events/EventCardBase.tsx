@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { Calendar, Globe, ImageOff, MapPin } from "lucide-react";
+import { ImageOff, MapPin } from "lucide-react";
 import type { Event } from "@/types/Event";
 import type { ReactNode } from "react";
-import clsx from "clsx";
+import EventStatusLabel from "./EventStatusLabel";
+import EventPrivacyStatus from "./EventPrivacyStatus";
+import EventTierStatus from "./EventTierStatus";
 
 type EventCardBaseProps = {
     event: Event;
@@ -20,7 +22,6 @@ export default function EventCardBase({
     children,
 }: EventCardBaseProps) {
     const hasThumbnail = Boolean(event.thumbnail);
-    console.log(event.isPremium);
 
     return (
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-cusblue/5 flex flex-col transition-all hover:scale-[1.02] profile-card-animate">
@@ -44,7 +45,7 @@ export default function EventCardBase({
 
             {/* Title + optional badge */}
 
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-start">
                 <h3 className="text-xl font-bold text-cusblue leading-tight line-clamp-2 min-h-12">
                     {event.eventName}
                 </h3>
@@ -52,50 +53,28 @@ export default function EventCardBase({
 
             {host}
 
-            {/* Event Details */}
-            <div className="space-y-2 mb-6 grow text-sm">
-                <div className="flex items-center text-cusviolet/80">
-                    <MapPin className="w-4 h-4 mr-2 shrink-0" />
-                    <span className="truncate">{event.location}</span>
-                </div>
-                <div className="flex items-center text-cusviolet/80">
-                    <Calendar className="w-4 h-4 mr-2 shrink-0" />
-                    <span>
-                        {new Date(event.startTime).toLocaleDateString(
-                            undefined,
-                            {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                            },
-                        )}
-                    </span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-cusblue/5">
-                    <div className="flex items-center text-cusblue/60 text-xs ">
-                        <Globe className="w-3 h-3 mr-2 shrink-0" />
-                        <span className="truncate">{event.uniqueSlug}</span>
+            <div className="my-2 py-2 space-y-2 border-t border-b border-cusviolet/20">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center text-cusviolet/80 min-w-0">
+                        <MapPin className="w-4 h-4 shrink-0 mr-1.5" />
+                        <span className="truncate text-xs">
+                            {event.location}
+                        </span>
                     </div>
-                    <span
-                        className={clsx(
-                            "shrink-0 text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md border ml-2 transition-all",
-                            {
-                                // Free: Subtle, muted, professional
-                                "bg-slate-500/10 text-slate-500 border-slate-500":
-                                    event.tier === "free",
+                    <div className="shrink-0">
+                        <EventPrivacyStatus
+                            isPublic={event.privacy === "public"}
+                            size={15}
+                        />
+                    </div>
+                </div>
 
-                                // Premium: Deep, rich indigo/blue
-                                "bg-indigo-600/15 text-indigo-500 border-indigo-600":
-                                    event.tier === "premium",
-
-                                // Pro: Warm gold with a soft glow
-                                "bg-amber-500/15 text-amber-600 border-amber-500":
-                                    event.tier === "pro",
-                            },
-                        )}>
-                        {event.tier}
-                    </span>
+                <div className="flex items-center justify-between text-cusviolet/80">
+                    <EventTierStatus tier={event.tier || "Free"} />
+                    <EventStatusLabel
+                        startTime={event.startTime}
+                        endTime={event.endTime}
+                    />
                 </div>
             </div>
 

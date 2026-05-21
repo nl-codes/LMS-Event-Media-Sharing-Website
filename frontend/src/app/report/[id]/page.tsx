@@ -135,7 +135,16 @@ export default function ReportDetailPage() {
             <div className="mx-auto max-w-4xl">
                 <BackButton label="Back" />
 
-                <ReportHeader report={report} />
+                <ReportHeader
+                    report={report}
+                    event={
+                        report.targetType === "Media" &&
+                        target?.eventId &&
+                        typeof target.eventId === "object"
+                            ? target.eventId
+                            : null
+                    }
+                />
 
                 {target && <ReportedContent report={report} target={target} />}
 

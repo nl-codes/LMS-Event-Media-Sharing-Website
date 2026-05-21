@@ -74,6 +74,15 @@ const EventSchema = new mongoose.Schema(
             enum: ["public", "private"],
             default: "private",
         },
+        highlightsGeneratedAt: {
+            type: Date,
+            default: null,
+        },
+        highlightGenerationStatus: {
+            type: String,
+            enum: ["pending", "processing", "completed", "failed"],
+            default: "pending",
+        },
     },
     {
         timestamps: true,

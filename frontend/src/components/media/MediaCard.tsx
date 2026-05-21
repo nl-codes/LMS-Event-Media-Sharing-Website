@@ -4,11 +4,12 @@ import React from "react";
 import type { Media } from "@/types/Media";
 import Image from "next/image";
 import Link from "next/link";
-import { Download, Heart } from "lucide-react";
+import { Download, Heart, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/common/UserAvatar";
-import DeleteMediaConfirmButton from "@/components/media/DeleteMediaConfirmButton";
+import MediaOptionsMenu from "@/components/media/MediaOptionsMenu";
 import ReportMenu from "@/components/report/ReportMenu";
+
 import {
     downloadSingleMedia,
     isImageMedia,
@@ -22,6 +23,9 @@ interface MediaCardProps {
     currentUserId: string;
     onDelete?: (mediaId: string) => void;
     onLike?: (mediaId: string) => void;
+
+    onToggleHighlight?: (mediaId: string, nextIsHighlight: boolean) => void;
+    eventEnded?: boolean;
     disableLike?: boolean;
     isSelected?: boolean;
     isSelectionActive?: boolean;
@@ -34,6 +38,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
     currentUserId,
     onDelete,
     onLike,
+    onToggleHighlight,
+    eventEnded = false,
     disableLike,
     isSelected = false,
     isSelectionActive = false,
@@ -131,14 +137,31 @@ const MediaCard: React.FC<MediaCardProps> = ({
                     </div>
                 )}
 
-                {/* Delete Button - Smooth fade & slide */}
+                {media.isHighlight && (
+                    <div className="absolute bottom-4 left-4">
+                        <span className="flex items-center gap-1 rounded-full bg-amber-400/95 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
+                            <Sparkles className="h-3 w-3" />
+                            Highlight
+                        </span>
+                    </div>
+                )}
+
                 {canDelete && !isSelectionActive && (
                     <div
                         onClick={(e) => e.stopPropagation()}
                         className="absolute top-4 right-4 translate-x-4 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
-                        <DeleteMediaConfirmButton
+                        <MediaOptionsMenu
                             mediaId={media._id}
-                            onConfirm={onDelete}
+                            onDelete={onDelete}
+                            onToggleHighlight={
+                                isHost &&
+                                eventEnded &&
+                                isImageMedia(media.mediaType) &&
+                                onToggleHighlight
+                                    ? onToggleHighlight
+                                    : undefined
+                            }
+                            isHighlight={Boolean(media.isHighlight)}
                         />
                     </div>
                 )}

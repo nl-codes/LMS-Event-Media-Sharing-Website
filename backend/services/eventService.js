@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
@@ -6,6 +7,8 @@ import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
+import { enqueueEventCleanupJob } from "../queues/eventCleanupQueue.js";
+import { triggerEventSync } from "../queues/eventSyncQueue.js";
 
 export const createEvent = async (eventData) => {
     try {
@@ -27,6 +30,10 @@ export const createEvent = async (eventData) => {
 
 export const findEventById = async (eventId) => {
     try {
+        if (!mongoose.isValidObjectId(eventId)) {
+            throw new Error("Event not found");
+        }
+
         const event = await Event.findById(eventId).populate(
             "hostId",
             "userName email",
@@ -139,6 +146,17 @@ export const updateEventStatus = async (eventId, status, requesterId) => {
             { new: true, runValidators: true },
         ).populate("hostId", "userName email");
 
+        if (status === "Completed") {
+            try {
+                await triggerEventSync();
+            } catch (err) {
+                console.warn(
+                    "[event-sync] failed to trigger after manual Complete:",
+                    err.message,
+                );
+            }
+        }
+
         return updatedEvent;
     } catch (error) {
         throw error;
@@ -161,6 +179,16 @@ export const removeEvent = async (eventId, requesterId) => {
         }
 
         await Event.findByIdAndDelete(eventId);
+
+        try {
+            await enqueueEventCleanupJob({ eventId: String(eventId) });
+        } catch (err) {
+            console.warn(
+                `[cleanup] failed to enqueue cleanup for ${eventId}:`,
+                err.message,
+            );
+        }
+
         return { message: "Event deleted successfully" };
     } catch (error) {
         throw error;

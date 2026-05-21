@@ -8,6 +8,7 @@ import { HelperFormatDate, HelperFormatTime } from "@/utils/HelperFunctions";
 import Link from "next/link";
 import { Event } from "@/types/Event";
 import EventStatusLabel from "./EventStatusLabel";
+import EventPrivacyStatus from "./EventPrivacyStatus";
 
 type EventDetailsLayoutProps = {
     event: Event;
@@ -18,6 +19,31 @@ export default function EventDetailsLayout({
     event,
     children,
 }: EventDetailsLayoutProps) {
+    const host =
+        typeof event.hostId === "object" && event.hostId !== null
+            ? event.hostId
+            : null;
+
+    const hostName = host?.userName || "Anonymous Host";
+
+    const HostCardInner = (
+        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex items-start gap-3 min-w-0 shadow-sm transition-colors hover:bg-white/80">
+            <UserAvatar
+                src={host?.profilePicture}
+                name={hostName}
+                size="small"
+            />
+            <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Hosted By
+                </p>
+                <p className="text-sm font-bold text-cusblue truncate">
+                    {hostName}
+                </p>
+            </div>
+        </div>
+    );
+
     return (
         <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row items-center">
             {/* Thumbnail */}
@@ -53,10 +79,17 @@ export default function EventDetailsLayout({
             {/* Right column */}
             <div className="flex-1 max-w-1/2 p-8 lg:p-10 lg:pl-4 space-y-8">
                 <div className="flex flex-col gap-4">
-                    <EventStatusLabel
-                        startTime={event.startTime}
-                        endTime={event.endTime}
-                    />
+                    <div className="flex gap-4 items-center">
+                        <EventPrivacyStatus
+                            showText={true}
+                            isPublic={event.privacy === "public"}
+                            size={18}
+                        />
+                        <EventStatusLabel
+                            startTime={event.startTime}
+                            endTime={event.endTime}
+                        />
+                    </div>
                     <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight w-full wrap-break-word">
                         {event.eventName}
                     </h1>
@@ -66,41 +99,15 @@ export default function EventDetailsLayout({
                     </p>
                 </div>
 
-                {/* Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Host Card */}
-                    {(() => {
-                        const host =
-                            typeof event.hostId === "object" &&
-                            event.hostId !== null
-                                ? event.hostId
-                                : null;
-                        const hostName = host?.userName || "Anonymous Host";
-                        const inner = (
-                            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex items-start gap-3 min-w-0 shadow-sm transition-colors hover:bg-white/80">
-                                <UserAvatar
-                                    src={host?.profilePicture}
-                                    name={hostName}
-                                    size="small"
-                                />
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                        Hosted By
-                                    </p>
-                                    <p className="text-sm font-bold text-cusblue truncate">
-                                        {hostName}
-                                    </p>
-                                </div>
-                            </div>
-                        );
-                        return host?._id ? (
-                            <Link href={`/home/profile/${host._id}/others`}>
-                                {inner}
-                            </Link>
-                        ) : (
-                            inner
-                        );
-                    })()}
+                    {host?._id ? (
+                        <Link href={`/home/profile/${host._id}/others`}>
+                            {HostCardInner}
+                        </Link>
+                    ) : (
+                        HostCardInner
+                    )}
 
                     {/* Location Card */}
                     <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex items-start gap-3 min-w-0 shadow-sm transition-colors hover:bg-white/80">
