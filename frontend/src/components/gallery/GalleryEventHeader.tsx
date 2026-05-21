@@ -8,7 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import UserAvatar from "@/components/common/UserAvatar";
 import { useUser } from "@/context/UserContext";
-import EventStatusLabel from "./EventStatusLabel";
+import EventStatusLabel from "../events/EventStatusLabel";
 
 interface GalleryEventHeaderProps {
     event: Pick<
