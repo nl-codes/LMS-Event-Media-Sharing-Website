@@ -14,7 +14,10 @@ export default function BackButton({ href, label, replace }: BackButtonProps) {
 
     const handleClick = () => {
         const navigate = replace ? router.replace : router.push;
-        if (href) navigate(href);
+        if (href) {
+            navigate(href);
+            return;
+        }
 
         router.back();
     };
