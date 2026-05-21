@@ -2,6 +2,7 @@ import { Queue, Worker } from "bullmq";
 import { getRedisConnection } from "../config/redisConfig.js";
 import {
     enqueueHighlightBacklog,
+    enqueueMediaRetentionBacklog,
     syncCompletedEvents,
 } from "../services/syncManager.js";
 
@@ -30,11 +31,13 @@ export const getEventSyncQueue = () => {
 };
 
 // Run one tick: flip newly-ended events to Completed, then enqueue highlight
-// jobs for the paid ones in that set. Both helpers are idempotent.
+// jobs for the paid ones in that set, then sweep for media-retention
+// deletions that have come due. All helpers are idempotent.
 const runTick = async () => {
     const completed = await syncCompletedEvents();
     const highlights = await enqueueHighlightBacklog();
-    return { completed, highlights };
+    const retention = await enqueueMediaRetentionBacklog();
+    return { completed, highlights, retention };
 };
 
 export const startEventSyncWorker = async () => {
@@ -52,9 +55,10 @@ export const startEventSyncWorker = async () => {
     worker.on("completed", (job, result) => {
         const c = result?.completed?.modifiedCount ?? 0;
         const h = result?.highlights?.queued ?? 0;
-        if (c > 0 || h > 0) {
+        const r = result?.retention?.queued ?? 0;
+        if (c > 0 || h > 0 || r > 0) {
             console.log(
-                `[event-sync] tick → completed=${c} highlightsQueued=${h}`,
+                `[event-sync] tick → completed=${c} highlightsQueued=${h} retentionQueued=${r}`,
             );
         }
     });
