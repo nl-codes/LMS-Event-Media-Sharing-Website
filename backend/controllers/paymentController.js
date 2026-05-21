@@ -5,20 +5,24 @@ import {
     getStripeCheckoutSession,
     getTierUpgradeValues,
 } from "../services/stripeService.js";
+import { calculateEventEndTime } from "../utils/eventDuration.js";
 
 const applyEventUpgrade = async (eventId, tier) => {
     const upgrade = getTierUpgradeValues(tier);
+    const event = await Event.findById(eventId).select("startTime status");
 
-    return Event.findByIdAndUpdate(
-        eventId,
-        {
-            isPremium: upgrade.isPremium,
-            tier: upgrade.tier,
-            expiresAt: upgrade.expiresAt,
-            uploadLimit: upgrade.uploadLimit,
-        },
-        { new: true },
-    );
+    const updates = {
+        isPremium: upgrade.isPremium,
+        tier: upgrade.tier,
+        expiresAt: upgrade.expiresAt,
+        uploadLimit: upgrade.uploadLimit,
+    };
+
+    if (event) {
+        updates.endTime = calculateEventEndTime(event.startTime, upgrade.tier);
+    }
+
+    return Event.findByIdAndUpdate(eventId, updates, { new: true });
 };
 
 export const createCheckoutSession = async (req, res) => {
