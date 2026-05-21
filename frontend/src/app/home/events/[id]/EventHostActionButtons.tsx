@@ -19,7 +19,11 @@ export default function EventHostActionButtons({
 
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between">
-            <BackButton label="Back to My Events" />
+            <BackButton
+                href="/home/events"
+                replace
+                label="Back to My Events"
+            />
             <div className="flex flex-wrap items-center gap-3">
                 <Button
                     onClick={() =>
