@@ -18,7 +18,15 @@ export type ReportedTarget = {
         profilePicture?: string;
         isGuest?: boolean;
     };
-    eventId?: { eventName?: string };
+    eventId?: {
+        _id?: string;
+        eventName?: string;
+        tier?: string;
+        privacy?: "public" | "private";
+        startTime?: string;
+        endTime?: string;
+        status?: string;
+    };
     content?: string;
     author?: { userName?: string; email?: string };
     userName?: string;

@@ -108,7 +108,10 @@ export async function getReportById(reportId) {
             targetDoc = await Model.findById(report.targetId)
                 .populate("uploaderId", "userName email")
                 .populate("guestId", "userName guest_id")
-                .populate("eventId", "eventName");
+                .populate(
+                    "eventId",
+                    "eventName tier privacy startTime endTime status",
+                );
 
             if (targetDoc) {
                 if (targetDoc.uploaderId) {
