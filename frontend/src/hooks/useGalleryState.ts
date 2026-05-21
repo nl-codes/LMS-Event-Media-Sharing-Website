@@ -3,7 +3,11 @@
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
-import { deleteMedia, toggleLike } from "@/lib/mediaApi";
+import {
+    deleteMedia,
+    toggleLike,
+    updateMediaHighlight,
+} from "@/lib/mediaApi";
 import {
     normalizeLikedByIds,
     normalizeMediaLikes,
@@ -119,10 +123,44 @@ export function useGalleryState({
         [canLike, currentUserId],
     );
 
+    const handleToggleHighlight = useCallback(
+        async (mediaId: string, nextIsHighlight: boolean) => {
+            // Optimistic: flip the local flag now so the badge appears/disappears
+            // immediately. Capture a snapshot for rollback.
+            let snapshot: Media[] = [];
+            setGallery((prev) => {
+                snapshot = prev;
+                return prev.map((m) =>
+                    m._id === mediaId
+                        ? { ...m, isHighlight: nextIsHighlight }
+                        : m,
+                );
+            });
+
+            try {
+                await updateMediaHighlight(mediaId, nextIsHighlight);
+                toast.success(
+                    nextIsHighlight
+                        ? "Added to highlights"
+                        : "Removed from highlights",
+                );
+            } catch (err) {
+                setGallery(snapshot);
+                toast.error(
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to update highlight",
+                );
+            }
+        },
+        [],
+    );
+
     return {
         gallery,
         setGallery,
         handleDelete,
         handleLike,
+        handleToggleHighlight,
     };
 }
