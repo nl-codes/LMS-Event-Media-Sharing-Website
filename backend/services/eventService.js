@@ -6,17 +6,27 @@ import { Profile } from "../models/profileModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
+import { calculateEventEndTime } from "../utils/eventDuration.js";
 import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
 import { enqueueEventCleanupJob } from "../queues/eventCleanupQueue.js";
 import { triggerEventSync } from "../queues/eventSyncQueue.js";
 
 export const createEvent = async (eventData) => {
     try {
-        if (new Date(eventData.startTime) >= new Date(eventData.endTime)) {
-            throw new Error("Start time must be before end time");
+        const start = new Date(eventData.startTime);
+        if (Number.isNaN(start.getTime())) {
+            throw new Error("Invalid start time");
         }
 
-        const event = new Event(eventData);
+        const tier = eventData.tier || "free";
+        const computedEndTime = calculateEventEndTime(start, tier);
+
+        const event = new Event({
+            ...eventData,
+            tier,
+            startTime: start,
+            endTime: computedEndTime,
+        });
         await event.save();
 
         // Populate host information
@@ -92,37 +102,87 @@ export const updateEvent = async (eventId, updateData, requesterId) => {
             );
         }
 
-        // Validate times if being updated
-        if (updateData.startTime || updateData.endTime) {
-            const startTime = updateData.startTime
-                ? new Date(updateData.startTime)
-                : event.startTime;
-            const endTime = updateData.endTime
-                ? new Date(updateData.endTime)
-                : event.endTime;
+        if (Object.prototype.hasOwnProperty.call(updateData, "endTime")) {
+            throw new Error(
+                "Event end time is calculated by tier and cannot be edited.",
+            );
+        }
 
-            if (startTime >= endTime) {
-                throw new Error("Start time must be before end time");
+        const sanitized = { ...updateData };
+
+        delete sanitized.endTime;
+        delete sanitized.tier;
+        delete sanitized.status;
+
+        if (sanitized.startTime !== undefined) {
+            const newStart = new Date(sanitized.startTime);
+            if (Number.isNaN(newStart.getTime())) {
+                throw new Error("Invalid start time");
             }
+
+            const now = new Date();
+            if (now >= event.startTime) {
+                throw new Error(
+                    "Start time cannot be edited after the event has started.",
+                );
+            }
+
+            sanitized.startTime = newStart;
+            sanitized.endTime = calculateEventEndTime(newStart, event.tier);
         }
 
         // Handle Image Update
-        if (updateData.thumbnail && event.thumbnail) {
+        if (sanitized.thumbnail && event.thumbnail) {
             const publicId = extractPublicIdFromUrl(event.thumbnail);
             await cloudinary.uploader.destroy(publicId);
         }
 
         // Update and save the event
-        const updatedEvent = await Event.findByIdAndUpdate(
-            eventId,
-            updateData,
-            { new: true, runValidators: true },
-        ).populate("hostId", "userName email");
+        const updatedEvent = await Event.findByIdAndUpdate(eventId, sanitized, {
+            new: true,
+            runValidators: true,
+        }).populate("hostId", "userName email");
 
         return updatedEvent;
     } catch (error) {
         throw error;
     }
+};
+
+export const finishEventByHost = async (eventId, requesterId) => {
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+        const err = new Error("Event not found");
+        throw err;
+    }
+
+    if (event.hostId.toString() !== requesterId) {
+        throw new Error("Unauthorized: Only event host can finish this event");
+    }
+
+    if (event.status === "Completed") {
+        throw new Error("Event is already completed.");
+    }
+
+    if (event.status === "Cancelled") {
+        throw new Error("Cancelled events cannot be marked as completed.");
+    }
+
+    event.status = "Completed";
+    await event.save();
+
+    try {
+        await triggerEventSync();
+    } catch (err) {
+        console.warn(
+            "[event-sync] failed to trigger after host finish:",
+            err.message,
+        );
+    }
+
+    await event.populate("hostId", "userName email");
+    return event;
 };
 
 export const updateEventStatus = async (eventId, status, requesterId) => {
