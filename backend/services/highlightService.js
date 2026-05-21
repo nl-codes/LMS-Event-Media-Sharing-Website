@@ -22,13 +22,23 @@ export const findEventsNeedingHighlights = async () => {
     const staleCutoff = new Date(now.getTime() - STALE_PROCESSING_MS);
     return Event.find({
         tier: { $in: PAID_TIERS },
-        endTime: { $lte: now },
+        // Eligible when the calculated end has passed OR the host marked
+        // the event as Completed manually.
+        $or: [{ endTime: { $lte: now } }, { status: "Completed" }],
         status: { $ne: "Cancelled" },
-        $or: [
-            { highlightGenerationStatus: { $in: ["pending", "failed"] } },
+        $and: [
             {
-                highlightGenerationStatus: "processing",
-                updatedAt: { $lt: staleCutoff },
+                $or: [
+                    {
+                        highlightGenerationStatus: {
+                            $in: ["pending", "failed"],
+                        },
+                    },
+                    {
+                        highlightGenerationStatus: "processing",
+                        updatedAt: { $lt: staleCutoff },
+                    },
+                ],
             },
         ],
     })
@@ -54,7 +64,11 @@ export const checkEventEligibility = async (eventId) => {
     if (event.status === "Cancelled") {
         return { eligible: false, reason: "Event was cancelled", event };
     }
-    if (new Date(event.endTime) > new Date()) {
+    // A host who manually completes an event opens the door for highlight
+    // generation even if the calculated endTime is still in the future.
+    const hasEnded =
+        event.status === "Completed" || new Date(event.endTime) <= new Date();
+    if (!hasEnded) {
         return { eligible: false, reason: "Event has not ended yet", event };
     }
     if (event.highlightGenerationStatus === "completed") {
