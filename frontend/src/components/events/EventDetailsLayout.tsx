@@ -88,6 +88,7 @@ export default function EventDetailsLayout({
                         <EventStatusLabel
                             startTime={event.startTime}
                             endTime={event.endTime}
+                            status={event.status}
                         />
                     </div>
                     <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight w-full wrap-break-word">
