@@ -27,7 +27,10 @@ import { startEventCleanupWorker } from "./queues/eventCleanupQueue.js";
 import { startEventSyncWorker } from "./queues/eventSyncQueue.js";
 
 import { setIO } from "./config/socketConfig.js";
-import { saveChatMessage } from "./services/chatService.js";
+import {
+    findPopulatedMessage,
+    saveChatMessage,
+} from "./services/chatService.js";
 import { markChatAsRead } from "./services/eventMembershipService.js";
 
 dotenv.config();
@@ -106,8 +109,9 @@ io.on("connection", (socket) => {
                 text,
             );
 
-            // Populate sender info for broadcast
-            const populatedMessage = {
+            const populatedMessage = (await findPopulatedMessage(
+                savedMessage._id,
+            )) || {
                 _id: savedMessage._id,
                 eventId: savedMessage.eventId,
                 senderId: savedMessage.senderId,
