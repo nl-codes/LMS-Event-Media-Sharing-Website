@@ -14,6 +14,8 @@ interface GalleryListSectionProps {
     onSelectionToggle: (mediaId: string) => void;
     onLike: (mediaId: string) => void;
     onDelete: (mediaId: string) => void;
+    onToggleHighlight?: (mediaId: string, nextIsHighlight: boolean) => void;
+    eventEnded?: boolean;
 }
 
 export default function GalleryListSection({
@@ -27,6 +29,8 @@ export default function GalleryListSection({
     onSelectionToggle,
     onLike,
     onDelete,
+    onToggleHighlight,
+    eventEnded,
 }: GalleryListSectionProps) {
     return (
         <>
@@ -48,6 +52,8 @@ export default function GalleryListSection({
                     onSelectionToggle={onSelectionToggle}
                     onLike={onLike}
                     onDelete={onDelete}
+                    onToggleHighlight={onToggleHighlight}
+                    eventEnded={eventEnded}
                     userExists={userExists}
                 />
             )}

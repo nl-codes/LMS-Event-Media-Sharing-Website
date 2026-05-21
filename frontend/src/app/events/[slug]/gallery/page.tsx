@@ -52,12 +52,22 @@ export default function EventPublicGallery() {
             ? event.hostId._id === currentUserId
             : event?.hostId === currentUserId;
 
-    const { gallery, setGallery, handleDelete, handleLike } = useGalleryState({
+    const {
+        gallery,
+        setGallery,
+        handleDelete,
+        handleLike,
+        handleToggleHighlight,
+    } = useGalleryState({
         eventId,
         currentUserId,
         canLike: Boolean(user),
         onMediaDeleted: handleRemoveFromSelection,
     });
+
+    const eventEnded = event
+        ? new Date(event.endTime).getTime() < Date.now()
+        : false;
 
     const scopedGuestDisplayName = slug ? getScopedGuestUserName(slug) : null;
     const uploaderDisplayName =
@@ -212,7 +222,7 @@ export default function EventPublicGallery() {
             <GalleryListSection
                 mediaItems={gallery}
                 isLoading={loadingGallery}
-                isHost={false}
+                isHost={isHost}
                 currentUserId={Boolean(user) ? currentUserId : ""}
                 userExists={Boolean(user)}
                 isSelectionActive={isSelectionActive}
@@ -220,6 +230,8 @@ export default function EventPublicGallery() {
                 onSelectionToggle={handleSelectToggle}
                 onLike={handleLike}
                 onDelete={handleDelete}
+                onToggleHighlight={handleToggleHighlight}
+                eventEnded={eventEnded}
             />
 
             {event && (

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { getHighlights } from "@/lib/mediaApi";
+import React, { useCallback, useEffect, useState } from "react";
+import { getHighlights, updateMediaHighlight } from "@/lib/mediaApi";
 import type { Media } from "@/types/Media";
 import MediaCard from "./MediaCard";
 import toast from "react-hot-toast";
@@ -48,6 +48,42 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
         };
     }, [eventId]);
 
+    // Host-only "Remove from highlight" toggle. Optimistically removes the
+    // item from this grid since once unhighlighted it shouldn't appear here.
+    // Rolls back if the server rejects.
+    const handleToggleHighlight = useCallback(
+        async (mediaId: string, nextIsHighlight: boolean) => {
+            let snapshot: Media[] = [];
+            setHighlights((prev) => {
+                snapshot = prev;
+                return nextIsHighlight
+                    ? prev.map((m) =>
+                          m._id === mediaId
+                              ? { ...m, isHighlight: true }
+                              : m,
+                      )
+                    : prev.filter((m) => m._id !== mediaId);
+            });
+
+            try {
+                await updateMediaHighlight(mediaId, nextIsHighlight);
+                toast.success(
+                    nextIsHighlight
+                        ? "Added to highlights"
+                        : "Removed from highlights",
+                );
+            } catch (err) {
+                setHighlights(snapshot);
+                toast.error(
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to update highlight",
+                );
+            }
+        },
+        [],
+    );
+
     if (loading)
         return <div className="py-4 text-center">Loading highlights...</div>;
 
@@ -68,6 +104,11 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
                         isHost={isHost}
                         currentUserId={currentUserId}
                         disableLike={true}
+                        // A media item only enters this grid if it's already
+                        // highlighted, which itself implies the event ended
+                        // (the backend gate forbids highlights before then).
+                        eventEnded={true}
+                        onToggleHighlight={handleToggleHighlight}
                     />
                 ))}
             </div>

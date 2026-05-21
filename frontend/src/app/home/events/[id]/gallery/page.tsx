@@ -40,12 +40,22 @@ export default function HostGalleryPage() {
         remove: handleRemoveFromSelection,
     } = useSelection({ canStart: () => isHost });
 
-    const { gallery, setGallery, handleDelete, handleLike } = useGalleryState({
+    const {
+        gallery,
+        setGallery,
+        handleDelete,
+        handleLike,
+        handleToggleHighlight,
+    } = useGalleryState({
         eventId,
         currentUserId,
         canLike: Boolean(user),
         onMediaDeleted: handleRemoveFromSelection,
     });
+
+    const eventEnded = event
+        ? new Date(event.endTime).getTime() < Date.now()
+        : false;
 
     const fetchGallery = useCallback(async () => {
         try {
@@ -202,6 +212,8 @@ export default function HostGalleryPage() {
                 onSelectionToggle={handleSelectToggle}
                 onLike={handleLike}
                 onDelete={handleDelete}
+                onToggleHighlight={handleToggleHighlight}
+                eventEnded={eventEnded}
             />
         </div>
     );
