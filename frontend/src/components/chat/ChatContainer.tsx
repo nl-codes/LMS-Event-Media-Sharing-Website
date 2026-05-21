@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import MessageInput from "@/components/chat/MessageInput";
+import UserAvatar from "@/components/common/UserAvatar";
 import { useUser } from "@/context/UserContext";
 import {
     MessageSquare,
@@ -193,33 +194,54 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                         </div>
                     )}
                     {displayMessages.map((message) => {
+                        const senderRef =
+                            typeof message.senderId === "object"
+                                ? message.senderId
+                                : null;
                         const isMe =
                             (typeof message.senderId === "string"
                                 ? message.senderId
                                 : message.senderId?._id) === user?._id;
+                        const avatarSrc = isMe
+                            ? user?.profilePicture
+                            : senderRef?.profilePicture;
+                        const avatarName = isMe
+                            ? user?.userName || message.senderName
+                            : message.senderName;
+
                         return (
                             <div
                                 key={message._id}
-                                className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                                {!isMe && (
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-1.5">
-                                        {message.senderName}
-                                    </span>
-                                )}
-                                <div
-                                    className={`px-5 py-3 rounded-3xl text-[13px] shadow-sm ${isMe ? "bg-cusblue text-white rounded-tr-none" : "bg-white border border-slate-100 text-slate-700 rounded-tl-none"}`}>
-                                    <p className="leading-relaxed whitespace-pre-wrap wrap-break-word">
-                                        {message.text}
-                                    </p>
+                                className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                                <div className="shrink-0">
+                                    <UserAvatar
+                                        src={avatarSrc}
+                                        name={avatarName}
+                                        size="extraSmall"
+                                    />
                                 </div>
-                                <span className="text-[9px] font-bold mt-1.5 opacity-40 uppercase">
-                                    {new Date(
-                                        message.createdAt,
-                                    ).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
-                                </span>
+                                <div
+                                    className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[80%]`}>
+                                    {!isMe && (
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5">
+                                            {message.senderName}
+                                        </span>
+                                    )}
+                                    <div
+                                        className={`px-5 py-3 rounded-3xl text-[13px] shadow-sm ${isMe ? "bg-cusblue text-white rounded-tr-none" : "bg-white border border-slate-100 text-slate-700 rounded-tl-none"}`}>
+                                        <p className="leading-relaxed whitespace-pre-wrap wrap-break-word">
+                                            {message.text}
+                                        </p>
+                                    </div>
+                                    <span className="text-[9px] font-bold mt-1.5 opacity-40 uppercase">
+                                        {new Date(
+                                            message.createdAt,
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </span>
+                                </div>
                             </div>
                         );
                     })}
