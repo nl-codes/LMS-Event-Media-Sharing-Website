@@ -9,7 +9,8 @@ interface HighlightsGridProps {
     highlights: Media[];
     isHost: boolean;
     currentUserId: string;
-
+    onLike?: (mediaId: string) => void;
+    disableLike?: boolean;
     onToggleHighlight?: (mediaId: string, nextIsHighlight: boolean) => void;
 }
 
@@ -17,6 +18,8 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
     highlights,
     isHost,
     currentUserId,
+    onLike,
+    disableLike,
     onToggleHighlight,
 }) => {
     if (!highlights.length) return null;
@@ -37,7 +40,8 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
                         media={media}
                         isHost={isHost}
                         currentUserId={currentUserId}
-                        disableLike={true}
+                        onLike={onLike}
+                        disableLike={disableLike}
                         eventEnded={true}
                         onToggleHighlight={onToggleHighlight}
                     />
