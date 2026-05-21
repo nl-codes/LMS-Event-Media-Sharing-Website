@@ -8,6 +8,7 @@ import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
 import { enqueueEventCleanupJob } from "../queues/eventCleanupQueue.js";
+import { triggerEventSync } from "../queues/eventSyncQueue.js";
 
 export const createEvent = async (eventData) => {
     try {
@@ -144,6 +145,17 @@ export const updateEventStatus = async (eventId, status, requesterId) => {
             { status },
             { new: true, runValidators: true },
         ).populate("hostId", "userName email");
+
+        if (status === "Completed") {
+            try {
+                await triggerEventSync();
+            } catch (err) {
+                console.warn(
+                    "[event-sync] failed to trigger after manual Complete:",
+                    err.message,
+                );
+            }
+        }
 
         return updatedEvent;
     } catch (error) {
