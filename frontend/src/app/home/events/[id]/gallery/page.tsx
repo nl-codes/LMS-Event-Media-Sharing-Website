@@ -14,6 +14,7 @@ import {
 } from "@/lib/galleryHelpers";
 import GalleryEventHeader from "@/components/events/GalleryEventHeader";
 import HighlightsGrid from "@/components/media/HighlightsGrid";
+import ChatContainer from "@/components/chat/ChatContainer";
 import BackButton from "@/components/navigation/BackButton";
 import GalleryToolbar from "@/components/gallery/GalleryToolbar";
 import GalleryListSection from "@/components/gallery/GalleryListSection";
@@ -200,6 +201,8 @@ export default function HostGalleryPage() {
                 highlights={highlights}
                 isHost={isHost}
                 currentUserId={currentUserId}
+                onLike={handleLike}
+                disableLike={!user}
                 onToggleHighlight={handleToggleHighlight}
             />
 
@@ -217,6 +220,13 @@ export default function HostGalleryPage() {
                 onToggleHighlight={handleToggleHighlight}
                 eventEnded={eventEnded}
             />
+
+            {event && (
+                <ChatContainer
+                    eventId={eventId}
+                    eventName={event.eventName || "Event"}
+                />
+            )}
         </div>
     );
 }
