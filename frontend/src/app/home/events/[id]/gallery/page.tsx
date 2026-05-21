@@ -168,8 +168,8 @@ export default function HostGalleryPage() {
         : `${hostDisplayName}'s Gallery`;
 
     return (
-        <div className="max-w-5xl mx-auto p-4">
-            <div className="mb-4 flex flex-row items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col py-4 gap-6">
+            <div className="flex flex-row items-center gap-4">
                 <BackButton label="Back to Event" />
             </div>
 

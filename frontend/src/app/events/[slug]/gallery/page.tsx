@@ -167,8 +167,8 @@ export default function EventPublicGallery() {
     }
 
     return (
-        <div className="max-w-5xl mx-auto p-4 relative min-h-screen">
-            <div className="mb-4 flex flex-row items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col py-4 gap-6">
+            <div className="flex flex-row items-center gap-4">
                 <BackButton
                     href={`/events/${slug}`}
                     label="Back to Event"
@@ -218,9 +218,7 @@ export default function EventPublicGallery() {
                 highlights={highlights}
                 isHost={Boolean(user) ? isHost : false}
                 currentUserId={Boolean(user) ? currentUserId : ""}
-                onToggleHighlight={
-                    isHost ? handleToggleHighlight : undefined
-                }
+                onToggleHighlight={isHost ? handleToggleHighlight : undefined}
             />
 
             <GalleryListSection

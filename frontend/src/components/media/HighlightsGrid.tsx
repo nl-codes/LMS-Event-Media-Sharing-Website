@@ -26,7 +26,7 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
     }
 
     return (
-        <div className="mb-8">
+        <div className="">
             <h2 className="text-xl font-semibold mb-4 text-amber-500">
                 ⭐ Highlights
             </h2>

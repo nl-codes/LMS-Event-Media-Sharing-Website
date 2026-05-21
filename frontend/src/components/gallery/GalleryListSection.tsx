@@ -34,7 +34,7 @@ export default function GalleryListSection({
 }: GalleryListSectionProps) {
     return (
         <>
-            <h2 className="text-xl font-semibold mt-8 mb-2">All Media</h2>
+            <h2 className="text-xl font-semibold">All Media</h2>
 
             {isLoading ? (
                 <div className="py-10 text-center">Loading gallery...</div>

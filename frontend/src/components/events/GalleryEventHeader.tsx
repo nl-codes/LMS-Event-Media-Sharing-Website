@@ -144,7 +144,7 @@ export default function GalleryEventHeader({
     );
 
     return (
-        <section className="rounded-3xl bg-cuscream p-6 md:p-8">
+        <section className="rounded-3xl bg-cuscream px-6 md:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div className="max-w-120 flex flex-col gap-4">
                     <EventStatusLabel
