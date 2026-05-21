@@ -218,6 +218,8 @@ export default function EventPublicGallery() {
                 highlights={highlights}
                 isHost={Boolean(user) ? isHost : false}
                 currentUserId={Boolean(user) ? currentUserId : ""}
+                onLike={handleLike}
+                disableLike={!isHost}
                 onToggleHighlight={isHost ? handleToggleHighlight : undefined}
             />
 
