@@ -68,6 +68,7 @@ export default function EventPublicGallery() {
     const eventEnded = event
         ? new Date(event.endTime).getTime() < Date.now()
         : false;
+    const highlights = gallery.filter((m) => m.isHighlight);
 
     const scopedGuestDisplayName = slug ? getScopedGuestUserName(slug) : null;
     const uploaderDisplayName =
@@ -214,9 +215,12 @@ export default function EventPublicGallery() {
             />
 
             <HighlightsGrid
-                eventId={eventId}
+                highlights={highlights}
                 isHost={Boolean(user) ? isHost : false}
                 currentUserId={Boolean(user) ? currentUserId : ""}
+                onToggleHighlight={
+                    isHost ? handleToggleHighlight : undefined
+                }
             />
 
             <GalleryListSection

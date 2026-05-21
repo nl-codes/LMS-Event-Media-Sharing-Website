@@ -1,94 +1,22 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { getHighlights, updateMediaHighlight } from "@/lib/mediaApi";
+"use client";
+
+import React from "react";
 import type { Media } from "@/types/Media";
 import MediaCard from "./MediaCard";
-import toast from "react-hot-toast";
 
 interface HighlightsGridProps {
-    eventId: string;
+    highlights: Media[];
     isHost: boolean;
     currentUserId: string;
+    onToggleHighlight?: (mediaId: string, nextIsHighlight: boolean) => void;
 }
 
 const HighlightsGrid: React.FC<HighlightsGridProps> = ({
-    eventId,
+    highlights,
     isHost,
     currentUserId,
+    onToggleHighlight,
 }) => {
-    const [highlights, setHighlights] = useState<Media[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        // Note: We REMOVED setLoading(true) from here because
-        // the state already starts as 'true'.
-
-        async function fetchHighlights() {
-            try {
-                const data = await getHighlights(eventId);
-                if (isMounted) setHighlights(data);
-            } catch (err) {
-                if (isMounted) {
-                    const msg =
-                        err instanceof Error
-                            ? err.message
-                            : "Failed to load highlights";
-                    toast.error(msg);
-                }
-            } finally {
-                if (isMounted) setLoading(false);
-            }
-        }
-
-        fetchHighlights();
-
-        return () => {
-            isMounted = false; // Cleanup to prevent memory leaks/state updates on unmounted components
-        };
-    }, [eventId]);
-
-    // Host-only "Remove from highlight" toggle. Optimistically removes the
-    // item from this grid since once unhighlighted it shouldn't appear here.
-    // Rolls back if the server rejects.
-    const handleToggleHighlight = useCallback(
-        async (mediaId: string, nextIsHighlight: boolean) => {
-            let snapshot: Media[] = [];
-            setHighlights((prev) => {
-                snapshot = prev;
-                return nextIsHighlight
-                    ? prev.map((m) =>
-                          m._id === mediaId
-                              ? { ...m, isHighlight: true }
-                              : m,
-                      )
-                    : prev.filter((m) => m._id !== mediaId);
-            });
-
-            try {
-                await updateMediaHighlight(mediaId, nextIsHighlight);
-                toast.success(
-                    nextIsHighlight
-                        ? "Added to highlights"
-                        : "Removed from highlights",
-                );
-            } catch (err) {
-                setHighlights(snapshot);
-                toast.error(
-                    err instanceof Error
-                        ? err.message
-                        : "Failed to update highlight",
-                );
-            }
-        },
-        [],
-    );
-
-    if (loading)
-        return <div className="py-4 text-center">Loading highlights...</div>;
-
-    // It's often better to return null or a hidden state if there are no highlights
-    // so the "All Media" section below it moves up cleanly.
     if (!highlights.length) return null;
 
     return (
@@ -104,11 +32,8 @@ const HighlightsGrid: React.FC<HighlightsGridProps> = ({
                         isHost={isHost}
                         currentUserId={currentUserId}
                         disableLike={true}
-                        // A media item only enters this grid if it's already
-                        // highlighted, which itself implies the event ended
-                        // (the backend gate forbids highlights before then).
                         eventEnded={true}
-                        onToggleHighlight={handleToggleHighlight}
+                        onToggleHighlight={onToggleHighlight}
                     />
                 ))}
             </div>

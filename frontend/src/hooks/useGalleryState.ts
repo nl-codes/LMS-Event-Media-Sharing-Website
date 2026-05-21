@@ -3,11 +3,7 @@
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { useGallerySocket } from "@/hooks/useGallerySocket";
-import {
-    deleteMedia,
-    toggleLike,
-    updateMediaHighlight,
-} from "@/lib/mediaApi";
+import { deleteMedia, toggleLike, updateMediaHighlight } from "@/lib/mediaApi";
 import {
     normalizeLikedByIds,
     normalizeMediaLikes,
@@ -115,9 +111,7 @@ export function useGalleryState({
                 );
             } catch (err) {
                 setGallery(snapshot);
-                toast.error(
-                    err instanceof Error ? err.message : "Like failed",
-                );
+                toast.error(err instanceof Error ? err.message : "Like failed");
             }
         },
         [canLike, currentUserId],
@@ -139,11 +133,6 @@ export function useGalleryState({
 
             try {
                 await updateMediaHighlight(mediaId, nextIsHighlight);
-                toast.success(
-                    nextIsHighlight
-                        ? "Added to highlights"
-                        : "Removed from highlights",
-                );
             } catch (err) {
                 setGallery(snapshot);
                 toast.error(

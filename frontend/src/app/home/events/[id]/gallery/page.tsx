@@ -56,6 +56,7 @@ export default function HostGalleryPage() {
     const eventEnded = event
         ? new Date(event.endTime).getTime() < Date.now()
         : false;
+    const highlights = gallery.filter((m) => m.isHighlight);
 
     const fetchGallery = useCallback(async () => {
         try {
@@ -196,9 +197,10 @@ export default function HostGalleryPage() {
             />
 
             <HighlightsGrid
-                eventId={eventId}
+                highlights={highlights}
                 isHost={isHost}
                 currentUserId={currentUserId}
+                onToggleHighlight={handleToggleHighlight}
             />
 
             <GalleryListSection
