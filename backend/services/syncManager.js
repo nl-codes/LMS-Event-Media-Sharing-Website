@@ -3,6 +3,8 @@ import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
 import { getTierLimits } from "../constants/tierLimits.js";
+import { findEventsNeedingHighlights } from "./highlightService.js";
+import { enqueueHighlightJob } from "../queues/highlightQueue.js";
 
 const toObjectId = (value) => {
     if (!value) return null;
@@ -109,6 +111,32 @@ export const syncEventParticipantCounts = async () => {
     };
 };
 
+// Enqueue highlight generation for any paid event that has ended but never
+// had a successful pass. Idempotent thanks to highlightGenerationStatus +
+// the BullMQ jobId based on eventId.
+export const enqueueHighlightBacklog = async () => {
+    try {
+        const events = await findEventsNeedingHighlights();
+        let queued = 0;
+        for (const ev of events) {
+            console.log(`"${ev.eventName}" has been queued for highlight`);
+            try {
+                await enqueueHighlightJob({ eventId: String(ev._id) });
+                queued++;
+            } catch (err) {
+                console.warn(
+                    `[highlight] failed to enqueue ${ev._id}:`,
+                    err.message,
+                );
+            }
+        }
+        return { name: "highlightBacklog", matched: events.length, queued };
+    } catch (err) {
+        console.warn("[highlight] backlog scan failed:", err.message);
+        return { name: "highlightBacklog", error: err.message };
+    }
+};
+
 export const runStartupSync = async () => {
     const now = new Date();
     const results = [];
@@ -116,6 +144,7 @@ export const runStartupSync = async () => {
     results.push(await syncCompletedEvents(now));
     results.push(await syncExpiredEventUpgrades(now));
     results.push(await syncEventParticipantCounts());
+    results.push(await enqueueHighlightBacklog());
 
     console.table(results);
     return results;
