@@ -18,6 +18,7 @@ interface GalleryListSectionProps {
     onDelete: (mediaId: string) => void;
     onToggleHighlight?: (mediaId: string, nextIsHighlight: boolean) => void;
     eventEnded?: boolean;
+    mediaRetentionCompleted?: boolean;
 }
 
 export default function GalleryListSection({
@@ -33,6 +34,7 @@ export default function GalleryListSection({
     onDelete,
     onToggleHighlight,
     eventEnded,
+    mediaRetentionCompleted = false,
 }: GalleryListSectionProps) {
     const itemLabel = mediaItems.length === 1 ? "item" : "items";
 
@@ -71,7 +73,9 @@ export default function GalleryListSection({
                 </div>
             ) : !mediaItems.length ? (
                 <div className="py-10 text-center text-sm font-bold text-cusviolet/60">
-                    No media uploaded yet.
+                    {mediaRetentionCompleted
+                        ? "Media retention period is over. Media for this event has been permanently deleted."
+                        : "No media uploaded yet."}
                 </div>
             ) : (
                 <GalleryGrid
