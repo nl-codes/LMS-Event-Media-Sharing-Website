@@ -1,7 +1,7 @@
 "use client";
 
 import Button from "@/components/buttons/Button";
-import BackButton from "@/components/navigation/BackButton";
+import BackButton from "@/components/buttons/BackButton";
 import { Edit3, Images, QrCode, TrendingUp, Users, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Event } from "@/types/Event";
@@ -19,11 +19,7 @@ export default function EventHostActionButtons({
 
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between">
-            <BackButton
-                href="/home/events"
-                replace
-                label="Back to My Events"
-            />
+            <BackButton href="/home/events" replace label="Back to My Events" />
             <div className="flex flex-wrap items-center gap-3">
                 <Button
                     onClick={() =>
