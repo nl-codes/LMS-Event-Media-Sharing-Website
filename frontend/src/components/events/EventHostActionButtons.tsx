@@ -62,50 +62,40 @@ export default function EventHostActionButtons({
                 <Button
                     onClick={() =>
                         router.push(`/home/events/${event._id}/participants`)
-                    }
-                    className="flex items-center gap-2 bg-white border border-slate-200 text-cusblue px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all font-bold text-sm shadow-sm">
+                    }>
                     <Users className="w-4 h-4" /> Participants
                 </Button>
                 <Button
                     onClick={() =>
                         router.push(`/home/events/${event._id}/insights`)
-                    }
-                    className="flex items-center gap-2 bg-white border border-slate-200 text-cusblue px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all font-bold text-sm shadow-sm">
+                    }>
                     <TrendingUp className="w-4 h-4" /> Insights
                 </Button>
                 {!event.isPremium && (
                     <Button
                         onClick={() =>
                             router.push(`/home/events/${event._id}/upgrade`)
-                        }
-                        className="flex items-center gap-2 bg-linear-to-r from-cusblue to-cusviolet text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all font-bold text-sm">
+                        }>
                         <Zap className="w-4 h-4 fill-current" /> Upgrade
                     </Button>
                 )}
-                <Button
-                    onClick={() => setShowQR(true)}
-                    className="flex items-center gap-2 bg-white border border-slate-200 text-cusblue px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all font-bold text-sm shadow-sm">
+                <Button onClick={() => setShowQR(true)}>
                     <QrCode className="w-4 h-4" /> QR Code
                 </Button>
                 <Button
                     onClick={() =>
                         router.push(`/home/events/${event._id}/gallery`)
-                    }
-                    className="flex items-center gap-2 bg-white border border-slate-200 text-cusblue px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-all font-bold text-sm shadow-sm">
+                    }>
                     <Images className="w-4 h-4" /> Gallery
                 </Button>
                 <Button
                     onClick={() =>
                         router.push(`/home/events/${event._id}/edit`)
-                    }
-                    className="flex items-center gap-2 bg-cusblue text-white px-5 py-2.5 rounded-xl hover:opacity-90 transition-all font-bold text-sm shadow-md">
+                    }>
                     <Edit3 className="w-4 h-4" /> Edit
                 </Button>
                 {canFinish && (
-                    <Button
-                        handleClick={handleFinish}
-                        loading={finishing}
-                        className="flex items-center gap-2 bg-red-600 text-white px-5 py-2.5 rounded-xl hover:opacity-90 transition-all font-bold text-sm shadow-md">
+                    <Button onClick={handleFinish} loading={finishing}>
                         <CheckCircle2 className="w-4 h-4" /> Finish Event
                     </Button>
                 )}
