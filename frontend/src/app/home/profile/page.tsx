@@ -3,7 +3,7 @@ import ProfileCard from "./ProfileCard";
 import BackButton from "@/components/buttons/BackButton";
 
 export const metadata: Metadata = {
-    title: "View Profile | LMS 24",
+    title: "My Profile | LMS 24",
     description: "See your profile details",
 };
 

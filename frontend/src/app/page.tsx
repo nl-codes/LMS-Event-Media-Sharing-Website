@@ -1,5 +1,12 @@
+import { Metadata } from "next";
 import Image from "next/image";
 import HomeButtonsGroup from "../components/LandingPageButtonGroup";
+
+export const metadata: Metadata = {
+    title: "LMS 24 | Live Media Sharing",
+    description:
+        "Share event photos and videos instantly with LMS 24 live media galleries.",
+};
 
 export default function Home() {
     return (

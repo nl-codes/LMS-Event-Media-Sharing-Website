@@ -39,7 +39,8 @@ export const verifyUser = async ({ email, password }) => {
     if (!email || !password) {
         throw new Error("Email and Password required");
     }
-    const existingUser = await User.findOne({ email: email });
+    const emailLower = String(email).toLowerCase().trim();
+    const existingUser = await User.findOne({ email: emailLower });
 
     if (!existingUser) {
         throw new Error("Invalid email or password");
@@ -165,6 +166,12 @@ export const resetPassword = async (token, newPassword) => {
     if (!user) throw new Error("Invalid or expired token");
     if (user.password === newPassword)
         throw new Error("Can't use old password");
+
+    if (!passwordRegex.test(password)) {
+        throw new Error(
+            "Password must contain at least: 1 uppercase, 1 lowercase, 1 number and 1 special character",
+        );
+    }
 
     const salt = await bcrypt.genSalt();
     user.password = await bcrypt.hash(newPassword, salt);
