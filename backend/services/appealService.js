@@ -4,6 +4,10 @@ import { User } from "../models/userModel.js";
 import { makeError } from "../utils/helperFunctions.js";
 import { unsuspendUser } from "./adminService.js";
 import sendEmail from "../utils/sendEmail.js";
+import {
+    getAppealApprovedEmailHTML,
+    getAppealRejectedEmailHTML,
+} from "../utils/longText.js";
 
 const validateObjectId = (id, label) => {
     if (!mongoose.isValidObjectId(id)) {
@@ -98,10 +102,11 @@ export async function approveAppeal({ appealId, adminId, adminNote }) {
             appeal.userId.email,
             "Your appeal has been approved",
             `Hello ${appeal.userId.userName},\n\nGreat news! Your appeal to lift the suspension on your account has been approved.\n\nYou can now log in at: ${loginUrl}\n\n${note ? `Admin note: ${note}` : ""}`,
-            `<p>Hello <b>${appeal.userId.userName}</b>,</p>
-             <p>Great news! Your suspension appeal has been <b style="color:#16a34a">approved</b>.</p>
-             ${note ? `<p><b>Admin note:</b> ${note}</p>` : ""}
-             <p>You can now <a href="${loginUrl}">log in to your account</a>.</p>`,
+            getAppealApprovedEmailHTML(
+                appeal.userId.userName,
+                note,
+                loginUrl,
+            ),
         );
     } catch (err) {
         console.error("Failed to send appeal approval email:", err.message);
@@ -135,10 +140,7 @@ export async function rejectAppeal({ appealId, adminId, adminNote }) {
             appeal.userId.email,
             "Your appeal has been rejected",
             `Hello ${appeal.userId.userName},\n\nAfter review, your suspension appeal has been rejected.\n\n${note ? `Reason: ${note}` : ""}\n\nIf you have further questions, please contact support.`,
-            `<p>Hello <b>${appeal.userId.userName}</b>,</p>
-             <p>After careful review, your suspension appeal has been <b style="color:#dc2626">rejected</b>.</p>
-             ${note ? `<p><b>Reason:</b> ${note}</p>` : ""}
-             <p>If you believe this is a mistake, please contact support.</p>`,
+            getAppealRejectedEmailHTML(appeal.userId.userName, note),
         );
     } catch (err) {
         console.error("Failed to send appeal rejection email:", err.message);
