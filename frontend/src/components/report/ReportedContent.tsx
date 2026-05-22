@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import { Download } from "lucide-react";
 import { type Report } from "@/types/Report";
@@ -32,6 +33,7 @@ export type ReportedTarget = {
     userName?: string;
     email?: string;
     status?: string;
+    profilePicture?: string;
 };
 
 type Props = {
@@ -147,13 +149,45 @@ export default function ReportedContent({ report, target }: Props) {
                     </p>
                 </div>
             ) : report.targetType === "User" ? (
-                <div className="space-y-1">
-                    <p className="text-lg font-black text-cusblue">
-                        {target.userName}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                        {target.email} · {target.status}
-                    </p>
+                <div className="flex items-center gap-4">
+                    {target._id ? (
+                        <Link
+                            href={`/home/profile/${target._id}/others`}
+                            className="group flex items-center gap-4 rounded-2xl border border-cusblue/10 bg-cuscream/30 p-3 transition hover:border-cusblue/30 hover:bg-cuscream/60"
+                            title={`Open ${target.userName ?? "user"}'s profile`}>
+                            <UserAvatar
+                                src={target.profilePicture}
+                                name={target.userName}
+                                size="medium"
+                            />
+                            <div className="min-w-0 space-y-1">
+                                <p className="text-lg font-black text-cusblue group-hover:underline">
+                                    {target.userName || "Unknown user"}
+                                </p>
+                                <p className="text-sm text-slate-600">
+                                    {target.email}
+                                    {target.status ? ` · ${target.status}` : ""}
+                                </p>
+                            </div>
+                        </Link>
+                    ) : (
+                        <div className="flex items-center gap-4">
+                            <UserAvatar
+                                src={target.profilePicture}
+                                name={target.userName}
+                                size="medium"
+                            />
+                            <div className="space-y-1">
+                                <p className="text-lg font-black text-cusblue">
+                                    {target.userName || "Unknown user"}
+                                </p>
+                                <p className="text-sm text-slate-600">
+                                    {target.email}
+                                    {target.status ? ` · ${target.status}` : ""}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : null}
         </section>
