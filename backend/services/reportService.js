@@ -3,6 +3,7 @@ import Report from "../models/reportModel.js";
 import Media from "../models/mediaModel.js";
 import Interaction from "../models/interactionModel.js";
 import { User } from "../models/userModel.js";
+import { Profile } from "../models/profileModel.js";
 import { makeError } from "../utils/helperFunctions.js";
 import { createNotification } from "./notificationService.js";
 import { suspendUser } from "./adminService.js";
@@ -135,9 +136,16 @@ export async function getReportById(reportId) {
                 "userName email",
             );
         } else if (report.targetType === "User") {
-            targetDoc = await Model.findById(report.targetId).select(
-                "userName email status",
-            );
+            const userDoc = await Model.findById(report.targetId)
+                .select("userName email status")
+                .lean();
+            if (userDoc) {
+                const profile = await Profile.findOne({ user: userDoc._id })
+                    .select("profilePicture")
+                    .lean();
+                userDoc.profilePicture = profile?.profilePicture || "";
+            }
+            targetDoc = userDoc;
         }
     }
 
