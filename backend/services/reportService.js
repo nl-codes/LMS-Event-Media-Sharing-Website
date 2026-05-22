@@ -8,6 +8,7 @@ import { makeError } from "../utils/helperFunctions.js";
 import { createNotification } from "./notificationService.js";
 import { suspendUser } from "./adminService.js";
 import sendEmail from "../utils/sendEmail.js";
+import { getSuspensionEmailHTML } from "../utils/longText.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 
 const TARGET_MODELS = {
@@ -241,10 +242,7 @@ async function performSuspendUser(report, admin, reasoning) {
                 user.email,
                 "Your account has been suspended",
                 `Hello ${user.userName},\n\nYour account has been suspended for the following reason:\n${reasoning}\n\nYou may appeal at: ${appealUrl}`,
-                `<p>Hello <b>${user.userName}</b>,</p>
-                 <p>Your account has been suspended for the following reason:</p>
-                 <blockquote>${reasoning}</blockquote>
-                 <p>If you believe this was a mistake, you can <a href="${appealUrl}">file an appeal</a>.</p>`,
+                getSuspensionEmailHTML(user.userName, reasoning, appealUrl),
             );
         } catch (err) {
             console.error("Failed to send suspension email:", err.message);
