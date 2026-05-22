@@ -20,7 +20,7 @@ export async function registerAdmin({ userName, email, password }) {
         throw makeError(400, "userName, email, and password are required");
     }
 
-    const emailLower = String(email).toLowerCase();
+    const emailLower = String(email).toLowerCase().trim();
     const existingUser = await User.findOne({ email: emailLower });
     if (existingUser) {
         throw makeError(409, "Email already registered");
@@ -43,7 +43,9 @@ export async function verifyAdminCredentials({ email, password, otp }) {
     if (!email || !password)
         throw makeError(400, "Email and Password required");
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const emailLower = String(email).toLowerCase().trim();
+
+    const user = await User.findOne({ email: emailLower });
     if (!user) throw makeError(400, "Invalid email or password");
 
     // Role and Status Checks
