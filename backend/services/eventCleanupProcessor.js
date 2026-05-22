@@ -2,8 +2,19 @@ import cloudinary from "../config/cloudinaryConfig.js";
 import Media from "../models/mediaModel.js";
 import Interaction from "../models/interactionModel.js";
 
-// Cloudinary's prefix delete cap is 100 assets per call. We page through if
-// needed. Resource type matters — videos and images live under separate APIs.
+/**
+ * @module services/eventCleanupProcessor
+ * @description BullMQ worker that purges Media + Interactions + Cloudinary
+ * assets AFTER the parent Event row has been deleted by
+ * {@link module:services/eventService}.
+ */
+
+/**
+ * Paged Cloudinary delete under `events/<id>/`, including the thumbnail
+ * subfolder, then drop the now-empty folders.
+ * @param {string} eventId
+ * @returns {Promise<{ image: number, video: number, folderRemoved: boolean }>}
+ */
 const purgeCloudinaryFolder = async (eventId) => {
     const folder = `events/${eventId}`;
     const summary = { image: 0, video: 0, folderRemoved: false };
@@ -54,11 +65,11 @@ const purgeCloudinaryFolder = async (eventId) => {
     return summary;
 };
 
-// Worker entrypoint. Deletes everything tied to a previously-removed event:
-// Media docs, Interaction docs against those Media, and Cloudinary assets.
-//
-// Idempotent: if the job runs twice on the same eventId, the second pass
-// finds zero of everything and exits cleanly.
+/**
+ * Worker entrypoint. Idempotent: a re-run finds nothing and exits cleanly.
+ * @param {import("bullmq").Job<{ eventId: string }>} job
+ * @returns {Promise<{ eventId: string, mediaDeleted: number, interactionsDeleted: number, cloudinary: { image: number, video: number, folderRemoved: boolean } }>}
+ */
 export const processEventCleanupJob = async (job) => {
     const { eventId } = job.data;
 

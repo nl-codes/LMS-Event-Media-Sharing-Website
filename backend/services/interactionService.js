@@ -3,12 +3,25 @@ import Interaction from "../models/interactionModel.js";
 import Media from "../models/mediaModel.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 
+/**
+ * @module services/interactionService
+ * @description Comments + likes against Media. Like uniqueness is enforced
+ * by the DB-level partial unique index; {@link toggleLike} wraps in a
+ * transaction with a standalone-Mongo fallback.
+ */
+
 const validateObjectId = (id, label) => {
     if (!mongoose.isValidObjectId(id)) {
         throw new Error(`Invalid ${label}`);
     }
 };
 
+/**
+ * Persist a comment against a media row.
+ * @param {{ content: string, authorId: string, mediaId: string }} input
+ * @returns {Promise<object>} Saved comment with author populated.
+ * @throws {Error} On invalid ids, empty content, or missing media.
+ */
 export const addComment = async ({ content, authorId, mediaId }) => {
     validateObjectId(authorId, "authorId");
     validateObjectId(mediaId, "mediaId");
@@ -84,6 +97,13 @@ const toggleLikeOperation = async ({ authorId, mediaId, session = null }) => {
     };
 };
 
+/**
+ * Atomic like/unlike toggle. Uses a Mongo transaction; falls back to a
+ * non-transactional path on standalone deployments.
+ * @param {{ mediaId: string, authorId: string }} input
+ * @returns {Promise<{ mediaId: string, eventId: string, userId: string, liked: boolean, likesCount: number }>}
+ * @throws {Error} On invalid ids or missing media.
+ */
 export const toggleLike = async ({ mediaId, authorId }) => {
     validateObjectId(authorId, "author id");
     validateObjectId(mediaId, "media id");
@@ -111,6 +131,13 @@ export const toggleLike = async ({ mediaId, authorId }) => {
     }
 };
 
+/**
+ * List interactions for a media row, newest first.
+ * @param {string} mediaId
+ * @param {"comment"|"like"} [type="comment"]
+ * @returns {Promise<object[]>}
+ * @throws {Error} On invalid id, invalid type, or missing media.
+ */
 export const getInteractionsByMediaId = async (mediaId, type = "comment") => {
     validateObjectId(mediaId, "media id");
 
@@ -129,6 +156,12 @@ export const getInteractionsByMediaId = async (mediaId, type = "comment") => {
     return attachAvatars(interactions, ["author"]);
 };
 
+/**
+ * Author-self edit of a comment's content.
+ * @param {{ commentId: string, authorId: string, content: string }} input
+ * @returns {Promise<object>} Updated comment with author populated.
+ * @throws {Error} On missing comment, empty content, or non-author requester.
+ */
 export const editComment = async ({ commentId, authorId, content }) => {
     validateObjectId(commentId, "comment id");
     validateObjectId(authorId, "author id");
@@ -157,6 +190,13 @@ export const editComment = async ({ commentId, authorId, content }) => {
     return attachAvatars(populated, ["author"]);
 };
 
+/**
+ * Author-self delete of a comment. Admin-driven deletes use
+ * {@link module:services/reportService}.
+ * @param {{ commentId: string, authorId: string }} input
+ * @returns {Promise<{ deletedId: string }>}
+ * @throws {Error} On missing comment or non-author requester.
+ */
 export const deleteComment = async ({ commentId, authorId }) => {
     validateObjectId(commentId, "comment id");
     validateObjectId(authorId, "author id");

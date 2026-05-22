@@ -9,6 +9,13 @@ import { Event } from "../models/eventModel.js";
 import { getIO } from "../config/socketConfig.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 
+/**
+ * @module services/videoProcessor
+ * @description BullMQ worker that transcodes uploaded videos (ffmpeg →
+ * libx264 + faststart), uploads to Cloudinary, persists the Media row,
+ * and emits a `new_media` socket event.
+ */
+
 const execFileAsync = promisify(execFile);
 
 // Matches the spec exactly:
@@ -59,8 +66,11 @@ const uploadToCloudinary = (filePath, eventId) =>
         );
     });
 
-// Worker entrypoint. Receives the BullMQ job; on success creates the Media doc
-// and emits new_media so the gallery updates without a refresh.
+/**
+ * Worker entrypoint. Transcodes, uploads, persists, and emits.
+ * @param {import("bullmq").Job<{ inputPath: string, eventId: string, uploaderId?: string, guestId?: string }>} job
+ * @returns {Promise<{ mediaId: import("mongoose").Types.ObjectId, publicId: string }>}
+ */
 export const processVideoJob = async (job) => {
     const { inputPath, eventId, uploaderId, guestId } = job.data;
     const outputPath = `${inputPath}.processed.mp4`;
@@ -116,8 +126,12 @@ export const processVideoJob = async (job) => {
     }
 };
 
-// Sanity check at boot — if ffmpeg-static didn't resolve a binary we should
-// know before the first upload, not when the first job runs.
+/**
+ * Boot-time sanity check that ffmpeg-static resolved a usable binary.
+ * Surfaces missing ffmpeg at server start rather than on first upload.
+ * @returns {Promise<string>} The resolved ffmpeg binary path.
+ * @throws {Error} If ffmpeg-static didn't resolve or the file is missing.
+ */
 export const verifyFfmpegAvailable = async () => {
     if (!ffmpegPath) {
         throw new Error("ffmpeg-static did not resolve a binary path");

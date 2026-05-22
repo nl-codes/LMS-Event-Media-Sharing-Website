@@ -5,6 +5,30 @@ import { EventMembership } from "../models/eventMembershipModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 
+/**
+ * @module services/profileService
+ * @description Profile CRUD + the public-profile view. Replacing a profile
+ * picture destroys the previous Cloudinary asset; suspended users 404 on
+ * the public view.
+ */
+
+/**
+ * @typedef {object} ProfileInput
+ * @property {string} [firstName]
+ * @property {string} [lastName]
+ * @property {string} [bio]
+ * @property {string} [profilePicture]
+ * @property {string} [gender]
+ * @property {string} [country]
+ */
+
+/**
+ * Create a Profile bound to a User. Fails if one already exists (1:1).
+ * @param {string} userId
+ * @param {ProfileInput} profileData
+ * @returns {Promise<import("mongoose").Document>} The saved profile.
+ * @throws {Error} If user missing or profile already exists.
+ */
 export const createProfile = async (userId, profileData) => {
     const user = await User.findById(userId);
     if (!user) throw new Error("User not found");
@@ -28,6 +52,12 @@ export const createProfile = async (userId, profileData) => {
     return await newProfile.save();
 };
 
+/**
+ * Fetch the caller's own Profile with User populated.
+ * @param {string} userId
+ * @returns {Promise<import("mongoose").Document>}
+ * @throws {Error} If no profile exists for the user.
+ */
 export const getProfile = async (userId) => {
     const profile = await Profile.findOne({ user: userId }).populate(
         "user",
@@ -37,6 +67,15 @@ export const getProfile = async (userId) => {
     return profile;
 };
 
+/**
+ * Patch profile fields; on `newImageUrl`, destroys the previous Cloudinary
+ * asset before saving the new URL.
+ * @param {string} userId
+ * @param {ProfileInput} updateData
+ * @param {string} [newImageUrl] New Cloudinary URL for the avatar.
+ * @returns {Promise<import("mongoose").Document>} Updated profile.
+ * @throws {Error} If no profile exists.
+ */
 export const updateProfile = async (userId, updateData, newImageUrl) => {
     const profile = await Profile.findOne({ user: userId });
     if (!profile) throw new Error("Profile not found");
@@ -63,6 +102,13 @@ export const updateProfile = async (userId, updateData, newImageUrl) => {
     return await profile.save();
 };
 
+/**
+ * Public profile view: user header, profile fields, recent created and
+ * joined events (joined events exclude the host's own events).
+ * @param {string} userId
+ * @returns {Promise<{ user: object, profile: object|null, createdEvents: object[], joinedEvents: object[] }>}
+ * @throws {Error} If the user is missing or suspended.
+ */
 export const getPublicProfile = async (userId) => {
     const user = await User.findById(userId).select("userName createdAt status");
     if (!user || user.status === "suspended") throw new Error("User not found");
@@ -93,6 +139,12 @@ export const getPublicProfile = async (userId) => {
     return { user, profile, createdEvents, joinedEvents };
 };
 
+/**
+ * Delete the user's profile, destroying any Cloudinary avatar first.
+ * @param {string} userId
+ * @returns {Promise<void>}
+ * @throws {Error} If no profile exists.
+ */
 export const deleteProfile = async (userId) => {
     const profile = await Profile.findOne({ user: userId });
     if (!profile) throw new Error("Profile not found");

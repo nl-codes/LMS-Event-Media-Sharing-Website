@@ -6,6 +6,13 @@ import { Guest } from "../models/guestModel.js";
 import Media from "../models/mediaModel.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 
+/**
+ * @module services/analyticsService
+ * @description Powers platform-wide growth charts and per-event host
+ * insights. All bucketing is UTC; `fillGaps` ensures dense series for the
+ * chart.
+ */
+
 const RANGE_CONFIG = {
     last7days: { days: 7, granularity: "day" },
     last30days: { days: 30, granularity: "day" },
@@ -96,9 +103,26 @@ const aggregateCountsOverTime = async (Model, range, filter = {}) => {
     };
 };
 
+/**
+ * Platform-wide user-growth chart.
+ * @param {keyof typeof RANGE_CONFIG} range
+ * @returns {Promise<{ granularity: string, range: string, data: Array<{date: string, count: number}> }>}
+ */
 export const getUserGrowth = (range) =>
     aggregateCountsOverTime(User, range, { role: "user" });
+
+/**
+ * Platform-wide event-growth chart.
+ * @param {keyof typeof RANGE_CONFIG} range
+ * @returns {Promise<{ granularity: string, range: string, data: Array<{date: string, count: number}> }>}
+ */
 export const getEventGrowth = (range) => aggregateCountsOverTime(Event, range);
+
+/**
+ * Platform-wide media-growth chart.
+ * @param {keyof typeof RANGE_CONFIG} range
+ * @returns {Promise<{ granularity: string, range: string, data: Array<{date: string, count: number}> }>}
+ */
 export const getMediaGrowth = (range) => aggregateCountsOverTime(Media, range);
 
 // Pick daily buckets for short windows, monthly for long ones (>90 days),
@@ -185,6 +209,13 @@ const aggregateMediaInWindow = async (eventId, from, to, granularity) => {
     };
 };
 
+/**
+ * Per-event host insights: total members + media plus daily/monthly
+ * timeseries for the event's start→end window (clamped to now if live).
+ * @param {string} eventId
+ * @returns {Promise<{ event: object, host: object|null, totals: { members: number, media: number }, window: { from: string, to: string, granularity: string }, members: object, media: object }>}
+ * @throws {Error} 404 if event missing.
+ */
 export const getEventInsights = async (eventId) => {
     const event = await Event.findById(eventId)
         .select("eventName hostId startTime endTime status tier")

@@ -4,6 +4,19 @@ import crypto from "crypto";
 import { generateGeneralToken } from "../utils/generateToken.js";
 import { passwordRegex } from "../utils/validators.js";
 
+/**
+ * @module services/userService
+ * @description End-user auth: signup, login, activation + password reset.
+ * Tokens are stored hashed; only plaintext is emailed. Resend/reset are
+ * capped at 3/day.
+ */
+
+/**
+ * Create a pending user. Password is bcrypt-hashed; email is lowercased.
+ * @param {{ userName: string, email: string, password: string }} input
+ * @returns {Promise<import("mongoose").Document>} The saved User doc.
+ * @throws {Error} On missing fields, duplicate email, or weak password.
+ */
 export const addUsers = async ({ userName, email, password }) => {
     if (!userName || !email || !password) {
         throw new Error("Missing required fields");
@@ -35,6 +48,12 @@ export const addUsers = async ({ userName, email, password }) => {
     return await newUser.save();
 };
 
+/**
+ * Verify login credentials and account status.
+ * @param {{ email: string, password: string }} input
+ * @returns {Promise<import("mongoose").Document>} The matched User doc.
+ * @throws {Error} On bad credentials, pending activation, or suspension.
+ */
 export const verifyUser = async ({ email, password }) => {
     if (!email || !password) {
         throw new Error("Email and Password required");
@@ -65,6 +84,14 @@ export const verifyUser = async ({ email, password }) => {
     return existingUser;
 };
 
+/**
+ * Consume a plaintext activation token: hashes it, matches the User row,
+ * flips status to "active", and wipes the token + resend counters so the
+ * link is one-shot.
+ * @param {string} token Plaintext token from the activation email.
+ * @returns {Promise<void>}
+ * @throws {Error} If the token is invalid or expired.
+ */
 export const verifyUserActivationToken = async (token) => {
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
@@ -83,6 +110,14 @@ export const verifyUserActivationToken = async (token) => {
     await user.save();
 };
 
+/**
+ * Issue a fresh activation token for a still-pending account.
+ * Rate-limited to 3 emails per calendar day.
+ * @param {string} email
+ * @returns {Promise<{ user: import("mongoose").Document, token: string }>}
+ *   The user doc and the plaintext token for the controller to email.
+ * @throws {Error} If the user is missing, already active, or over the cap.
+ */
 export const resendActivationToken = async (email) => {
     const user = await User.findOne({ email });
     if (!user) throw new Error("User not found.");
@@ -125,6 +160,14 @@ export const resendActivationToken = async (email) => {
     return { user, token };
 };
 
+/**
+ * Issue a one-shot password-reset token for an active account.
+ * Rate-limited to 3 emails per calendar day.
+ * @param {string} email
+ * @returns {Promise<{ user: import("mongoose").Document, token: string }>}
+ *   The user doc and plaintext token for the controller to email.
+ * @throws {Error} If the user is missing, not active, or over the cap.
+ */
 export const requestPasswordReset = async (email) => {
     const user = await User.findOne({ email });
     if (!user) throw new Error("User not found");
@@ -155,6 +198,14 @@ export const requestPasswordReset = async (email) => {
     return { user, token };
 };
 
+/**
+ * Consume a reset token and persist a new bcrypt-hashed password. Wipes
+ * the token + rate-limit bookkeeping on success.
+ * @param {string} token Plaintext token from the reset email.
+ * @param {string} newPassword Must satisfy passwordRegex.
+ * @returns {Promise<void>}
+ * @throws {Error} On invalid/expired token, password reuse, or weak password.
+ */
 export const resetPassword = async (token, newPassword) => {
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 

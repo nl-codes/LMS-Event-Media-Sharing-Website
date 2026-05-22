@@ -8,11 +8,23 @@ import { enqueueHighlightJob } from "../queues/highlightQueue.js";
 import { findEventsNeedingMediaDeletion } from "./mediaRetentionService.js";
 import { enqueueMediaRetentionJob } from "../queues/mediaRetentionQueue.js";
 
+/**
+ * @module services/syncManager
+ * @description Periodic event-lifecycle reconciliation. Runs at boot via
+ * {@link runStartupSync} and on the 5-minute event-sync tick. All
+ * helpers are idempotent.
+ */
+
 const toObjectId = (value) => {
     if (!value) return null;
     new mongoose.Types.ObjectId(String(value));
 };
 
+/**
+ * Flip Active events whose endTime has passed to Completed.
+ * @param {Date} [now=new Date()]
+ * @returns {Promise<{ name: string, matchedCount: number, modifiedCount: number }>}
+ */
 export const syncCompletedEvents = async (now = new Date()) => {
     const result = await Event.updateMany(
         {
@@ -33,6 +45,12 @@ export const syncCompletedEvents = async (now = new Date()) => {
     };
 };
 
+/**
+ * Revert premium events whose `expiresAt` has passed back to free and
+ * reset their uploadLimit.
+ * @param {Date} [now=new Date()]
+ * @returns {Promise<{ name: string, matchedCount: number, modifiedCount: number }>}
+ */
 export const syncExpiredEventUpgrades = async (now = new Date()) => {
     const result = await Event.updateMany(
         {
@@ -72,6 +90,11 @@ const getCountsByEvent = async (Model) => {
     }, new Map());
 };
 
+/**
+ * Recompute `Event.participantCount` (registered members + guests) for
+ * every event, zeroing out those with no participants.
+ * @returns {Promise<{ name: string, matchedCount: number, modifiedCount: number }>}
+ */
 export const syncEventParticipantCounts = async () => {
     const [memberCounts, guestCounts] = await Promise.all([
         getCountsByEvent(EventMembership),
@@ -113,9 +136,11 @@ export const syncEventParticipantCounts = async () => {
     };
 };
 
-// Enqueue highlight generation for any paid event that has ended but never
-// had a successful pass. Idempotent thanks to highlightGenerationStatus +
-// the BullMQ jobId based on eventId.
+/**
+ * Enqueue highlight-generation jobs for any paid+ended events that need
+ * them. Idempotent via highlightGenerationStatus + jobId.
+ * @returns {Promise<{ name: string, matched?: number, queued?: number, error?: string }>}
+ */
 export const enqueueHighlightBacklog = async () => {
     try {
         const events = await findEventsNeedingHighlights();
@@ -139,9 +164,11 @@ export const enqueueHighlightBacklog = async () => {
     }
 };
 
-// Enqueue media-retention cleanup for any event whose deletion deadline has
-// passed and whose cleanup hasn't completed yet. Idempotent thanks to
-// mediaDeletionStatus + the BullMQ jobId based on eventId.
+/**
+ * Enqueue media-retention cleanup for events past their tier-derived
+ * deletion deadline. Idempotent via mediaDeletionStatus.
+ * @returns {Promise<{ name: string, matched?: number, queued?: number, error?: string }>}
+ */
 export const enqueueMediaRetentionBacklog = async () => {
     try {
         const events = await findEventsNeedingMediaDeletion();
@@ -164,6 +191,11 @@ export const enqueueMediaRetentionBacklog = async () => {
     }
 };
 
+/**
+ * Boot-time reconciliation. Runs every helper above in order and logs a
+ * table summary.
+ * @returns {Promise<object[]>}
+ */
 export const runStartupSync = async () => {
     const now = new Date();
     const results = [];

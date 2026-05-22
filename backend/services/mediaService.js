@@ -8,6 +8,18 @@ import { getTierLimits } from "../constants/tierLimits.js";
 import { compressImageBuffer } from "../utils/imageCompression.js";
 import { isEventFinished } from "../utils/eventDuration.js";
 
+/**
+ * @module services/mediaService
+ * @description Media CRUD, Cloudinary upload, gallery reads, and the
+ * upload-gate (tier caps + event status). Every read decorates results
+ * with `{ likesCount, likedBy }` via {@link attachLikeMetadata}.
+ */
+
+/**
+ * Decorate Media doc(s) with aggregated likesCount + likedBy ids.
+ * @param {object|object[]} mediaDocs
+ * @returns {Promise<object|object[]>} Same shape, enriched.
+ */
 const attachLikeMetadata = async (mediaDocs) => {
     const docs = Array.isArray(mediaDocs) ? mediaDocs : [mediaDocs];
     if (docs.length === 0) return mediaDocs;
@@ -68,6 +80,16 @@ const ensureEventExists = async (eventId) => {
 };
 
 // Upload multiple files to Cloudinary and save them to DB
+/**
+ * Authoritative upload gate. Validates event status/window and tier cap,
+ * then uploads each file to Cloudinary and persists Media rows.
+ * @param {string} eventId
+ * @param {string|null} uploaderId Registered uploader, or null for guests.
+ * @param {string|null} guestId Guest uploader, or null for users.
+ * @param {Array<{ buffer: Buffer, mimetype: string, originalname?: string }>} files
+ * @returns {Promise<{ uploaded: object[], pending: object[], hasVideos: boolean }>}
+ * @throws {Error} On bad event status, capacity overflow, or upload failure.
+ */
 export const uploadMultipleMedia = async (
     eventId,
     uploaderId,
@@ -211,6 +233,12 @@ export const uploadMultipleMedia = async (
 };
 
 // Get all media for an event
+/**
+ * Gallery for an event (visible media only, newest first), decorated
+ * with like metadata.
+ * @param {string} eventId
+ * @returns {Promise<object[]>}
+ */
 export const getGallery = async (eventId) => {
     await ensureEventExists(eventId);
 
@@ -238,6 +266,12 @@ const decodeCursor = (cursor) => {
     return { createdAt: date, id };
 };
 
+/**
+ * Public explore feed: paginated newest-first across all isPublic, non-hidden
+ * media.
+ * @param {{ cursor?: string, limit?: number }} [opts]
+ * @returns {Promise<{ items: object[], nextCursor: string|null }>}
+ */
 export const getExploreMedia = async ({ cursor, limit } = {}) => {
     const cappedLimit = Math.min(
         Math.max(parseInt(limit, 10) || DEFAULT_EXPLORE_LIMIT, 1),
@@ -278,6 +312,12 @@ export const getExploreMedia = async ({ cursor, limit } = {}) => {
     };
 };
 
+/**
+ * Fetch a single Media doc with like metadata + uploader avatar attached.
+ * @param {string} mediaId
+ * @returns {Promise<object>}
+ * @throws {Error} If missing.
+ */
 export const getMediaById = async (mediaId) => {
     const media = await Media.findById(mediaId)
         .populate("eventId", "eventName uniqueSlug")
@@ -290,6 +330,14 @@ export const getMediaById = async (mediaId) => {
 };
 
 // Delete a media item
+/**
+ * Delete a single Media doc + its Cloudinary asset. Allowed for the
+ * uploader or the event host.
+ * @param {string} mediaId
+ * @param {string} requesterId
+ * @returns {Promise<{ deletedId: string }>}
+ * @throws {Error} 404 if missing, 403 if not uploader/host.
+ */
 export const deleteMedia = async (mediaId, requesterId) => {
     const media = await Media.findById(mediaId);
     if (!media) throw new Error("Media not found");
@@ -316,6 +364,13 @@ export const deleteMedia = async (mediaId, requesterId) => {
 };
 
 // Delete multiple media items (Host Or Uploader)
+/**
+ * Bulk delete with the same auth rules as {@link deleteMedia}.
+ * @param {string[]} mediaIds
+ * @param {string} requesterId
+ * @returns {Promise<{ deletedIds: string[] }>}
+ * @throws {Error} If a row in the set is not owned by the requester or host.
+ */
 export const deleteMultipleMedia = async (mediaIds, requesterId) => {
     if (!requesterId) throw new Error("Authentication required");
 
@@ -395,6 +450,11 @@ export const deleteMultipleMedia = async (mediaIds, requesterId) => {
 };
 
 // Get highlights for an event
+/**
+ * Highlight-marked media for an event, like-metadata-enriched.
+ * @param {string} eventId
+ * @returns {Promise<object[]>}
+ */
 export const getHighlights = async (eventId) => {
     await ensureEventExists(eventId);
 
@@ -408,6 +468,12 @@ export const getHighlights = async (eventId) => {
 };
 
 // Delete all media for an event (auto-deletion)
+/**
+ * Wipe every Media row for an event. Used by event cleanup; does NOT
+ * touch Cloudinary (that's handled by the cleanup processor).
+ * @param {string} eventId
+ * @returns {Promise<{ deletedCount: number }>}
+ */
 export const deleteAllMediaForEvent = async (eventId) => {
     const mediaList = await Media.find({ eventId });
     for (const media of mediaList) {
@@ -423,6 +489,13 @@ export const deleteAllMediaForEvent = async (eventId) => {
 };
 
 // Tier usage snapshot for an event (used by upload UI)
+/**
+ * Capacity snapshot for the upload UI: used / max files, per-tier video
+ * + size limits.
+ * @param {string} eventId
+ * @returns {Promise<{ tier: string, used: number, maxFiles: number, remaining: number, maxFileSizeBytes: number, atCapacity: boolean, allowsVideo: boolean, maxVideoBytes: number, maxVideoSeconds: number }>}
+ * @throws {Error} 404 if event missing.
+ */
 export const getEventUsage = async (eventId) => {
     if (!mongoose.isValidObjectId(eventId)) {
         throw new Error("Event not found");
@@ -448,6 +521,15 @@ export const getEventUsage = async (eventId) => {
     };
 };
 
+/**
+ * Host-only highlight toggle for image media. Requires the event to be
+ * finished (status or endTime).
+ * @param {string} mediaId
+ * @param {boolean} isHighlight
+ * @param {string} requesterId Must be event.hostId.
+ * @returns {Promise<{ _id: string, isHighlight: boolean }>}
+ * @throws {Error} 404 missing, 403 non-host, 400 if event live or media non-image.
+ */
 export const updateMediaHighlight = async (
     mediaId,
     isHighlight,
@@ -497,7 +579,15 @@ export const updateMediaHighlight = async (
     return { _id: String(media._id), isHighlight: media.isHighlight };
 };
 
-// Set label on media (host only)
+/**
+ * Host-only caption/label on a media row.
+ * @param {string} mediaId
+ * @param {string} label
+ * @param {string} hostId Must match Event.hostId for the parent event.
+ * @param {string} eventId
+ * @returns {Promise<import("mongoose").Document>} Updated media.
+ * @throws {Error} If event/media missing or hostId mismatch.
+ */
 export const setMediaLabel = async (mediaId, label, hostId, eventId) => {
     // Verify hostId is the host of eventId
     const event = await Event.findById(eventId);

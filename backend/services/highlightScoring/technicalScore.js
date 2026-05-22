@@ -1,14 +1,20 @@
 import sharp from "sharp";
 
-// Scoring weights kept here so the rest of the pipeline doesn't have magic numbers scattered around.
+/**
+ * @module services/highlightScoring/technicalScore
+ * @description Brightness scorer (one of three highlight signals).
+ */
+
 const BRIGHTNESS_WEIGHT = 20;
 const BRIGHTNESS_MIN_PCT = 40;
 const BRIGHTNESS_MAX_PCT = 80;
 
-// Lightweight brightness analysis on a small grayscale thumbnail. Returns
-// { brightnessPercent, brightnessScore } so the scorer can report both the
-// raw signal and the contribution to the total score.
-//
+/**
+ * Compute mean luma on a 64×64 grayscale thumbnail and award the full
+ * weight only when brightness is in the well-exposed band.
+ * @param {Buffer} imageBuffer
+ * @returns {Promise<{ brightnessPercent: number, brightnessScore: number }>}
+ */
 export const scoreTechnical = async (imageBuffer) => {
     try {
         const { data, info } = await sharp(imageBuffer)

@@ -1,6 +1,20 @@
 import { User } from "../models/userModel.js";
 import { makeError, safeUserForAdmin } from "../utils/helperFunctions.js";
 
+/**
+ * @module services/superAdminService
+ * @description Superadmin-only operations on admin accounts: approve,
+ * list, suspend, unsuspend. Admin-on-user moderation lives in
+ * {@link module:services/adminService}.
+ */
+
+/**
+ * Approve a pending admin request. Promotes status to "active" if still
+ * pending.
+ * @param {string} adminId
+ * @returns {Promise<object>} Sanitised admin user (safeUserForAdmin).
+ * @throws {Error} If the target is missing or not an admin.
+ */
 export const approveAdminUser = async (adminId) => {
     const requestedAdmin = await User.findById(adminId);
 
@@ -19,6 +33,11 @@ export const approveAdminUser = async (adminId) => {
     return await safeUserForAdmin(approvedAdmin);
 };
 
+/**
+ * List admins for the superadmin dashboard.
+ * @param {string} [searchTerm] Substring against userName/email.
+ * @returns {Promise<import("mongoose").Document[]>} Up to 500 admins, newest first.
+ */
 export const getAdminsList = async (searchTerm) => {
     const q = { role: "admin" };
     if (searchTerm) {
@@ -36,6 +55,13 @@ export const getAdminsList = async (searchTerm) => {
     return filteredAdmin;
 };
 
+/**
+ * Suspend an admin account.
+ * @param {string} adminId
+ * @param {string} suspensionReason Required, non-empty.
+ * @returns {Promise<import("mongoose").Document>} The updated admin.
+ * @throws {Error} 404 if missing, 400 if non-admin, pending, or already suspended.
+ */
 export const suspendAdmin = async (adminId, suspensionReason) => {
     const target = await User.findById(adminId);
 
@@ -70,6 +96,13 @@ export const suspendAdmin = async (adminId, suspensionReason) => {
     );
 };
 
+/**
+ * Lift an admin suspension. Restores adminRequestStatus to "approved".
+ * @param {string} adminId
+ * @param {string} upliftReason Required, non-empty.
+ * @returns {Promise<import("mongoose").Document>} The updated admin.
+ * @throws {Error} 404 if missing, 400 if non-admin, pending, or not suspended.
+ */
 export const unsuspendAdmin = async (adminId, upliftReason) => {
     const target = await User.findById(adminId);
 

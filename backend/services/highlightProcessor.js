@@ -9,6 +9,13 @@ import { scoreTechnical } from "./highlightScoring/technicalScore.js";
 import { scoreFace } from "./highlightScoring/faceScore.js";
 import { scoreVibe } from "./highlightScoring/vibeScore.js";
 
+/**
+ * @module services/highlightProcessor
+ * @description BullMQ worker that scores an event's images (technical +
+ * face + vibe), selects the top N, and writes the highlight selection.
+ * Concurrency 1; failed images are sentinel-scored so they sort last.
+ */
+
 // CPU-bound scorers; keep this small. Each "slot" downloads + Sharps + runs
 // CLIP inference, which is heavy on its own. Concurrency 1 is intentional:
 // two simultaneous CLIP forward passes on onnxruntime-node contend for the
@@ -82,8 +89,11 @@ const scoreOne = async (media) => {
     }
 };
 
-// Worker entrypoint. Returns a result object summarizing what happened, which
-// BullMQ surfaces in the completed-job log.
+/**
+ * Worker entrypoint. Returns a summary surfaced in the completed-job log.
+ * @param {import("bullmq").Job<{ eventId: string }>} job
+ * @returns {Promise<{ eventId: string, skipped?: boolean, reason?: string, tier?: string, totalImages?: number, scoredCount?: number, selectedCount?: number, topScore?: number, allFailed?: boolean }>}
+ */
 export const processHighlightJob = async (job) => {
     const { eventId } = job.data;
 

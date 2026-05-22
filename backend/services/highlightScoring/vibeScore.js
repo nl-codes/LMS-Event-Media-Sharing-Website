@@ -4,6 +4,13 @@ import path from "path";
 import fs from "fs/promises";
 import { randomBytes } from "crypto";
 
+/**
+ * @module services/highlightScoring/vibeScore
+ * @description CLIP-based aesthetic scorer (one of three highlight
+ * signals). Lazy-loads the @xenova/transformers CLIP model; if loading
+ * fails the scorer disables itself for the process and returns zeros.
+ */
+
 const VIBE_WEIGHT = 50;
 const PROMPT_POSITIVE = "A beautiful elegant aesthetic event highlight photo";
 const PROMPT_NEGATIVE = "A blurry boring low-quality snapshot";
@@ -63,9 +70,14 @@ const toRawImage = async (imageBuffer) => {
     }
 };
 
-// Returns { vibeScore, clipSimilarity }. clipSimilarity is the model's
-// probability for the positive prompt vs the negative; the score is that
-// number multiplied by the configured weight.
+/**
+ * Score a single image's aesthetic via CLIP zero-shot vs a positive and
+ * negative reference prompt.
+ * @param {Buffer} imageBuffer
+ * @returns {Promise<{ vibeScore: number, clipSimilarity: number }>}
+ *   `clipSimilarity` ∈ [0,1] is the positive-prompt softmax probability;
+ *   `vibeScore = similarity * VIBE_WEIGHT`. Both are 0 if CLIP is disabled.
+ */
 export const scoreVibe = async (imageBuffer) => {
     const ready = await initClip();
     if (!ready) return { vibeScore: 0, clipSimilarity: 0 };
