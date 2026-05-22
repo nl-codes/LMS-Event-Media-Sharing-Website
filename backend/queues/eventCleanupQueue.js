@@ -1,3 +1,10 @@
+/**
+ * @module queues/eventCleanupQueue
+ * @description BullMQ wiring for full-event teardown: runs AFTER the
+ * Event row has been deleted to purge Media + Interactions + the
+ * Cloudinary folder. Processor: {@link module:services/eventCleanupProcessor}.
+ */
+
 import { Queue, Worker } from "bullmq";
 import { getRedisConnection } from "../config/redisConfig.js";
 import { processEventCleanupJob } from "../services/eventCleanupProcessor.js";
@@ -7,6 +14,10 @@ export const EVENT_CLEANUP_QUEUE_NAME = "event-cleanup";
 let queue = null;
 let worker = null;
 
+/**
+ * Lazy-singleton accessor for the cleanup queue.
+ * @returns {import("bullmq").Queue}
+ */
 export const getEventCleanupQueue = () => {
     if (queue) return queue;
     queue = new Queue(EVENT_CLEANUP_QUEUE_NAME, {
@@ -21,6 +32,12 @@ export const getEventCleanupQueue = () => {
     return queue;
 };
 
+/**
+ * Schedule an event-cleanup job, de-duped per event id (BullMQ returns
+ * the existing job rather than scheduling a second one).
+ * @param {{ eventId: string }} payload
+ * @returns {Promise<import("bullmq").Job>}
+ */
 export const enqueueEventCleanupJob = async (payload) => {
     const q = getEventCleanupQueue();
     // jobId scoped per event so a double-delete in flight de-dupes naturally
@@ -30,6 +47,10 @@ export const enqueueEventCleanupJob = async (payload) => {
     });
 };
 
+/**
+ * Boot the worker. Idempotent.
+ * @returns {Promise<import("bullmq").Worker>}
+ */
 export const startEventCleanupWorker = async () => {
     if (worker) return worker;
 
@@ -54,6 +75,10 @@ export const startEventCleanupWorker = async () => {
     return worker;
 };
 
+/**
+ * Tear down worker + queue.
+ * @returns {Promise<void>}
+ */
 export const stopEventCleanupWorker = async () => {
     if (worker) {
         await worker.close();

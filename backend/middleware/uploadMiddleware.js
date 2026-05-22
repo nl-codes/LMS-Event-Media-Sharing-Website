@@ -1,3 +1,18 @@
+/**
+ * @module middleware/uploadMiddleware
+ * @description Multer + Cloudinary upload plumbing. Three flavours:
+ *
+ *  - {@link uploadUserProfile}: single profile picture under `lms/profiles/`.
+ *  - {@link uploadEventThumbnail}: single event cover under
+ *    `events/<id>/thumbnail/`. Requires `attachEventId` upstream.
+ *  - {@link uploadEventMedia}: memory-storage multi-file gallery upload
+ *    capped at 10 files, gated by {@link validateUploadTierLimits} after
+ *    multer buffers them.
+ *
+ * Plus {@link handleMulterErrors} which translates multer's
+ * `LIMIT_FILE_SIZE` into a clean 413 response.
+ */
+
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinaryConfig.js";
@@ -44,8 +59,15 @@ const uploadEventMedia = multer({
     limits: { fileSize: MAX_TIER_FILE_BYTES, files: 10 },
 });
 
-// Per-file size enforcement against the event's tier. Runs AFTER multer
-// has buffered files, so it inspects the actual byte length.
+/**
+ * Per-file size + media-type enforcement against the event's tier.
+ * Runs AFTER multer has buffered the files (memory storage), so it can
+ * inspect actual byte length + mimetype rather than trusting client claims.
+ * Populates `req.eventTier` and `req.tierLimits` for downstream handlers.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
+ */
 const validateUploadTierLimits = async (req, res, next) => {
     try {
         const eventId = req.body.eventId || req.query.eventId;
@@ -106,7 +128,15 @@ const validateUploadTierLimits = async (req, res, next) => {
     }
 };
 
-// Translate multer's own size error into a clean 413.
+/**
+ * Express error-handler middleware that translates multer's
+ * `LIMIT_FILE_SIZE` into a 413 with a human-readable byte cap and
+ * other MulterErrors into 400s. Pass-through for anything else.
+ * @param {Error} err
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
+ */
 const handleMulterErrors = (err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {

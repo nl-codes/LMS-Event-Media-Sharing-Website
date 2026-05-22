@@ -1,3 +1,14 @@
+/**
+ * @module queues/highlightQueue
+ * @description BullMQ wiring for paid-event highlight selection (CLIP +
+ * brightness scoring). Processor:
+ * {@link module:services/highlightProcessor}.
+ *
+ * Concurrency is intentionally 1 and the worker `lockDuration` is raised
+ * far above the default — CLIP inference can hold the main thread in
+ * long bursts that would otherwise miss the BullMQ heartbeat.
+ */
+
 import { Queue, Worker } from "bullmq";
 import { getRedisConnection } from "../config/redisConfig.js";
 import { processHighlightJob } from "../services/highlightProcessor.js";
@@ -7,6 +18,10 @@ export const HIGHLIGHT_QUEUE_NAME = "event-highlight-generation";
 let queue = null;
 let worker = null;
 
+/**
+ * Lazy-singleton accessor for the highlight queue.
+ * @returns {import("bullmq").Queue}
+ */
 export const getHighlightQueue = () => {
     if (queue) return queue;
     queue = new Queue(HIGHLIGHT_QUEUE_NAME, {
@@ -21,6 +36,11 @@ export const getHighlightQueue = () => {
     return queue;
 };
 
+/**
+ * Schedule a highlight-generation job, de-duped per event.
+ * @param {{ eventId: string }} payload
+ * @returns {Promise<import("bullmq").Job>}
+ */
 export const enqueueHighlightJob = async (payload) => {
     const q = getHighlightQueue();
     // Job ID set to the eventId so duplicate enqueues for the same event
@@ -31,6 +51,11 @@ export const enqueueHighlightJob = async (payload) => {
     });
 };
 
+/**
+ * Boot the worker. Uses concurrency 1 + a 5-minute lockDuration so CLIP
+ * bursts don't trip BullMQ's stall detector. Idempotent.
+ * @returns {Promise<import("bullmq").Worker>}
+ */
 export const startHighlightWorker = async () => {
     if (worker) return worker;
 
@@ -60,9 +85,7 @@ export const startHighlightWorker = async () => {
 
     worker.on("completed", (job, result) => {
         if (result?.skipped) {
-            console.log(
-                `[highlight] job ${job.id} skipped: ${result.reason}`,
-            );
+            console.log(`[highlight] job ${job.id} skipped: ${result.reason}`);
         } else {
             console.log(
                 `[highlight] job ${job.id} done → event ${result?.eventId}, selected ${result?.selectedCount}/${result?.totalImages}`,
@@ -73,6 +96,10 @@ export const startHighlightWorker = async () => {
     return worker;
 };
 
+/**
+ * Tear down worker + queue.
+ * @returns {Promise<void>}
+ */
 export const stopHighlightWorker = async () => {
     if (worker) {
         await worker.close();
