@@ -1,14 +1,11 @@
-"use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Metadata } from "next";
+import ProfileCreatePage from "./ProfileCreateClient";
 
-export default function ProfileCreatePage() {
-    const router = useRouter();
+export const metadata: Metadata = {
+    title: "Create Profile | LMS 24",
+    description: "Set up your LMS 24 profile information.",
+};
 
-    useEffect(() => {
-        // Redirect to edit page which now handles both create and edit
-        router.replace("/home/profile/edit");
-    }, [router]);
-
-    return <div className="text-center p-10">Redirecting...</div>;
+export default function Page() {
+    return <ProfileCreatePage />;
 }
