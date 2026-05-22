@@ -39,7 +39,8 @@ export const verifyUser = async ({ email, password }) => {
     if (!email || !password) {
         throw new Error("Email and Password required");
     }
-    const existingUser = await User.findOne({ email: email });
+    const emailLower = String(email).toLowerCase().trim();
+    const existingUser = await User.findOne({ email: emailLower });
 
     if (!existingUser) {
         throw new Error("Invalid email or password");
