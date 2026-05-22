@@ -105,7 +105,16 @@ export async function middleware(request: NextRequest) {
 
     // Role-based authorization
     // - user-only home
-    if (pathname.startsWith("/home") && payload.role !== "user") {
+    const isOthersProfileRoute =
+        /^\/home\/profile\/[^/]+\/others(?:\/.*)?$/.test(pathname);
+    if (
+        pathname.startsWith("/home") &&
+        payload.role !== "user" &&
+        !(
+            isOthersProfileRoute &&
+            (payload.role === "admin" || payload.role === "superadmin")
+        )
+    ) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 

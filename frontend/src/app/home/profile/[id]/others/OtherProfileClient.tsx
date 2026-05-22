@@ -19,6 +19,8 @@ import { getPublicProfile, type PublicProfile } from "@/lib/profileApi";
 import type { Event } from "@/types/Event";
 import clsx from "clsx";
 import BackButton from "@/components/buttons/BackButton";
+import ReportMenu from "@/components/report/ReportMenu";
+import { useUser } from "@/context/UserContext";
 import {
     HelperFormatDate,
     HelperFormatMonthYear,
@@ -96,6 +98,7 @@ function SectionHeader({
 
 export default function OthersProfilePage() {
     const { id } = useParams<{ id: string }>();
+    const { user: currentUser } = useUser();
     const [data, setData] = useState<PublicProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -141,6 +144,8 @@ export default function OthersProfilePage() {
         [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") ||
         user.userName;
 
+    const canReport = Boolean(currentUser) && currentUser?._id !== user._id;
+
     const countryName = profile?.country
         ? (Country.getCountryByCode(profile.country)?.name ?? profile.country)
         : null;
@@ -172,11 +177,20 @@ export default function OthersProfilePage() {
                                     priority
                                 />
                             </div>
-                            {/* Member since badge */}
-                            <span className="mb-1 rounded-2xl border border-cusblue/10 bg-cusblue/5 px-4 py-1.5 text-xs font-bold text-cusblue/70">
-                                Member since{" "}
-                                {HelperFormatMonthYear(user.createdAt)}
-                            </span>
+                            {/* Member since badge + Report menu */}
+                            <div className="mb-1 flex items-center gap-2">
+                                <span className="rounded-2xl border border-cusblue/10 bg-cusblue/5 px-4 py-1.5 text-xs font-bold text-cusblue/70">
+                                    Member since{" "}
+                                    {HelperFormatMonthYear(user.createdAt)}
+                                </span>
+                                {canReport && (
+                                    <ReportMenu
+                                        targetId={user._id}
+                                        targetType="User"
+                                        targetLabel={user.userName}
+                                    />
+                                )}
+                            </div>
                         </div>
 
                         {/* Name & username */}
