@@ -2,6 +2,30 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
+/**
+ * Notification
+ * ------------
+ * In-app message addressed to a single User. The bell-icon feed lists these
+ * newest-first, filtered by read state.
+ *
+ * Relationship: recipientId → User. Notifications are never multi-recipient;
+ * fan-out happens at the service layer (one row per target).
+ *
+ * Type vocabulary (drives the icon/colour the UI picks):
+ *  - "report_filed"        :   sent to admins on a new report.
+ *  - "report_verified"     :   sent to the reporter when their report is upheld.
+ *  - "report_dismissed"    :   sent to the reporter when their report is dropped.
+ *  - "media_hidden"        :   sent to a media owner whose upload was hidden.
+ *  - "comment_deleted"     :   sent to a comment author whose comment was removed.
+ *  - "user_suspended"      :   sent to the suspended user explaining the action.
+ *  - "system"              :   generic catch-all (default).
+ *
+ * `link` is an optional in-app route (e.g. `/home/events/...`) the UI uses
+ * to make the notification clickable.
+ *
+ * The `(recipientId, isRead, createdAt:-1)` compound index supports the
+ * dominant query: "fetch unread (or all) notifications for me, newest first."
+ */
 const notificationSchema = new Schema(
     {
         recipientId: {
@@ -41,6 +65,7 @@ const notificationSchema = new Schema(
     { timestamps: true },
 );
 
+// Bell-icon feed: per-user, optionally filtered by read state, newest first.
 notificationSchema.index({ recipientId: 1, isRead: 1, createdAt: -1 });
 
 const Notification = mongoose.model("Notification", notificationSchema);
