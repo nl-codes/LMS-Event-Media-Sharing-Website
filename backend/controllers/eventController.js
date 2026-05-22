@@ -1,3 +1,11 @@
+/**
+ * @module controllers/eventController
+ * @description HTTP layer for event CRUD, host actions (finish, status,
+ * privacy), public discovery, guest join, and the upload-gate verification
+ * endpoint. Validation and side-effects (queues, retention, slug) live in
+ * {@link module:services/eventService}.
+ */
+
 import {
     createEvent,
     findAllEventsByHost,
@@ -16,6 +24,17 @@ import { Guest } from "../models/guestModel.js";
 import { v4 as uuidv4 } from "uuid";
 import { isNowBetween } from "../utils/timeline.js";
 
+/**
+ * POST /events
+ *
+ * Create a (free-tier) event. `endTime` is intentionally NOT accepted — it
+ * is derived from tier+startTime by the service. `attachEventId` middleware
+ * pre-generates `req.generatedEventId` so the Cloudinary thumbnail folder
+ * matches the eventual Event id.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const registerEvent = async (req, res) => {
     try {
         const {
@@ -61,6 +80,15 @@ export const registerEvent = async (req, res) => {
     }
 };
 
+/**
+ * GET /events/details/:id
+ *
+ * Authoritative event read (host populated + avatar attached + retention
+ * virtuals).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getEventById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -78,6 +106,14 @@ export const getEventById = async (req, res) => {
     }
 };
 
+/**
+ * GET /events/host-events
+ *
+ * Events owned by the authenticated user (host dashboard).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getHostEvents = async (req, res) => {
     try {
         const events = await findAllEventsByHost(req.user.id);
@@ -95,6 +131,14 @@ export const getHostEvents = async (req, res) => {
     }
 };
 
+/**
+ * GET /events/:slug
+ *
+ * Public-facing event resolver by short slug. Used by guest QR/share links.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getEventBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
@@ -112,9 +156,21 @@ export const getEventBySlug = async (req, res) => {
     }
 };
 
+/**
+ * PATCH /events/:id
+ *
+ * Host edit of mutable event fields. The service rejects any attempt to
+ * change `endTime` (tier-derived) and locks `startTime` once the event has
+ * started. A new thumbnail upload arrives via multer as `req.file`.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const editEvent = async (req, res) => {
     try {
         const { id } = req.params;
+        // Merge multipart body + (optional) new thumbnail URL. The service
+        // strips tier/status; we forward everything else.
         const updateData = {
             ...req.body,
             ...(req.file?.path ? { thumbnail: req.file.path } : {}),
@@ -128,6 +184,8 @@ export const editEvent = async (req, res) => {
             data: updatedEvent,
         });
     } catch (error) {
+        // Map service errors to HTTP codes by error-message substring. Not
+        // ideal long-term, but matches the rest of this controller.
         const statusCode = error.message.includes("Unauthorized")
             ? 403
             : error.message.includes("not found")
@@ -141,6 +199,16 @@ export const editEvent = async (req, res) => {
     }
 };
 
+/**
+ * PATCH /events/:id/finish
+ *
+ * Host-driven manual completion. Closes uploads and triggers the
+ * event-sync tick (highlight + retention scans). Does NOT mutate
+ * `endTime`.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const finishEvent = async (req, res) => {
     try {
         const { id } = req.params;
@@ -165,6 +233,16 @@ export const finishEvent = async (req, res) => {
     }
 };
 
+/**
+ * PATCH /events/:id/status
+ *
+ * Generic status setter (Active/Completed/Cancelled). Use {@link finishEvent}
+ * for the host "Finish Event" UI; this endpoint is the broader admin/edit
+ * surface.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const editEventStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -199,6 +277,16 @@ export const editEventStatus = async (req, res) => {
     }
 };
 
+/**
+ * DELETE /events/:id
+ *
+ * Host-driven delete. The Event row goes immediately; an event-cleanup job
+ * is enqueued by the service to purge Media + Interactions + Cloudinary
+ * folder asynchronously.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const deleteEvent = async (req, res) => {
     try {
         const { id } = req.params;
@@ -222,12 +310,23 @@ export const deleteEvent = async (req, res) => {
     }
 };
 
+/**
+ * POST /events/:slug/upload-check
+ *
+ * Lightweight "may I upload?" probe used by the public gallery before
+ * showing the upload button. Returns the live event state so the UI can
+ * explain *why* uploads are closed when they are.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const requestUploadSignature = async (req, res) => {
     try {
         const { slug } = req.params;
         const event = await findEventBySlug(slug);
 
-        // Check if event is live (Gatekeeper functionality)
+        // `isLive` is a model virtual that combines status, startTime and
+        // endTime — the single source of truth for the upload gate.
         if (!event.isLive) {
             return res.status(403).json({
                 success: false,
@@ -261,6 +360,22 @@ export const requestUploadSignature = async (req, res) => {
     }
 };
 
+/**
+ * GET /events/verify/:eventId
+ *
+ * Verbose verification endpoint used by the public gallery routes. Returns
+ * different 403 messages so the UI can show a precise reason
+ * (cancelled / finished / not started yet / inactive). On success, exposes
+ * whether the caller is a registered user (sets `data.isRegistered`).
+ *
+ * The order of branches is deliberate — Cancelled and Completed must
+ * win before the "not started yet" check or a finished event that hasn't
+ * started would render a misleading "come back later" message.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const verifyEventAccess = async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -327,6 +442,17 @@ export const verifyEventAccess = async (req, res) => {
     }
 };
 
+/**
+ * POST /events/join-as-guest
+ *
+ * Anonymous join: mints a UUID guest identity scoped to the event and
+ * persists a Guest row. The frontend stores `guest_id` in a per-event
+ * scoped cookie; subsequent uploads carry that id via `identifyUser`
+ * middleware.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const joinAsGuest = async (req, res) => {
     try {
         const { eventId, userName } = req.body;
@@ -346,6 +472,9 @@ export const joinAsGuest = async (req, res) => {
             });
         }
 
+        // Active + within window — guests can't join finished/cancelled
+        // events, no point handing out an identity that won't pass the
+        // upload gate.
         const eventEndTime = new Date(event.endTime);
         const isActiveWindow =
             event.status === "Active" &&
@@ -382,6 +511,15 @@ export const joinAsGuest = async (req, res) => {
     }
 };
 
+/**
+ * GET /events/:id/participants
+ *
+ * Host-only merged participants list (registered members + guests). Host
+ * check happens in the service.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getEventParticipantsController = async (req, res) => {
     try {
         const { id } = req.params;
@@ -407,6 +545,16 @@ export const getEventParticipantsController = async (req, res) => {
     }
 };
 
+/**
+ * PATCH /events/:eventId/privacy
+ *
+ * Toggle public/private. Returns 202 because the row flip is synchronous
+ * but the per-media `isPublic` cascade runs through the event-privacy
+ * queue and may still be in flight when we respond.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateEventPrivacyController = async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -438,6 +586,14 @@ export const updateEventPrivacyController = async (req, res) => {
     }
 };
 
+/**
+ * GET /events/public?q=...&limit=...
+ *
+ * Public discovery feed — no auth. Service caps the response size.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const listPublicEventsController = async (req, res) => {
     try {
         const { q, limit } = req.query;

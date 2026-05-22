@@ -1,3 +1,11 @@
+/**
+ * @module controllers/userController
+ * @description HTTP layer for end-user auth (signup, login, activation,
+ * password reset), the unsuspension appeal entrypoint, and the `getMe`
+ * session probe. Email side-effects use {@link module:utils/sendEmail};
+ * templates live in {@link module:utils/longText}.
+ */
+
 import {
     addUsers,
     requestPasswordReset,
@@ -19,10 +27,21 @@ import {
 } from "../utils/longText.js";
 import sendEmail from "../utils/sendEmail.js";
 
+/**
+ * POST /users/signup
+ *
+ * Create a pending account and email an activation link. In `development`
+ * the activation is short-circuited (status flipped to "active" immediately)
+ * so seeding a local DB doesn't require working SMTP.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const registerUser = async (req, res) => {
     try {
         const registeredUser = await addUsers(req.body);
-        // console.log(registeredUser);
+        // Plaintext `token` is what we email; only `tokenHash` is persisted.
         const { token, tokenHash, expires } = generateGeneralToken();
         registeredUser.activationToken = tokenHash;
         registeredUser.activationExpires = expires;
@@ -32,6 +51,7 @@ export const registerUser = async (req, res) => {
 
         const testMode = process.env.NODE_ENV === "development";
         if (testMode) {
+            // Dev convenience: skip the email roundtrip entirely.
             registeredUser.status = "active";
             await registeredUser.save();
         } else {
@@ -58,9 +78,22 @@ export const registerUser = async (req, res) => {
     }
 };
 
+/**
+ * POST /users/login
+ *
+ * Verify credentials, issue a JWT, and set it on a same-site httpOnly
+ * cookie. The cookie carries the user's avatar URL so the topbar can
+ * render without a follow-up profile fetch.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const loginUser = async (req, res) => {
     try {
         const loginUser = await verifyUser(req.body);
+        // Single Profile lookup so the JWT payload can carry profilePicture
+        // — avoids a second roundtrip from the frontend topbar on load.
         const profile = await Profile.findOne({ user: loginUser._id })
             .select("profilePicture")
             .lean();
@@ -92,6 +125,15 @@ export const loginUser = async (req, res) => {
     }
 };
 
+/**
+ * GET /users/activate?token=...
+ *
+ * Consume an activation token from the signup email and flip the account
+ * to "active". The link is one-shot; the service wipes the token on success.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const activateUser = async (req, res) => {
     const { token } = req.query;
     try {
@@ -106,6 +148,15 @@ export const activateUser = async (req, res) => {
     }
 };
 
+/**
+ * POST /users/reactivate
+ *
+ * Re-issue the activation link for a still-pending account. Service caps
+ * resends at 3 per UTC day.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const reactivateUser = async (req, res) => {
     try {
         const { email } = req.body;
@@ -130,6 +181,15 @@ export const reactivateUser = async (req, res) => {
     }
 };
 
+/**
+ * POST /users/forgot-password
+ *
+ * Issue a password-reset token and email the link. Capped at 3/day by the
+ * service.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -151,6 +211,15 @@ export const forgotPassword = async (req, res) => {
     }
 };
 
+/**
+ * POST /users/reset-password?token=...
+ *
+ * Consume a password-reset token (one-shot) and persist a new hashed
+ * password. Service enforces password policy.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const resetPasswordController = async (req, res) => {
     try {
         const { token } = req.query;
@@ -167,6 +236,14 @@ export const resetPasswordController = async (req, res) => {
     }
 };
 
+/**
+ * POST /users/logout
+ *
+ * Clear the auth cookie. The cookie attributes mirror the ones used in
+ * login so the browser actually drops it.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
 export const logoutUser = (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
@@ -177,6 +254,21 @@ export const logoutUser = (req, res) => {
     res.json({ message: "Logged out successfully" });
 };
 
+/**
+ * POST /users/unsuspend-appeal
+ *
+ * Public (no auth) endpoint for suspended users to file an appeal. The
+ * service silently returns null for unknown emails or duplicate pending
+ * appeals — we mirror that here with a uniform "Appeal received" response
+ * so attackers can't probe which emails are suspended.
+ *
+ * Side-effect: when a real appeal is created, fan a notification out to
+ * every admin/superadmin so it lands in the moderation queue immediately.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const submitUnsuspendAppeal = async (req, res) => {
     try {
         const { email, appealMessage } = req.body || {};
@@ -188,6 +280,9 @@ export const submitUnsuspendAppeal = async (req, res) => {
 
         const result = await createAppeal({ email, appealMessage });
 
+        // `result` is null when the service decided to swallow the request
+        // (unknown email / duplicate pending appeal) — skip the admin
+        // fan-out in that case but still respond with success below.
         if (result) {
             const { user } = result;
             const admins = await User.find({
@@ -215,10 +310,21 @@ export const submitUnsuspendAppeal = async (req, res) => {
     }
 };
 
+/**
+ * GET /users/me
+ *
+ * Session probe used by the frontend to bootstrap the UserContext. Prefers
+ * the live Profile.profilePicture but falls back to the JWT-embedded value
+ * so a transient DB blip doesn't sign the user out.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getMe = async (req, res) => {
     // req.user is set by requireAuth middleware
     let profilePicture = req.user.profilePicture || "";
     try {
+        // Best-effort fresh lookup; failure falls through to the JWT value.
         const profile = await Profile.findOne({ user: req.user.id })
             .select("profilePicture")
             .lean();

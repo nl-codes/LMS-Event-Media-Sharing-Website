@@ -1,3 +1,11 @@
+/**
+ * @module controllers/profileController
+ * @description HTTP layer for Profile CRUD plus the public profile view
+ * used by the "view another user" route. Auth-required handlers all
+ * resolve the caller's User by email from the JWT before delegating to
+ * {@link module:services/profileService}.
+ */
+
 import { User } from "../models/userModel.js";
 import {
     createProfile,
@@ -7,6 +15,15 @@ import {
     getPublicProfile,
 } from "../services/profileService.js";
 
+/**
+ * POST /users/profile
+ *
+ * Create the caller's Profile (1:1 with their User). A new thumbnail
+ * arrives via multer at `req.file`.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const addProfile = async (req, res) => {
     try {
         const { email } = req.user;
@@ -30,6 +47,14 @@ export const addProfile = async (req, res) => {
     }
 };
 
+/**
+ * GET /users/profile
+ *
+ * The caller's own Profile.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const retrieveProfile = async (req, res) => {
     try {
         const { email } = req.user;
@@ -45,6 +70,15 @@ export const retrieveProfile = async (req, res) => {
     }
 };
 
+/**
+ * PATCH /users/profile
+ *
+ * Patch profile fields; on a new image the service destroys the previous
+ * Cloudinary asset.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const editProfile = async (req, res) => {
     try {
         const { email } = req.user;
@@ -69,6 +103,15 @@ export const editProfile = async (req, res) => {
     }
 };
 
+/**
+ * GET /users/profile/:userId/public
+ *
+ * Public profile view: name, bio, avatar, created+joined events. Suspended
+ * users 404 from the service.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const retrievePublicProfile = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -80,6 +123,15 @@ export const retrievePublicProfile = async (req, res) => {
     }
 };
 
+/**
+ * DELETE /users/profile
+ *
+ * Delete the caller's Profile. Service also destroys the Cloudinary
+ * avatar asset.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const removeProfile = async (req, res) => {
     try {
         const { email } = req.user;

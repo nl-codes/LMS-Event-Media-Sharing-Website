@@ -1,3 +1,11 @@
+/**
+ * @module controllers/mediaController
+ * @description HTTP layer for media upload, gallery reads, deletes, the
+ * host highlight toggle, the explore feed, and event-capacity probes.
+ * Images upload synchronously to Cloudinary; videos are persisted to a
+ * tmp file and handed to the video queue for transcode + upload.
+ */
+
 import {
     uploadMultipleMedia,
     getGallery,
@@ -20,10 +28,17 @@ import { attachAvatars } from "../utils/attachAvatars.js";
 
 const TMP_DIR = path.resolve("uploads/tmp");
 
+/** Idempotent mkdir for the shared video staging dir. */
 const ensureTmpDir = async () => {
     await fs.mkdir(TMP_DIR, { recursive: true });
 };
 
+/**
+ * Spill an in-memory video buffer to disk for the video worker. Uses a
+ * crypto-random name to avoid collisions across concurrent uploads.
+ * @param {{ buffer: Buffer, originalname?: string }} file
+ * @returns {Promise<string>} Absolute path to the staged file.
+ */
 const writeVideoToTmp = async (file) => {
     await ensureTmpDir();
     const ext = path.extname(file.originalname) || ".bin";
@@ -33,11 +48,28 @@ const writeVideoToTmp = async (file) => {
     return filePath;
 };
 
-// Handles POST /media/upload
+/**
+ * POST /media/upload
+ *
+ * Accepts mixed image + video uploads from a registered user or a guest
+ * scoped to the same event. Branches:
+ *
+ *  - Images: synchronous Cloudinary upload + Media row, then the new docs
+ *    are broadcast over socket.io so live gallery viewers refresh without
+ *    a poll. Response code 201.
+ *  - Videos: spilled to disk and handed to the video queue; the response
+ *    carries "pending" placeholders the gallery can render until the
+ *    worker emits `new_media` with the encoded result. Response code 202.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const uploadMediaController = async (req, res) => {
     try {
         const eventId = req.body.eventId || req.query.eventId;
 
+        // Either an authenticated user OR an identified guest is required.
         const uploaderId = req.user?.id || null;
         const guestId = req.guest?._id || null;
 
@@ -48,6 +80,8 @@ export const uploadMediaController = async (req, res) => {
             });
         }
 
+        // Guests are scoped to a single event — block cross-event reuse
+        // even if someone copies the guest cookie around.
         if (
             req.guest?.eventId &&
             eventId &&
@@ -65,6 +99,8 @@ export const uploadMediaController = async (req, res) => {
                 .json({ success: false, message: "Missing required fields" });
         }
 
+        // Split by mimetype: images go through the synchronous path,
+        // videos defer to the queue.
         const imageFiles = req.files.filter(
             (f) => !f.mimetype?.startsWith("video/"),
         );
@@ -72,7 +108,7 @@ export const uploadMediaController = async (req, res) => {
             f.mimetype?.startsWith("video/"),
         );
 
-        // Images: synchronous Cloudinary upload, immediate gallery emit.
+        // ── Images: synchronous Cloudinary upload, immediate gallery emit.
         let mediaPayload = [];
         if (imageFiles.length > 0) {
             const mediaDocs = await uploadMultipleMedia(
@@ -110,7 +146,9 @@ export const uploadMediaController = async (req, res) => {
             });
         }
 
-        // Videos: persist to tmp, enqueue, return pending markers.
+        // ── Videos: persist to tmp, enqueue, return pending markers so
+        // the gallery can render a "processing" tile until the worker
+        // emits the final `new_media` event.
         const pendingVideos = [];
         for (const file of videoFiles) {
             try {
@@ -138,6 +176,8 @@ export const uploadMediaController = async (req, res) => {
             }
         }
 
+        // 202 when there's at least one video pending; 201 when everything
+        // landed synchronously.
         const status = videoFiles.length > 0 ? 202 : 201;
         res.status(status).json({
             success: true,
@@ -150,7 +190,14 @@ export const uploadMediaController = async (req, res) => {
     }
 };
 
-// Handles GET /media/usage/:eventId
+/**
+ * GET /media/usage/:eventId
+ *
+ * Tier capacity snapshot used by the upload UI.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getEventUsageController = async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -161,7 +208,14 @@ export const getEventUsageController = async (req, res) => {
     }
 };
 
-// Handles GET /media/explore?cursor=...&limit=20
+/**
+ * GET /media/explore?cursor=...&limit=20
+ *
+ * Public explore feed (cursor-paginated, newest first across isPublic media).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getExploreMediaController = async (req, res) => {
     try {
         const { cursor, limit } = req.query;
@@ -175,7 +229,14 @@ export const getExploreMediaController = async (req, res) => {
     }
 };
 
-// Handles GET /media/:eventId
+/**
+ * GET /media/:eventId
+ *
+ * Full event gallery (like-metadata enriched).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getGalleryController = async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -186,7 +247,14 @@ export const getGalleryController = async (req, res) => {
     }
 };
 
-// Handles GET /media/item/:mediaId
+/**
+ * GET /media/item/:mediaId
+ *
+ * Single-media view (used by the lightbox / media detail page).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getMediaByIdController = async (req, res) => {
     try {
         const { mediaId } = req.params;
@@ -197,7 +265,15 @@ export const getMediaByIdController = async (req, res) => {
     }
 };
 
-// Handles DELETE /media/:mediaId
+/**
+ * DELETE /media/:mediaId
+ *
+ * Single-media delete (uploader or host). The eventId is read BEFORE the
+ * service call so the socket emit can still fire after the row is gone.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const deleteMediaController = async (req, res) => {
     try {
         const { mediaId } = req.params;
@@ -208,6 +284,8 @@ export const deleteMediaController = async (req, res) => {
                 .json({ success: false, message: "Authentication required" });
         }
 
+        // Resolve eventId up front so we can still emit `media_deleted`
+        // after the service drops the row.
         const mediaDoc = await Media.findById(mediaId).select("eventId");
         if (!mediaDoc) {
             return res
@@ -226,7 +304,15 @@ export const deleteMediaController = async (req, res) => {
     }
 };
 
-// Handles DELETE /media
+/**
+ * DELETE /media
+ *
+ * Bulk delete. Per-event socket emits happen for each removed row so any
+ * live gallery viewer prunes their grid.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const deleteMultipleMediaController = async (req, res) => {
     try {
         const requesterId = req.user?.id;
@@ -261,7 +347,15 @@ export const deleteMultipleMediaController = async (req, res) => {
     }
 };
 
-// Handles GET /media/:eventId/highlights
+/**
+ * GET /media/:eventId/highlights
+ *
+ * Highlight-marked media for an event. For paid+ended events these are
+ * either curated by the host or selected by the highlight worker.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getHighlightsController = async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -272,7 +366,14 @@ export const getHighlightsController = async (req, res) => {
     }
 };
 
-// Handles PATCH /media/:mediaId/label
+/**
+ * PATCH /media/:mediaId/label
+ *
+ * Host-only caption update on a media row.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const setMediaLabelController = async (req, res) => {
     try {
         const { mediaId } = req.params;
@@ -295,7 +396,15 @@ export const setMediaLabelController = async (req, res) => {
     }
 };
 
-// Handles PATCH /media/:mediaId/highlight
+/**
+ * PATCH /media/:mediaId/highlight
+ *
+ * Host-only manual highlight toggle. The service rejects non-image media
+ * and refuses while the event is still live.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateMediaHighlightController = async (req, res) => {
     try {
         const { mediaId } = req.params;

@@ -1,3 +1,18 @@
+/**
+ * @module controllers/paymentController
+ * @description Two Stripe flows live here, distinguished by
+ * `session.metadata.purpose`:
+ *
+ *   - "event_upgrade" — upgrade an existing free event to a paid tier
+ *     (sync confirm endpoint + webhook idempotent).
+ *   - "event_create"  — create a paid event; the Event row is materialised
+ *     only after Stripe confirms payment.
+ *
+ * Both flows route through {@link finalizePendingEventCheckout} /
+ * {@link applyEventUpgrade} so the success-page redirect and the webhook
+ * can race safely.
+ */
+
 import mongoose from "mongoose";
 import { Event } from "../models/eventModel.js";
 import { PendingEventCheckout } from "../models/pendingEventCheckoutModel.js";
@@ -12,6 +27,14 @@ import {
 import { calculateEventEndTime } from "../utils/eventDuration.js";
 import { createEvent } from "../services/eventService.js";
 
+/**
+ * Apply the paid-tier grant to an existing Event row and recalculate
+ * endTime against the new tier so the upload window matches what was
+ * actually paid for.
+ * @param {string} eventId
+ * @param {string} tier
+ * @returns {Promise<import("mongoose").Document|null>}
+ */
 const applyEventUpgrade = async (eventId, tier) => {
     const upgrade = getTierUpgradeValues(tier);
     const event = await Event.findById(eventId).select("startTime status");
@@ -30,6 +53,15 @@ const applyEventUpgrade = async (eventId, tier) => {
     return Event.findByIdAndUpdate(eventId, updates, { new: true });
 };
 
+/**
+ * POST /payments/checkout
+ *
+ * Start an "event_upgrade" Stripe Checkout session for an event the
+ * authenticated user hosts. Refuses if the event is already premium.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const createCheckoutSession = async (req, res) => {
     try {
         const { eventId, userId, lookupKey } = req.body;
@@ -101,10 +133,27 @@ export const createCheckoutSession = async (req, res) => {
     }
 };
 
-// Pre-checkout entrypoint for paid event creation. The Event is NOT created
-// here — we only persist the payload + reserved id and hand back the Stripe
-// Checkout URL. The actual Event document is materialized in
-// finalizePendingEventCheckout once Stripe confirms the payment.
+/**
+ * POST /payments/event-checkout
+ *
+ * Pre-checkout entrypoint for paid event creation. The Event is NOT
+ * created here — we persist the validated payload to PendingEventCheckout
+ * keyed by the (yet-to-be-created) Stripe session id and hand back the
+ * Checkout URL. The Event materialises later in
+ * {@link finalizePendingEventCheckout} on payment success.
+ *
+ * Notable details:
+ *  - `attachEventId` pre-mints an ObjectId so the thumbnail Cloudinary
+ *    folder matches the eventual Event id.
+ *  - We insert the pending row with a placeholder sessionId first, call
+ *    Stripe, then patch in the real sessionId. If Stripe fails we roll
+ *    back the row to avoid a dead pending record.
+ *  - TTL on the pending row is sized just past Stripe's 24h session expiry.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const startEventCreateCheckout = async (req, res) => {
     try {
         const authenticatedUserId = req.user?.id;
@@ -203,9 +252,22 @@ export const startEventCreateCheckout = async (req, res) => {
     }
 };
 
-// Idempotent: creates the Event if Stripe confirms payment and the pending
-// record hasn't been materialized yet; otherwise returns the existing event.
-// Safe to call from both the success-page confirm endpoint and the webhook.
+/**
+ * Idempotent finaliser for the "event_create" flow. Creates the Event if
+ * Stripe confirms payment and the pending record hasn't been materialised
+ * yet; otherwise returns the existing event. Safe to call from both the
+ * success-page confirm endpoint and the webhook (they can race).
+ *
+ * Verification layers (all required):
+ *  - PendingEventCheckout exists and is owned by `expectedUserId`.
+ *  - Stripe payment_status === "paid".
+ *  - Stripe metadata.purpose === "event_create".
+ *  - Stripe metadata.userId matches the pending row's host.
+ *
+ * @param {{ sessionId: string, expectedUserId?: string, stripeSession?: object }} input
+ * @returns {Promise<{ event: object, pending: import("mongoose").Document, alreadyCompleted: boolean }>}
+ * @throws {Error} 404 missing, 403 mismatch, 400 unpaid / wrong purpose / cancelled.
+ */
 const finalizePendingEventCheckout = async ({
     sessionId,
     expectedUserId,
@@ -286,6 +348,16 @@ const finalizePendingEventCheckout = async ({
     return { event, pending, alreadyCompleted: false };
 };
 
+/**
+ * POST /payments/event-checkout/confirm
+ *
+ * Success-page callback for the "event_create" flow. Verifies the session
+ * via {@link finalizePendingEventCheckout} and returns the materialised
+ * event. Safe to call multiple times.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const confirmEventCreateCheckout = async (req, res) => {
     try {
         const authenticatedUserId = req.user?.id;
@@ -322,6 +394,21 @@ export const confirmEventCreateCheckout = async (req, res) => {
     }
 };
 
+/**
+ * POST /webhooks/stripe
+ *
+ * Stripe webhook entrypoint. The raw-body mount in server.js is required
+ * for signature verification. Dispatches `checkout.session.completed` by
+ * `metadata.purpose`:
+ *
+ *  - "event_create" → idempotent finalize (failures logged + swallowed so
+ *    Stripe doesn't retry forever on a permanent error).
+ *  - "event_upgrade" (default) → apply the tier grant in-line.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const handleStripeWebhook = async (req, res) => {
     try {
         const signature = req.headers["stripe-signature"];
@@ -330,6 +417,9 @@ export const handleStripeWebhook = async (req, res) => {
         if (event.type === "checkout.session.completed") {
             const session = event.data.object;
             const metadata = session.metadata || {};
+            // Default to "event_upgrade" for sessions created before the
+            // purpose tag existed — older upgrade sessions still need to
+            // finish materialising.
             const purpose = metadata.purpose || "event_upgrade";
 
             if (purpose === "event_create") {
@@ -339,6 +429,8 @@ export const handleStripeWebhook = async (req, res) => {
                         stripeSession: session,
                     });
                 } catch (err) {
+                    // Log + swallow so Stripe doesn't keep retrying a job
+                    // that will never succeed (e.g. missing pending row).
                     console.warn(
                         `[stripe-webhook] event_create finalize failed for ${session.id}:`,
                         err.message,
@@ -367,6 +459,17 @@ export const handleStripeWebhook = async (req, res) => {
     }
 };
 
+/**
+ * POST /payments/confirm
+ *
+ * Success-page callback for the "event_upgrade" flow. Re-verifies the
+ * session with Stripe (never trust the client-supplied session id alone)
+ * and applies the grant. Rejects non-upgrade purposes so this endpoint
+ * can't be tricked into finishing an event_create session.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const confirmCheckoutSession = async (req, res) => {
     try {
         const { sessionId } = req.body;
