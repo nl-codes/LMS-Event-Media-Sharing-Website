@@ -1,3 +1,11 @@
+/**
+ * @module routes/notificationRoute
+ * @description Mounted at `/notifications`. Caller-scoped bell-icon feed.
+ * Order matters: literal-prefix routes (`/unread-count`, `/mark-all-read`)
+ * are declared BEFORE the generic `/:notificationId/read` so they don't
+ * get captured by the param.
+ */
+
 import express from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import {

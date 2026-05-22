@@ -1,3 +1,10 @@
+/**
+ * @module routes/userRoute
+ * @description Mounted at `/users`. End-user auth lifecycle (signup,
+ * login, activation, password reset, unsuspend appeal) plus the
+ * `/me` session probe.
+ */
+
 import express from "express";
 import {
     activateUser,
@@ -14,7 +21,6 @@ import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Public routes
 router.post("/signup", registerUser);
 router.post("/login", loginUser);
 router.get("/activate", activateUser);
@@ -23,7 +29,6 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPasswordController);
 router.post("/unsuspend-appeal", submitUnsuspendAppeal);
 
-// Protected routes
 router.post("/logout", requireAuth, logoutUser);
 router.get("/me", requireAuth, getMe);
 

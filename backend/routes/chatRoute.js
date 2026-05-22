@@ -1,3 +1,11 @@
+/**
+ * @module routes/chatRoute
+ * @description Mounted at `/chats`. HTTP companion to the socket.io
+ * chat room: history, "recent + unread badge" initial load,
+ * mark-read, and a cheap unread-count probe. Live send/receive uses
+ * socket.io in server.js, not these routes.
+ */
+
 import express from "express";
 import {
     getChatHistoryController,
@@ -9,24 +17,9 @@ import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-/**
- * GET /chats/:eventId
- * Fetch paginated chat history for a specific event
- * Protected route - requires authentication
- */
 router.get("/:eventId", requireAuth, getChatHistoryController);
-
-/**
- * GET /chats/:eventId/recent
- * Fetch recent messages for initial load
- * Protected route - requires authentication
- */
 router.get("/:eventId/recent", requireAuth, getRecentMessagesController);
-
-// Get unread count for the current user for an event
 router.get("/:eventId/unread", requireAuth, getUnreadCountController);
-
-// Mark the chat as read for the current user
 router.post("/:eventId/mark-as-read", requireAuth, markAsReadController);
 
 export default router;

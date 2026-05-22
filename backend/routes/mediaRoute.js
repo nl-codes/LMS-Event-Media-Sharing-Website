@@ -1,3 +1,22 @@
+/**
+ * @module routes/mediaRoute
+ * @description Mounted at `/media`. Reads are public so guests can view
+ * galleries; mutations require {@link requireAuth}. Highlight toggle and
+ * label endpoints are host-only — the role check lives in the service,
+ * not in the route, so re-using {@link requireAuth} is enough here.
+ *
+ * Upload middleware chain (POST /upload):
+ *  1. identifyUser             :    populates req.user OR req.guest (optional auth).
+ *  2. uploadEventMedia.array   :    multer buffers up to 10 files in memory.
+ *  3. handleMulterErrors       :    translates multer LIMIT_FILE_SIZE → 413.
+ *  4. validateUploadTierLimits :    per-file size / video duration / tier check.
+ *  5. uploadMediaController    :    split images/videos, persist + emit.
+ *
+ * Public reads stay open so QR-link visitors can browse the gallery
+ * without an account. Sensitive moderation is on Media.isHidden, which
+ * the gallery service already filters out.
+ */
+
 import express from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { identifyUser } from "../middleware/identifyUser.js";
@@ -21,7 +40,6 @@ import {
 
 const router = express.Router();
 
-// POST /upload (auth optional, guests allowed)
 router.post(
     "/upload",
     identifyUser,
@@ -31,30 +49,14 @@ router.post(
     uploadMediaController,
 );
 
-// GET /usage/:eventId tier + remaining capacity (public; needed by guests too)
 router.get("/usage/:eventId", getEventUsageController);
-
 router.get("/explore", getExploreMediaController);
-
-// GET /item/:mediaId (public)
 router.get("/item/:mediaId", getMediaByIdController);
-
-// GET /:eventId/highlights (public)
 router.get("/:eventId/highlights", getHighlightsController);
-
-// GET /:eventId (public)
 router.get("/:eventId", getGalleryController);
-
-// DELETE / (auth required, bulk delete with body)
 router.delete("/", requireAuth, deleteMultipleMediaController);
-
-// DELETE /:mediaId (auth required)
 router.delete("/:mediaId", requireAuth, deleteMediaController);
-
-// PATCH /:mediaId/label (auth required)
 router.patch("/:mediaId/label", requireAuth, setMediaLabelController);
-
-// PATCH /:mediaId/highlight (host-only, enforced in service)
 router.patch(
     "/:mediaId/highlight",
     requireAuth,
