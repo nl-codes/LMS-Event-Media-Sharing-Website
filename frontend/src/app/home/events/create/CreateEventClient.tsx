@@ -1,0 +1,467 @@
+"use client";
+
+import { useEffect, useState, useRef, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createEvent } from "@/lib/eventApi";
+import { startEventCreationCheckout } from "@/lib/stripe";
+import BackButton from "@/components/buttons/BackButton";
+import { toast } from "react-hot-toast";
+import Image from "next/image";
+import Button from "@/components/buttons/Button";
+import {
+    calculateEventEndTime,
+    type EventTier,
+    TIER_DURATION_LABEL,
+} from "@/lib/eventDuration";
+import { HelperFormatDateTime } from "@/utils/HelperFunctions";
+import {
+    Calendar,
+    MapPin,
+    Type,
+    AlignLeft,
+    Image as ImageIcon,
+    Sparkles,
+    Clock,
+    Plus,
+    Zap,
+} from "lucide-react";
+
+type TierOption = {
+    key: EventTier;
+    name: string;
+    price: string;
+    blurb: string;
+};
+
+const TIER_OPTIONS: TierOption[] = [
+    {
+        key: "free",
+        name: "Free",
+        price: "$0",
+        blurb: "24h upload window, 100 uploads.",
+    },
+    {
+        key: "premium",
+        name: "Premium",
+        price: "$19.50",
+        blurb: "7d window, 200 uploads, video support.",
+    },
+    {
+        key: "pro",
+        name: "Pro",
+        price: "$49.50",
+        blurb: "1 month window, 500 uploads, longer videos.",
+    },
+];
+
+export default function CreateEventPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [submitting, setSubmitting] = useState(false);
+    const lastHandledPaymentRef = useRef<string | null>(null);
+    const paymentStatus = searchParams.get("payment");
+
+    const [tier, setTier] = useState<EventTier>("free");
+
+    const [form, setForm] = useState({
+        eventName: "",
+        description: "",
+        location: "",
+        startTime: "",
+        isPremium: false,
+        thumbnail: null as File | null,
+        privacy: "private" as "public" | "private",
+    });
+
+    const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const getCurrentDateTime = () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16);
+    };
+
+    const computedEndTime = useMemo(() => {
+        if (!form.startTime) return null;
+        try {
+            return calculateEventEndTime(form.startTime, tier);
+        } catch {
+            return null;
+        }
+    }, [form.startTime, tier]);
+
+    useEffect(() => {
+        return () => {
+            if (thumbnailPreview) {
+                URL.revokeObjectURL(thumbnailPreview);
+            }
+        };
+    }, [thumbnailPreview]);
+
+    // Stripe routes the user back here when they cancel a paid-tier checkout.
+    useEffect(() => {
+        if (!paymentStatus || paymentStatus === lastHandledPaymentRef.current) {
+            return;
+        }
+        if (paymentStatus === "cancelled") {
+            toast.error("Payment cancelled. Your event was not created.");
+        }
+        lastHandledPaymentRef.current = paymentStatus;
+    }, [paymentStatus]);
+
+    const onSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setSubmitting(true);
+
+            if (tier === "free") {
+                const event = await createEvent({
+                    eventName: form.eventName,
+                    description: form.description,
+                    location: form.location,
+                    startTime: new Date(form.startTime).toISOString(),
+                    isPremium: form.isPremium,
+                    thumbnail: form.thumbnail,
+                    privacy: form.privacy,
+                });
+
+                toast.success("Event created successfully!");
+                router.replace(`/home/events/${event._id}`);
+                return;
+            }
+
+            // Paid tier: hand off to Stripe. The Event is NOT created until
+            // /home/events/create/success confirms payment with the backend.
+            await startEventCreationCheckout({
+                eventName: form.eventName,
+                description: form.description,
+                location: form.location,
+                startTime: new Date(form.startTime).toISOString(),
+                privacy: form.privacy,
+                tier,
+                thumbnail: form.thumbnail,
+            });
+            // window.location.assign happens inside the helper; the page
+            // unloads before this line runs in the happy path.
+        } catch (err) {
+            toast.error((err as Error).message || "Failed to create event");
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <main className="min-h-screen py-12 px-4 sm:px-6">
+            <div className="max-w-5xl mx-auto">
+                <div className="mb-8">
+                    <BackButton label="Back to My Events" />
+                </div>
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5 overflow-hidden profile-card-animate">
+                    {/* Header Banner */}
+                    <div className="bg-cusblue h-28 flex items-center justify-center relative">
+                        <Sparkles className="absolute top-4 right-6 text-white/20 w-12 h-12" />
+                        <div className="text-center">
+                            <h2 className="text-3xl font-black text-white tracking-tight">
+                                New Event
+                            </h2>
+                            <p className="text-white/70 text-sm font-medium">
+                                Host your next big moment
+                            </p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={onSubmit} className="p-8 lg:p-10">
+                        <div className="flex flex-col lg:flex-row gap-10">
+                            {/* Thumbnail */}
+                            <div className="w-full lg:w-2/5 space-y-4">
+                                <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                    <ImageIcon size={16} />
+                                    Cover Image
+                                </label>
+
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file =
+                                            e.target.files?.[0] || null;
+                                        setForm({ ...form, thumbnail: file });
+                                        if (thumbnailPreview)
+                                            URL.revokeObjectURL(
+                                                thumbnailPreview,
+                                            );
+                                        if (file)
+                                            setThumbnailPreview(
+                                                URL.createObjectURL(file),
+                                            );
+                                    }}
+                                />
+
+                                <div
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
+                                    className="group relative aspect-video w-full rounded-4xl border-2 border-dashed border-cusblue/20 bg-cusblue/5 overflow-hidden cursor-pointer hover:border-cusblue/40 transition-all shadow-inner">
+                                    {thumbnailPreview ? (
+                                        <>
+                                            <Image
+                                                src={thumbnailPreview}
+                                                alt="Preview"
+                                                fill
+                                                className="object-cover transition duration-500 group-hover:scale-105"
+                                            />
+                                            <div className="absolute inset-0 bg-cusblue/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <div className="bg-white px-4 py-2 rounded-xl text-cusblue text-xs font-bold shadow-lg">
+                                                    Change Photo
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full gap-3 text-cusblue/40 px-6 text-center">
+                                            <div className="p-4 bg-white rounded-2xl shadow-sm">
+                                                <Plus className="w-6 h-6 text-cusblue" />
+                                            </div>
+                                            <span className="text-xs font-bold uppercase tracking-wider">
+                                                Click to upload
+                                                <br />
+                                                event thumbnail
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-[10px] text-cusviolet/50 text-center uppercase font-bold tracking-tighter">
+                                    Recommended: 16:9 Aspect Ratio
+                                </p>
+                            </div>
+
+                            {/* Details */}
+                            <div className="w-full lg:w-3/5 space-y-6">
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                        <Type size={16} />
+                                        Event Title
+                                    </label>
+                                    <input
+                                        className="w-full bg-white/50 border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all"
+                                        placeholder="Give your event a catchy name..."
+                                        value={form.eventName}
+                                        onChange={(e) =>
+                                            setForm({
+                                                ...form,
+                                                eventName: e.target.value,
+                                            })
+                                        }
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                        <AlignLeft size={16} />
+                                        Description
+                                    </label>
+                                    <textarea
+                                        className="w-full bg-white/50 border border-slate-200 rounded-2xl px-5 py-4 h-32 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all resize-none"
+                                        placeholder="What's happening at this event?"
+                                        value={form.description}
+                                        onChange={(e) =>
+                                            setForm({
+                                                ...form,
+                                                description: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-6 p-6 bg-cusblue/5 rounded-4xl border border-cusblue/10">
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                            <MapPin size={16} />
+                                            Location
+                                        </label>
+                                        <input
+                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all"
+                                            placeholder="Venue name or Meeting link"
+                                            value={form.location}
+                                            onChange={(e) =>
+                                                setForm({
+                                                    ...form,
+                                                    location: e.target.value,
+                                                })
+                                            }
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* START TIME */}
+                                        <div className="space-y-2 group">
+                                            <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                                <Clock
+                                                    size={16}
+                                                    className="group-focus-within:text-cusblue transition-colors"
+                                                />
+                                                Starts
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="datetime-local"
+                                                    min={getCurrentDateTime()}
+                                                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-cusblue/20 focus:border-cusblue transition-all text-sm appearance-none cursor-pointer"
+                                                    value={form.startTime}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            startTime:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* END TIME (computed by tier — read-only) */}
+                                        <div className="space-y-2 group">
+                                            <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                                <Clock
+                                                    size={16}
+                                                    className="group-focus-within:text-cusblue transition-colors"
+                                                />
+                                                Ends (auto)
+                                            </label>
+                                            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm text-cusblue/80">
+                                                {computedEndTime
+                                                    ? HelperFormatDateTime(
+                                                          computedEndTime.toISOString(),
+                                                      )
+                                                    : "Pick a start time"}
+                                            </div>
+                                            <p className="text-[10px] text-cusviolet/60 ml-1 font-bold uppercase tracking-wider">
+                                                {tier.charAt(0).toUpperCase() +
+                                                    tier.slice(1)}{" "}
+                                                tier — runs for{" "}
+                                                {TIER_DURATION_LABEL[tier]} from
+                                                the start time.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                        Privacy
+                                    </label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {(
+                                            [
+                                                {
+                                                    value: "private",
+                                                    title: "Private",
+                                                    desc: "Media stays inside the event. Not shown on Explore.",
+                                                },
+                                                {
+                                                    value: "public",
+                                                    title: "Public",
+                                                    desc: "Media from this event can appear on Explore.",
+                                                },
+                                            ] as const
+                                        ).map((opt) => {
+                                            const selected =
+                                                form.privacy === opt.value;
+                                            return (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setForm({
+                                                            ...form,
+                                                            privacy: opt.value,
+                                                        })
+                                                    }
+                                                    className={`text-left rounded-2xl border px-5 py-4 transition-all ${
+                                                        selected
+                                                            ? "border-cusblue bg-cusblue/5 ring-2 ring-cusblue/20"
+                                                            : "border-slate-200 bg-white hover:border-cusblue/40"
+                                                    }`}>
+                                                    <p className="text-sm font-extrabold text-cusblue">
+                                                        {opt.title}
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-cusviolet/70">
+                                                        {opt.desc}
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
+                                        <Zap size={16} />
+                                        Tier
+                                    </label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        {TIER_OPTIONS.map((opt) => {
+                                            const selected = tier === opt.key;
+                                            return (
+                                                <button
+                                                    key={opt.key}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setTier(opt.key)
+                                                    }
+                                                    className={`text-left rounded-2xl border px-5 py-4 transition-all ${
+                                                        selected
+                                                            ? "border-cusblue bg-cusblue/5 ring-2 ring-cusblue/20"
+                                                            : "border-slate-200 bg-white hover:border-cusblue/40"
+                                                    }`}>
+                                                    <div className="flex items-baseline justify-between gap-2">
+                                                        <p className="text-sm font-extrabold text-cusblue">
+                                                            {opt.name}
+                                                        </p>
+                                                        <p className="text-xs font-bold text-cusviolet/80">
+                                                            {opt.price}
+                                                        </p>
+                                                    </div>
+                                                    <p className="mt-1 text-xs text-cusviolet/70">
+                                                        {opt.blurb}
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {tier !== "free" && (
+                                        <p className="text-[11px] text-cusviolet/70 ml-1 font-semibold">
+                                            Paid events require Stripe checkout.
+                                            Your event will only be created
+                                            after the payment succeeds.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="pt-4">
+                                    <Button
+                                        type="submit"
+                                        loading={submitting}
+                                        className="bg-green-600 hover:bg-green-700 text-white w-full py-5 rounded-3xl text-lg font-bold shadow-xl shadow-green-600/20">
+                                        <Calendar className="w-5 h-5" />
+                                        {submitting
+                                            ? tier === "free"
+                                                ? "Publishing..."
+                                                : "Redirecting to checkout..."
+                                            : tier === "free"
+                                              ? "Publish Event"
+                                              : "Continue to Payment"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    );
+}
