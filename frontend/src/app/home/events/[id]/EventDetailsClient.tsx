@@ -14,8 +14,11 @@ import { Loader2, XCircle, ExternalLink } from "lucide-react";
 import Button from "@/components/buttons/Button";
 import EventDetailsLayout from "@/components/events/EventDetailsLayout";
 import EventHostActionButtons from "../../../../components/events/EventHostActionButtons";
+import { useUser } from "@/context/UserContext";
 
 export default function EventDetailsPage() {
+    const { user } = useUser();
+
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -27,6 +30,10 @@ export default function EventDetailsPage() {
     const eventId = typeof params?.id === "string" ? params.id : "";
     const paymentStatus = searchParams.get("payment");
     const sessionId = searchParams.get("session_id");
+
+    const host = event?.hostId;
+    const isHost =
+        typeof host === "object" ? user?._id == host._id : user?._id == host;
 
     useEffect(() => {
         if (!paymentStatus || paymentStatus === lastHandledPaymentRef.current)
@@ -105,18 +112,22 @@ export default function EventDetailsPage() {
                     />
                 )}
 
-                <EventHostActionButtons
-                    event={event}
-                    setShowQR={setShowQR}
-                    onEventUpdated={setEvent}
-                />
+                {isHost && (
+                    <>
+                        <EventHostActionButtons
+                            event={event}
+                            setShowQR={setShowQR}
+                            onEventUpdated={setEvent}
+                        />
 
-                <EventCapacityAlert eventId={event._id} />
+                        <EventCapacityAlert eventId={event._id} />
 
-                <EventPrivacyControl
-                    eventId={event._id}
-                    initialPrivacy={event.privacy || "private"}
-                />
+                        <EventPrivacyControl
+                            eventId={event._id}
+                            initialPrivacy={event.privacy || "private"}
+                        />
+                    </>
+                )}
 
                 <EventDetailsLayout event={event}>
                     <Link
