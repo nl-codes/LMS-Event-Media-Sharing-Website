@@ -54,7 +54,7 @@ export default function LogoutButton({
             type="button"
             onClick={handleLogOutClick}
             className={clsx(
-                "flex w-full min-w-fit items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-rose-600/80 transition-all hover:bg-rose-500/10 hover:text-rose-700",
+                "flex w-full min-w-fit items-center gap-3 rounded-2xl text-sm font-bold text-rose-600/80 transition-all hover:bg-rose-500/10 hover:text-rose-700",
                 className,
             )}>
             <LogOut className="h-5 w-5" />
