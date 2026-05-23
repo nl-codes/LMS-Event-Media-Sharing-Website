@@ -60,7 +60,7 @@ export default function TierUpgradePage() {
             <div className="flex flex-row">
                 <BackButton label="Back to Events" />
             </div>
-            <div className="relative z-10 mx-auto w-fullmax-w-6xl py-2">
+            <div className="relative z-10 mx-auto w-full max-w-6xl py-2">
                 <div className="mx-auto mb-10 sm:mb-16 lg:mb-20 max-w-3xl text-center">
                     <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-cusblue shadow-sm">
                         <Sparkles className="h-3.5 w-3.5" />
