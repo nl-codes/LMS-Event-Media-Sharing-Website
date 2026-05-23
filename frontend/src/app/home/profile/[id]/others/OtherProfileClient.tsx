@@ -150,8 +150,6 @@ export default function OthersProfilePage() {
         ? (Country.getCountryByCode(profile.country)?.name ?? profile.country)
         : null;
 
-    console.log(profile);
-
     return (
         <main className="min-h-screen bg-cuscream px-4 py-10">
             <div className="mx-auto max-w-5xl">
