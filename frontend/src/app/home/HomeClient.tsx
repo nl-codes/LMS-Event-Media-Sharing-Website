@@ -25,7 +25,7 @@ export default function Home() {
                         </span>
                     </h1>
 
-                    <p className="text-cusviolet/60 text-base sm:text-lg max-w-lg mb-8 sm:mb-10 leading-relaxed font-medium">
+                    <p className="hidden md:block lg:block text-cusviolet/60 text-base sm:text-lg max-w-lg mb-8 sm:mb-10 leading-relaxed font-medium">
                         Ready to check on your schedule or create something new?
                         Access all your hosted experiences and joined events in
                         one elegant space.
