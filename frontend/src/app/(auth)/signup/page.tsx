@@ -32,7 +32,9 @@ export default function Home() {
                         anytime with a community that cares.
                     </p>
 
-                    <LoginOptions />
+                    <div className="hidden md:block">
+                        <LoginOptions />
+                    </div>
 
                     {/* Feature Badges */}
                     <div className="hidden md:flex lg:flex flex-row gap-4 pt-8 justify-start border-t border-cusblue/5 mt-4">
@@ -52,8 +54,15 @@ export default function Home() {
                 </div>
 
                 {/* Right Side: Form */}
-                <div className="w-full lg:w-[500px] bg-white/40 backdrop-blur-md p-6 sm:p-8 lg:p-10 rounded-3xl sm:rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5">
-                    <SignupForm />
+                <div className="w-full lg:w-[500px] flex flex-col gap-6">
+                    <div className="w-full bg-white/40 backdrop-blur-md p-6 sm:p-8 lg:p-10 rounded-3xl sm:rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5">
+                        <SignupForm />
+                    </div>
+
+                    {/* Login link — shown only on small screens, after the form */}
+                    <div className="md:hidden flex flex-col items-center gap-2 text-sm text-cusviolet/80">
+                        <LoginOptions />
+                    </div>
                 </div>
             </div>
         </main>
