@@ -75,7 +75,7 @@ export default function ProfileCard() {
 
     if (notCreated || !profile)
         return (
-            <div className="flex flex-col text-center p-12 bg-white rounded-3xl border-2 border-dashed border-gray-200">
+            <div className="flex flex-col text-center p-6 sm:p-12 bg-white rounded-3xl border-2 border-dashed border-gray-200">
                 <div className="bg-cuscream w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <FiUser className="text-2xl text-cusblue" />
                 </div>
@@ -99,7 +99,7 @@ export default function ProfileCard() {
                 {/* Top Decorative Banner */}
                 <div className="h-32 bg-linear-to-r from-cusblue to-cusviolet w-full" />
 
-                <div className="relative px-8 pb-8">
+                <div className="relative px-5 sm:px-8 pb-6 sm:pb-8">
                     {/* Profile Image Overlay */}
                     <div className="relative -top-12 -mb-8 flex justify-between items-end">
                         <UserAvatar
@@ -131,7 +131,7 @@ export default function ProfileCard() {
 
                     {/* User Identity */}
                     <div className="mt-2">
-                        <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight wrap-break-word">
                             {profile.firstName} {profile.lastName}
                         </h1>
                         <p className="text-cusblue font-medium flex items-center gap-1">

@@ -151,7 +151,7 @@ export default function OthersProfilePage() {
         : null;
 
     return (
-        <main className="min-h-screen bg-cuscream px-4 py-10">
+        <main className="min-h-screen bg-cuscream px-4 sm:px-6 py-6 sm:py-10">
             <div className="mx-auto max-w-5xl">
                 <div className="mb-6 flex flex-row items-center gap-4">
                     <BackButton label="Back" />
@@ -160,17 +160,17 @@ export default function OthersProfilePage() {
                 <div className="mb-6 overflow-hidden rounded-3xl bg-white shadow-xl">
                     <div className="h-28 bg-linear-to-r from-cusblue to-cusviolet" />
 
-                    <div className="relative px-8 pb-8">
+                    <div className="relative px-5 sm:px-8 pb-6 sm:pb-8">
                         {/* Avatar */}
-                        <div className="relative -top-14 -mb-6 flex items-end justify-between">
+                        <div className="relative -top-14 -mb-6 flex flex-wrap items-end justify-between gap-3">
                             <UserAvatar
                                 src={profile?.profilePicture}
                                 name={fullName}
                                 size="large"
                             />
                             {/* Member since badge + Report menu */}
-                            <div className="mb-1 flex items-center gap-2">
-                                <span className="rounded-2xl border border-cusblue/10 bg-cusblue/5 px-4 py-1.5 text-xs font-bold text-cusblue/70">
+                            <div className="mb-1 flex items-center gap-2 flex-wrap">
+                                <span className="rounded-2xl border border-cusblue/10 bg-cusblue/5 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold text-cusblue/70">
                                     Member since{" "}
                                     {HelperFormatMonthYear(user.createdAt)}
                                 </span>
@@ -185,7 +185,7 @@ export default function OthersProfilePage() {
                         </div>
 
                         {/* Name & username */}
-                        <h1 className="text-2xl font-extrabold tracking-tight text-gray-800">
+                        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-800 wrap-break-word">
                             {fullName}
                         </h1>
                         <p className="text-sm font-medium text-cusblue">
@@ -205,7 +205,7 @@ export default function OthersProfilePage() {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Left column — personal info */}
                     <div className="lg:col-span-1 space-y-4">
-                        <div className="rounded-3xl bg-white/60 backdrop-blur-sm border border-white/80 shadow-sm p-6 space-y-4">
+                        <div className="rounded-3xl bg-white/60 backdrop-blur-sm border border-white/80 shadow-sm p-5 sm:p-6 space-y-4">
                             <p className="text-[10px] font-black uppercase tracking-widest text-cusviolet/50">
                                 Personal Info
                             </p>
