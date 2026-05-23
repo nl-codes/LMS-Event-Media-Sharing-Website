@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import ReactCountryFlag from "react-country-flag";
 import { Country } from "country-state-city";
-import default_profile from "public/profile-male.png";
 import { getPublicProfile, type PublicProfile } from "@/lib/profileApi";
 import type { Event } from "@/types/Event";
 import clsx from "clsx";
@@ -25,6 +24,7 @@ import {
     HelperFormatDate,
     HelperFormatMonthYear,
 } from "@/utils/HelperFunctions";
+import UserAvatar from "@/components/common/UserAvatar";
 
 function EventPill({ event, href }: { event: Event; href: string }) {
     return (
@@ -163,18 +163,11 @@ export default function OthersProfilePage() {
                     <div className="relative px-8 pb-8">
                         {/* Avatar */}
                         <div className="relative -top-14 -mb-6 flex items-end justify-between">
-                            <div className="relative h-28 w-28 overflow-hidden rounded-2xl border-4 border-white shadow-lg bg-white">
-                                <Image
-                                    src={
-                                        profile?.profilePicture ||
-                                        default_profile
-                                    }
-                                    alt={fullName}
-                                    fill
-                                    className="object-cover"
-                                    priority
-                                />
-                            </div>
+                            <UserAvatar
+                                src={profile?.profilePicture}
+                                name={fullName}
+                                size="large"
+                            />
                             {/* Member since badge + Report menu */}
                             <div className="mb-1 flex items-center gap-2">
                                 <span className="rounded-2xl border border-cusblue/10 bg-cusblue/5 px-4 py-1.5 text-xs font-bold text-cusblue/70">
