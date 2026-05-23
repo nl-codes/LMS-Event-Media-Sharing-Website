@@ -57,7 +57,7 @@ export default function EventsPage() {
     };
 
     return (
-        <main className="max-w-7xl mx-auto px-6 py-10 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 min-h-screen">
             <div className="mb-6 flex flex-row items-center gap-4">
                 <BackButton label="Back to dashboard" />
             </div>
@@ -65,7 +65,7 @@ export default function EventsPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                 <div>
-                    <h1 className="text-4xl font-bold text-cusblue tracking-tight">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-cusblue tracking-tight">
                         My Events
                     </h1>
                     <p className="text-cusviolet mt-1 opacity-80">
@@ -134,7 +134,7 @@ export default function EventsPage() {
 
             {/* Joined Events Section */}
             <div className="mt-16">
-                <h2 className="text-3xl font-bold text-cusblue tracking-tight mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-cusblue tracking-tight mb-2">
                     Events I&apos;ve Joined
                 </h2>
                 <p className="text-cusviolet opacity-80 mb-8">

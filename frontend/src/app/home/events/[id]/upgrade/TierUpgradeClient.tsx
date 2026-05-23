@@ -60,19 +60,19 @@ export default function TierUpgradePage() {
             <div className="flex flex-row">
                 <BackButton label="Back to Events" />
             </div>
-            <div className="relative z-10 mx-auto w-full max-w-6xl">
-                <div className="mx-auto mb-20 max-w-3xl text-center">
+            <div className="relative z-10 mx-auto w-fullmax-w-6xl py-2">
+                <div className="mx-auto mb-10 sm:mb-16 lg:mb-20 max-w-3xl text-center">
                     <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-cusblue shadow-sm">
                         <Sparkles className="h-3.5 w-3.5" />
                         Simple Pricing
                     </div>
-                    <h1 className="mb-6 text-5xl font-black tracking-tight text-slate-900 sm:text-7xl">
+                    <h1 className="mb-6 text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight text-slate-900">
                         Event plans for <br />
                         <span className="bg-linear-to-r from-cusblue to-cusviolet bg-clip-text text-transparent">
                             every scale.
                         </span>
                     </h1>
-                    <p className="mx-auto max-w-lg text-lg font-medium leading-relaxed text-slate-500">
+                    <p className="mx-auto max-w-lg text-base sm:text-lg font-medium leading-relaxed text-slate-500">
                         Pay once and Access Forever. Start for free and upgrade
                         as your event grows.
                     </p>
