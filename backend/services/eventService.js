@@ -13,8 +13,23 @@ import { enqueueEventCleanupJob } from "../queues/eventCleanupQueue.js";
 import { enqueueMediaRetentionJob } from "../queues/mediaRetentionQueue.js";
 import { triggerEventSync } from "../queues/eventSyncQueue.js";
 
+/**
+ * @module services/eventService
+ * @description Lifecycle + read/write for the Event aggregate. Invariants:
+ * endTime is always server-derived; startTime is locked once the event has
+ * started; tier/status flow through dedicated entrypoints only.
+ */
+
+/** BullMQ delays cap at ~2^31 ms (~24.8 days); past that, the periodic
+ *  scanner picks it up instead. */
 const MAX_DELAY_MS = 24 * 24 * 60 * 60 * 1000;
 
+/**
+ * Best-effort: enqueue the retention cleanup job with a delay equal to
+ * `deleteAt - now`. Skipped if `deleteAt` is too far out for BullMQ.
+ * @param {import("mongoose").Document} event
+ * @returns {Promise<void>}
+ */
 const scheduleRetentionForEvent = async (event) => {
     try {
         const deleteAt = getMediaRetentionDeleteAt(event);
@@ -33,6 +48,13 @@ const scheduleRetentionForEvent = async (event) => {
     }
 };
 
+/**
+ * Persist a new Event. Derives endTime from tier+startTime and schedules
+ * the media-retention job.
+ * @param {object} eventData Must include startTime; tier defaults to "free".
+ * @returns {Promise<import("mongoose").Document>} Saved event with host populated.
+ * @throws {Error} If startTime is missing/invalid.
+ */
 export const createEvent = async (eventData) => {
     try {
         const start = new Date(eventData.startTime);
@@ -62,6 +84,12 @@ export const createEvent = async (eventData) => {
     }
 };
 
+/**
+ * Fetch an event by id with host populated + avatar hydrated.
+ * @param {string} eventId
+ * @returns {Promise<object>}
+ * @throws {Error} 404 if missing/invalid id.
+ */
 export const findEventById = async (eventId) => {
     try {
         if (!mongoose.isValidObjectId(eventId)) {
@@ -83,6 +111,11 @@ export const findEventById = async (eventId) => {
     }
 };
 
+/**
+ * List events owned by a host, newest first.
+ * @param {string} hostId
+ * @returns {Promise<object[]>}
+ */
 export const findAllEventsByHost = async (hostId) => {
     try {
         const events = await Event.find({ hostId })
@@ -94,6 +127,12 @@ export const findAllEventsByHost = async (hostId) => {
     }
 };
 
+/**
+ * Resolve an event by its public uniqueSlug.
+ * @param {string} slug
+ * @returns {Promise<object>}
+ * @throws {Error} 404 if missing.
+ */
 export const findEventBySlug = async (slug) => {
     try {
         const event = await Event.findOne({ uniqueSlug: slug }).populate(
@@ -111,6 +150,16 @@ export const findEventBySlug = async (slug) => {
     }
 };
 
+/**
+ * Patch an event. Host-only; rejects endTime edits; drops tier/status;
+ * lets startTime through only while the event hasn't started, and
+ * recalculates endTime in that case.
+ * @param {string} eventId
+ * @param {object} updateData
+ * @param {string} requesterId
+ * @returns {Promise<object>} Updated event with host populated.
+ * @throws {Error} On not-found, unauthorized, locked startTime, or endTime edit attempt.
+ */
 export const updateEvent = async (eventId, updateData, requesterId) => {
     try {
         const event = await Event.findById(eventId);
@@ -173,6 +222,14 @@ export const updateEvent = async (eventId, updateData, requesterId) => {
     }
 };
 
+/**
+ * Host-driven event completion: flips status to "Completed" and triggers
+ * the event-sync tick (which runs the highlight/retention scans).
+ * @param {string} eventId
+ * @param {string} requesterId Must match event.hostId.
+ * @returns {Promise<import("mongoose").Document>} The updated event with host populated.
+ * @throws {Error} If missing, unauthorized, or already Completed/Cancelled.
+ */
 export const finishEventByHost = async (eventId, requesterId) => {
     const event = await Event.findById(eventId);
 
@@ -209,6 +266,15 @@ export const finishEventByHost = async (eventId, requesterId) => {
     return event;
 };
 
+/**
+ * Generic host-driven status update. Triggers an event-sync tick when
+ * the new status is "Completed".
+ * @param {string} eventId
+ * @param {"Active"|"Completed"|"Cancelled"} status
+ * @param {string} requesterId Must match event.hostId.
+ * @returns {Promise<object>} Updated event with host populated.
+ * @throws {Error} If missing or unauthorized.
+ */
 export const updateEventStatus = async (eventId, status, requesterId) => {
     try {
         const event = await Event.findById(eventId);
@@ -247,6 +313,14 @@ export const updateEventStatus = async (eventId, status, requesterId) => {
     }
 };
 
+/**
+ * Delete an event and enqueue a cleanup job that wipes its Media,
+ * Interactions, and Cloudinary folder.
+ * @param {string} eventId
+ * @param {string} requesterId Must match event.hostId.
+ * @returns {Promise<{ message: string }>}
+ * @throws {Error} If missing or unauthorized.
+ */
 export const removeEvent = async (eventId, requesterId) => {
     try {
         const event = await Event.findById(eventId);
@@ -281,6 +355,11 @@ export const removeEvent = async (eventId, requesterId) => {
 
 const MAX_PUBLIC_EVENTS = 100;
 
+/**
+ * Public (logged-out) event listing.
+ * @param {{ q?: string, limit?: number }} [opts]
+ * @returns {Promise<object[]>} Up to MAX_PUBLIC_EVENTS events.
+ */
 export const listPublicEvents = async ({ q, limit } = {}) => {
     const cap = Math.min(
         Math.max(parseInt(limit, 10) || 50, 1),
@@ -310,8 +389,14 @@ export const listPublicEvents = async ({ q, limit } = {}) => {
     return attachAvatars(events, ["hostId"]);
 };
 
-// Host-only: list every participant of an event (registered members + guests)
-// merged into one shape so the frontend can render them in a single list.
+/**
+ * Host-only: merged list of every participant (registered members + guests)
+ * in a single uniform shape for the frontend table.
+ * @param {string} eventId
+ * @param {string} requesterId Must match event.hostId.
+ * @returns {Promise<Array<{ id: string, name: string, userName: string, type: "registered"|"guest", profilePicture: string, joinedAt: Date }>>}
+ * @throws {Error} 404 if event missing, 403 if requester is not the host.
+ */
 export const getEventParticipants = async (eventId, requesterId) => {
     const event = await Event.findById(eventId).select("hostId");
     if (!event) {
@@ -391,6 +476,15 @@ export const getEventParticipants = async (eventId, requesterId) => {
     );
 };
 
+/**
+ * Toggle public/private. Persists the new privacy and enqueues the
+ * event-privacy worker to cascade isPublic to each Media row.
+ * @param {string} eventId
+ * @param {"public"|"private"} privacy
+ * @param {string} requesterId Must match event.hostId.
+ * @returns {Promise<{ event: { _id: string, privacy: string }, jobId: string|null, targetIsPublic: boolean, queueError: string|null }>}
+ * @throws {Error} 400 invalid privacy, 404 missing event, 403 unauthorized.
+ */
 export const updateEventPrivacy = async (eventId, privacy, requesterId) => {
     if (privacy !== "public" && privacy !== "private") {
         const err = new Error("privacy must be 'public' or 'private'");

@@ -1,3 +1,15 @@
+/**
+ * @module queues/eventSyncQueue
+ * @description Recurring 5-minute reconciliation tick. Each tick flips
+ * newly-ended events to Completed, enqueues highlight jobs for paid-ended
+ * events, and enqueues retention cleanup jobs for events past their
+ * deletion deadline.
+ *
+ * Also exposes {@link triggerEventSync} so transitions like "host
+ * manually finished an event" can fire an immediate tick without waiting
+ * for the scheduler.
+ */
+
 import { Queue, Worker } from "bullmq";
 import { getRedisConnection } from "../config/redisConfig.js";
 import {
@@ -9,6 +21,8 @@ import {
 export const EVENT_SYNC_QUEUE_NAME = "event-sync";
 export const EVENT_SYNC_JOB_NAME = "tick";
 
+/** Repeatable-job key used by upsertJobScheduler kept stable so we can
+ *  evict legacy keys on startup. */
 export const EVENT_SYNC_SCHEDULER_ID = "event-sync-tick";
 
 const TICK_INTERVAL_MS = 5 * 60 * 1000;
@@ -16,6 +30,10 @@ const TICK_INTERVAL_MS = 5 * 60 * 1000;
 let queue = null;
 let worker = null;
 
+/**
+ * Lazy-singleton accessor for the event-sync queue.
+ * @returns {import("bullmq").Queue}
+ */
 export const getEventSyncQueue = () => {
     if (queue) return queue;
     queue = new Queue(EVENT_SYNC_QUEUE_NAME, {
@@ -40,6 +58,11 @@ const runTick = async () => {
     return { completed, highlights, retention };
 };
 
+/**
+ * Boot the worker and (re)register the recurring scheduler. Also evicts
+ * any legacy repeatable-job entries left over from earlier scheduler ids.
+ * @returns {Promise<import("bullmq").Worker>}
+ */
 export const startEventSyncWorker = async () => {
     if (worker) return worker;
 
@@ -90,9 +113,12 @@ export const startEventSyncWorker = async () => {
     return worker;
 };
 
-// One-shot trigger for explicit transitions (e.g. host clicks Complete).
-// Fires the same tick logic immediately rather than waiting for the next
-// scheduled run.
+/**
+ * One-shot tick trigger for explicit transitions (e.g. the host clicks
+ * Finish Event). Schedules the same tick handler so callers don't have
+ * to wait for the 5-minute interval.
+ * @returns {Promise<import("bullmq").Job>}
+ */
 export const triggerEventSync = async () => {
     const q = getEventSyncQueue();
     return q.add(
@@ -102,6 +128,10 @@ export const triggerEventSync = async () => {
     );
 };
 
+/**
+ * Tear down worker + queue.
+ * @returns {Promise<void>}
+ */
 export const stopEventSyncWorker = async () => {
     if (worker) {
         await worker.close();

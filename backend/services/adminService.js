@@ -15,6 +15,18 @@ import {
 } from "./otpService.js";
 import { getEventParticipationCount } from "./eventMembershipService.js";
 
+/**
+ * @module services/adminService
+ * @description Admin auth (password + OTP MFA) and admin-on-user
+ * moderation. Admin-on-admin actions live in {@link module:services/superAdminService}.
+ */
+
+/**
+ * Create a pending admin account awaiting superadmin approval.
+ * @param {{ userName: string, email: string, password: string }} input
+ * @returns {Promise<object>} Sanitised admin user (safeUserForAdmin).
+ * @throws {Error} 400 on missing fields, 409 on duplicate email.
+ */
 export async function registerAdmin({ userName, email, password }) {
     if (!userName || !email || !password) {
         throw makeError(400, "userName, email, and password are required");
@@ -39,6 +51,14 @@ export async function registerAdmin({ userName, email, password }) {
     return safeUserForAdmin(newAdmin);
 }
 
+/**
+ * Two-step admin login: password check, then OTP MFA (admins only —
+ * superadmins bypass MFA). Without an `otp`, mints a fresh code and
+ * returns it for the controller to email; with an `otp`, verifies it.
+ * @param {{ email: string, password: string, otp?: string }} input
+ * @returns {Promise<{ mfaRequired: boolean, user: import("mongoose").Document, otpCode?: string }>}
+ * @throws {Error} 400 on bad credentials/OTP, 403 on role/status, 429 over attempts.
+ */
 export async function verifyAdminCredentials({ email, password, otp }) {
     if (!email || !password)
         throw makeError(400, "Email and Password required");
@@ -92,6 +112,11 @@ export async function verifyAdminCredentials({ email, password, otp }) {
     return { mfaRequired: false, user };
 }
 
+/**
+ * List end users for the admin user-management table.
+ * @param {string} searchTerm Case-insensitive substring against userName/email.
+ * @returns {Promise<import("mongoose").Document[]>} Up to 500 users, newest first.
+ */
 export async function getUsersList(searchTerm) {
     const q = { role: "user" };
     const normalizedSearch = searchTerm.trim();
@@ -152,7 +177,13 @@ const handleUserStatusUpdate = ({
     })();
 };
 
-// Suspend
+/**
+ * Suspend an end user. Bumps suspensionCount.
+ * @param {string} userId
+ * @param {string} reason Persisted as adminActionReason.
+ * @returns {Promise<import("mongoose").Document>} The updated user.
+ * @throws {Error} 404 if missing, 400 if non-user or already suspended.
+ */
 export const suspendUser = (userId, reason) =>
     handleUserStatusUpdate({
         userId,
@@ -161,7 +192,13 @@ export const suspendUser = (userId, reason) =>
         blockIfSuspended: true,
     });
 
-// Unsuspend
+/**
+ * Lift a suspension. User must currently be suspended.
+ * @param {string} userId
+ * @param {string} reason Persisted as adminActionReason.
+ * @returns {Promise<import("mongoose").Document>} The updated user.
+ * @throws {Error} 404 if missing, 400 if non-user or not suspended.
+ */
 export const unsuspendUser = (userId, reason) =>
     handleUserStatusUpdate({
         userId,
@@ -170,6 +207,12 @@ export const unsuspendUser = (userId, reason) =>
         requireSuspended: true,
     });
 
+/**
+ * List events for the admin events table.
+ * @param {string} [search] Substring against eventName/description.
+ * @param {string} [tier] Optional tier filter ("free"|"premium"|"pro").
+ * @returns {Promise<import("mongoose").Document[]>} Up to 500 events.
+ */
 export async function getEventsList(search = "", tier = "") {
     const q = {};
     const normalizedSearch = String(search || "").trim();
@@ -192,6 +235,13 @@ export async function getEventsList(search = "", tier = "") {
         .populate("hostId", "userName email");
 }
 
+/**
+ * Admin event detail: event row + aggregate stats + uploads timeseries.
+ * Bucket granularity is picked from event duration via getEventBucketUnit.
+ * @param {string} eventId
+ * @returns {Promise<{ event: object, stats: { participants: number, uploads: number }, uploadsSeries: Array<{ t: Date, y: number }>, bucketUnit: "minute"|"hour"|"day" }>}
+ * @throws {Error} 404 if event not found.
+ */
 export async function getEventDetails(eventId) {
     const event = await Event.findById(eventId)
         .select(

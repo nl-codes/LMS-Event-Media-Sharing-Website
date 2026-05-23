@@ -1,3 +1,11 @@
+/**
+ * @module routes/eventMembershipRoute
+ * @description Mounted at `/event-memberships`. Registered-user
+ * participation: idempotent join + "my joined events" listing. Guest
+ * participation goes through {@link module:routes/eventRoute}
+ * (`POST /events/join-as-guest`).
+ */
+
 import express from "express";
 import {
     getMyJoinedEvents,

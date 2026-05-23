@@ -1,9 +1,33 @@
 import mongoose from "mongoose";
 
-// Holds the event payload a host submitted for a Premium/Pro creation until
-// the corresponding Stripe Checkout Session resolves. The event itself is
-// only created after Stripe confirms payment, so this collection is the only
-// place a "paid event" exists between submit and payment confirmation.
+/**
+ * PendingEventCheckout
+ * --------------------
+ * Holds the event payload a host submitted for a Premium/Pro creation until
+ * the corresponding Stripe Checkout Session resolves. The Event document
+ * itself is only created after Stripe confirms payment, so this collection
+ * is the only place a "paid event" exists between submit and payment
+ * confirmation.
+ *
+ * Why a dedicated collection (vs. trusting Stripe metadata): Stripe metadata
+ * has tight size limits, and the host needs idempotent confirmation that
+ * survives webhook retries and the success-page redirect racing each other.
+ *
+ * Relationships:
+ *  - hostId         → User (the would-be event host).
+ *  - createdEventId → Event (populated only after finalize succeeds).
+ *
+ * Lifecycle (status):
+ *  - "pending"     :   checkout in flight.
+ *  - "completed"   :   payment confirmed and Event materialized.
+ *  - "cancelled"   :   host bailed out at Stripe; no Event was created.
+ *  - "expired"     :   never resolved before TTL kicked in.
+ *
+ * Indexes:
+ *  - `sessionId` unique    :   every Stripe session has at most one pending row.
+ *  - `hostId` and `status` :   admin/host listing.
+ *  - TTL on `expiresAt`    :   abandoned rows self-destruct without manual cleanup.
+ */
 const PendingEventCheckoutSchema = new mongoose.Schema(
     {
         hostId: {

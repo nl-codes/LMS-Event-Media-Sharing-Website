@@ -9,12 +9,27 @@ import {
     getAppealRejectedEmailHTML,
 } from "../utils/longText.js";
 
+/**
+ * @module services/appealService
+ * @description Unsuspension-appeal workflow. createAppeal returns null
+ * (not throws) for unknown/non-suspended emails so the controller can
+ * respond uniformly and avoid leaking account existence.
+ */
+
 const validateObjectId = (id, label) => {
     if (!mongoose.isValidObjectId(id)) {
         throw makeError(400, `Invalid ${label}`);
     }
 };
 
+/**
+ * File a new unsuspension appeal.
+ * @param {{ email: string, appealMessage: string }} input
+ * @returns {Promise<{ appeal: import("mongoose").Document, user: import("mongoose").Document }|null>}
+ *   null when the email doesn't map to a suspended user or the user already
+ *   has a pending appeal (controller treats this as success).
+ * @throws {Error} 400 on missing fields.
+ */
 export async function createAppeal({ email, appealMessage }) {
     const emailLower = String(email || "")
         .toLowerCase()
@@ -48,6 +63,10 @@ export async function createAppeal({ email, appealMessage }) {
     return { appeal, user };
 }
 
+/**
+ * Counts per status, for the admin-appeals tabs.
+ * @returns {Promise<{ pending: number, approved: number, rejected: number }>}
+ */
 export async function getAppealCounts() {
     const [pending, approved, rejected] = await Promise.all([
         Appeal.countDocuments({ status: "pending" }),
@@ -57,6 +76,11 @@ export async function getAppealCounts() {
     return { pending, approved, rejected };
 }
 
+/**
+ * Admin appeals queue (newest first, capped at 500).
+ * @param {{ status?: string }} [filters] Pass "all" or omit for everything.
+ * @returns {Promise<object[]>}
+ */
 export async function listAppeals({ status } = {}) {
     const filter = {};
     if (status && status !== "all") filter.status = status;
@@ -68,6 +92,13 @@ export async function listAppeals({ status } = {}) {
         .populate("reviewedBy", "userName email");
 }
 
+/**
+ * Approve an appeal: unsuspends the user (if still suspended) and emails
+ * them the approval template. Email failures are swallowed.
+ * @param {{ appealId: string, adminId: string, adminNote?: string }} input
+ * @returns {Promise<import("mongoose").Document>} The closed Appeal.
+ * @throws {Error} 404 if missing, 400 if already reviewed.
+ */
 export async function approveAppeal({ appealId, adminId, adminNote }) {
     validateObjectId(appealId, "appeal id");
     validateObjectId(adminId, "admin id");
@@ -115,6 +146,13 @@ export async function approveAppeal({ appealId, adminId, adminNote }) {
     return appeal;
 }
 
+/**
+ * Reject an appeal: user stays suspended; emails the rejection template
+ * with the optional admin note.
+ * @param {{ appealId: string, adminId: string, adminNote?: string }} input
+ * @returns {Promise<import("mongoose").Document>} The closed Appeal.
+ * @throws {Error} 404 if missing, 400 if already reviewed.
+ */
 export async function rejectAppeal({ appealId, adminId, adminNote }) {
     validateObjectId(appealId, "appeal id");
     validateObjectId(adminId, "admin id");

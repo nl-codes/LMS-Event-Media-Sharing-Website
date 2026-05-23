@@ -5,9 +5,19 @@ import Interaction from "../models/interactionModel.js";
 import { getMediaRetentionDeleteAt } from "../utils/mediaRetention.js";
 import { markRetentionStatus } from "./mediaRetentionService.js";
 
-// Same paged-delete approach used by eventCleanupProcessor.js. We keep the
-// Cloudinary folder alive for the thumbnail subfolder since the Event
-// document is intentionally preserved by retention cleanup.
+/**
+ * @module services/mediaRetentionProcessor
+ * @description BullMQ worker for the media-retention queue. Wipes an
+ * event's Media (Mongo + Cloudinary) and dependent Interactions while
+ * preserving the Event row + its thumbnail folder.
+ */
+
+/**
+ * Paged Cloudinary purge for `events/<id>/`, both image and video assets.
+ * Keeps the folder root + thumbnail subfolder so the Event keeps a cover.
+ * @param {string} eventId
+ * @returns {Promise<{ image: number, video: number }>}
+ */
 const purgeEventMediaFolder = async (eventId) => {
     const folder = `events/${eventId}`;
     const summary = { image: 0, video: 0 };
@@ -41,8 +51,12 @@ const purgeEventMediaFolder = async (eventId) => {
     return summary;
 };
 
-// Worker entrypoint. Idempotent — running twice on the same event finds zero
-// remaining media on the second pass and exits cleanly.
+/**
+ * Worker entrypoint. Idempotent: short-circuits if the event is gone,
+ * already completed, or the deadline isn't here yet.
+ * @param {import("bullmq").Job<{ eventId: string }>} job
+ * @returns {Promise<{ eventId: string, skipped?: boolean, reason?: string, mediaDeleted?: number, interactionsDeleted?: number, cloudinary?: { image: number, video: number } }>}
+ */
 export const processMediaRetentionJob = async (job) => {
     const { eventId } = job.data;
 

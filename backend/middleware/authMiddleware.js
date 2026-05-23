@@ -1,8 +1,20 @@
+/**
+ * @module middleware/authMiddleware
+ * @description JWT cookie-based auth gates. {@link requireAuth} verifies
+ * the token and attaches `req.user`; {@link requireRole} layers a role
+ * check on top. Optional-auth (guest fallback) lives in
+ * {@link module:middleware/identifyUser}.
+ */
+
 import jwt from "jsonwebtoken";
 
 /**
- * Middleware that verifies the JWT token from the httpOnly cookie.
- * Attaches the decoded user payload to `req.user` on success.
+ * Verify the JWT from the httpOnly `token` cookie and attach the decoded
+ * payload as `req.user`. Rejects the request when no cookie is present
+ * or the token is invalid/expired.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
  */
 export const requireAuth = (req, res, next) => {
     const token = req.cookies?.token;
@@ -22,10 +34,10 @@ export const requireAuth = (req, res, next) => {
 };
 
 /**
- * Middleware that restricts access to specific roles.
- * Must be used after `requireAuth`.
- *
- * @param  {...string} roles - Allowed roles (e.g. "admin", "user")
+ * Restrict access to specific roles. Must be chained AFTER
+ * {@link requireAuth} so `req.user` is populated.
+ * @param {...string} roles Allowed role values, e.g. `"admin"`, `"superadmin"`.
+ * @returns {import("express").RequestHandler}
  */
 export const requireRole = (...roles) => {
     return (req, res, next) => {

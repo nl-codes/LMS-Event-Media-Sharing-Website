@@ -1,3 +1,9 @@
+/**
+ * @module controllers/analyticsController
+ * @description Two surfaces: admin-wide growth charts (users / events /
+ * media) and per-event host/admin insights with bucketed timeseries.
+ */
+
 import {
     getUserGrowth,
     getEventGrowth,
@@ -6,6 +12,13 @@ import {
 } from "../services/analyticsService.js";
 import { Event } from "../models/eventModel.js";
 
+/**
+ * Express-handler factory for the three platform-growth endpoints. They
+ * all share the same `?range=` query + response shape, so we don't
+ * repeat the boilerplate three times.
+ * @param {(range: string) => Promise<object>} loader Service function.
+ * @returns {import("express").RequestHandler}
+ */
 const makeHandler = (loader) => async (req, res) => {
     try {
         const { range } = req.query;
@@ -19,12 +32,25 @@ const makeHandler = (loader) => async (req, res) => {
     }
 };
 
+/** GET /analytics/users?range=... — platform user growth chart. */
 export const getUserGrowthController = makeHandler(getUserGrowth);
+
+/** GET /analytics/events?range=... — platform event growth chart. */
 export const getEventGrowthController = makeHandler(getEventGrowth);
+
+/** GET /analytics/media?range=... — platform media growth chart. */
 export const getMediaGrowthController = makeHandler(getMediaGrowth);
 
-// Host-scoped per-event insights. Caller must be the host of the event (or an
-// admin / superadmin) to read these numbers.
+/**
+ * GET /events/:eventId/insights
+ *
+ * Host- or admin-only per-event insights. The host check is local (not
+ * pushed into the service) because we also need to allow admin/superadmin
+ * read-through.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getEventInsightsController = async (req, res) => {
     try {
         const { eventId } = req.params;

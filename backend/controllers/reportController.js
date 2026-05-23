@@ -1,3 +1,10 @@
+/**
+ * @module controllers/reportController
+ * @description Moderation HTTP layer: filing reports, admin queue, verdict
+ * (verify/dismiss), housekeeping delete, and a "my hidden media" view for
+ * end users.
+ */
+
 import {
     createReport,
     deleteReport,
@@ -8,6 +15,15 @@ import {
     verifyReport,
 } from "../services/reportService.js";
 
+/**
+ * POST /reports
+ *
+ * File a moderation report. `reporterId` is taken from the JWT, never the
+ * request body — clients can't impersonate other reporters.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function createReportController(req, res) {
     try {
         const reporterId = req.user?.id;
@@ -34,6 +50,14 @@ export async function createReportController(req, res) {
     }
 }
 
+/**
+ * GET /reports?status=...&targetType=...
+ *
+ * Admin moderation queue.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function listReportsController(req, res) {
     try {
         const status = String(req.query.status || "").trim() || undefined;
@@ -54,6 +78,14 @@ export async function listReportsController(req, res) {
     }
 }
 
+/**
+ * GET /reports/:reportId
+ *
+ * Report detail with hydrated target (Media / Interaction / User).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function getReportController(req, res) {
     try {
         const { reportId } = req.params || {};
@@ -70,6 +102,15 @@ export async function getReportController(req, res) {
     }
 }
 
+/**
+ * POST /reports/:reportId/verify
+ *
+ * Apply an admin verdict + action handler (hideMedia / deleteComment /
+ * suspendUser). The service notifies the reporter on success.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function verifyReportController(req, res) {
     try {
         const { reportId } = req.params || {};
@@ -96,6 +137,14 @@ export async function verifyReportController(req, res) {
     }
 }
 
+/**
+ * POST /reports/:reportId/dismiss
+ *
+ * Close a report as dismissed; notifies the reporter.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function dismissReportController(req, res) {
     try {
         const { reportId } = req.params || {};
@@ -121,6 +170,14 @@ export async function dismissReportController(req, res) {
     }
 }
 
+/**
+ * DELETE /reports/:reportId
+ *
+ * Hard-delete a report (superadmin housekeeping).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function deleteReportController(req, res) {
     try {
         const { reportId } = req.params || {};
@@ -138,6 +195,15 @@ export async function deleteReportController(req, res) {
     }
 }
 
+/**
+ * GET /reports/flagged-media
+ *
+ * "My hidden media" view for the authenticated user — what an admin
+ * verdict has hidden of their content.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function getFlaggedMediaController(req, res) {
     try {
         const userId = req.user?.id;

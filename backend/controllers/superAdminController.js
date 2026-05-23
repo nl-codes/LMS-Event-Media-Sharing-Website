@@ -1,3 +1,9 @@
+/**
+ * @module controllers/superAdminController
+ * @description Superadmin-only endpoints: approve pending admin requests,
+ * list admins, suspend/unsuspend admin accounts.
+ */
+
 import {
     approveAdminUser,
     getAdminsList,
@@ -5,6 +11,14 @@ import {
     unsuspendAdmin,
 } from "../services/superAdminService.js";
 
+/**
+ * POST /superadmins/admins/approve
+ *
+ * Mark an admin account as approved and active.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function superAdminApproveAdminController(req, res) {
     try {
         const { adminId } = req.body || {};
@@ -32,6 +46,14 @@ export async function superAdminApproveAdminController(req, res) {
     }
 }
 
+/**
+ * GET /superadmins/admins?search=...
+ *
+ * Admin management table.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function superAdminListAdminsController(req, res) {
     const search = String(req.query.search || "").trim();
     try {
@@ -42,6 +64,14 @@ export async function superAdminListAdminsController(req, res) {
     }
 }
 
+/**
+ * POST /superadmins/admins/suspend
+ *
+ * Suspend an admin account; requires a non-empty reason.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function superAdminSuspendAdmin(req, res) {
     try {
         const { adminId, reason } = req.body || {};
@@ -68,6 +98,14 @@ export async function superAdminSuspendAdmin(req, res) {
     }
 }
 
+/**
+ * POST /superadmins/admins/unsuspend
+ *
+ * Lift an admin suspension; requires a non-empty reason.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function superAdminUnsuspendAdmin(req, res) {
     try {
         const { adminId, reason } = req.body || {};

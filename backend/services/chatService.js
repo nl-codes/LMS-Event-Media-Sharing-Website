@@ -4,13 +4,21 @@ import { EventMembership } from "../models/eventMembershipModel.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 
 /**
- * Save a chat message to the database
- * @param {string} eventId - The event ID
- * @param {string} senderId - The sender's user ID
- * @param {string} senderName - The sender's name
- * @param {string} senderEmail - The sender's email
- * @param {string} text - The message text
- * @returns {Object} The saved chat message
+ * @module services/chatService
+ * @description Event-scoped chat. Persists to ChatMessage; live and history
+ * shapes match via {@link findPopulatedMessage}. Unread badges read off
+ * `EventMembership.lastSeenChatAt`.
+ */
+
+/**
+ * Persist a chat message after asserting the event exists.
+ * @param {string} eventId
+ * @param {string} senderId
+ * @param {string} senderName
+ * @param {string} senderEmail
+ * @param {string} text
+ * @returns {Promise<import("mongoose").Document>} Saved message doc.
+ * @throws {Error} On missing required fields or unknown event.
  */
 export const saveChatMessage = async (
     eventId,
@@ -41,9 +49,9 @@ export const saveChatMessage = async (
 };
 
 /**
- * Reload a saved message with the sender populated and profilePicture attached,
- * matching the shape returned by the REST history endpoints. Used by the
- * realtime broadcast path so live messages render the same as historical ones.
+ * Reload a message in REST-history shape (sender populated + avatar).
+ * @param {string} messageId
+ * @returns {Promise<object|null>}
  */
 export const findPopulatedMessage = async (messageId) => {
     const message = await ChatMessage.findById(messageId)
@@ -54,11 +62,12 @@ export const findPopulatedMessage = async (messageId) => {
 };
 
 /**
- * Get chat history for a specific event
- * @param {string} eventId - The event ID
- * @param {number} limit - Maximum number of messages (default: 50)
- * @param {number} skip - Number of messages to skip for pagination (default: 0)
- * @returns {Array} Array of chat messages
+ * Paginated chat history (newest first).
+ * @param {string} eventId
+ * @param {number} [limit=50]
+ * @param {number} [skip=0]
+ * @returns {Promise<object[]>}
+ * @throws {Error} If eventId is missing.
  */
 export const getChatHistory = async (eventId, limit = 50, skip = 0) => {
     if (!eventId) {
@@ -75,10 +84,11 @@ export const getChatHistory = async (eventId, limit = 50, skip = 0) => {
 };
 
 /**
- * Get recent messages for an event (for initial load)
- * @param {string} eventId - The event ID
- * @param {number} limit - Maximum number of messages (default: 20)
- * @returns {Array} Array of chat messages sorted chronologically (oldest first)
+ * Recent messages for the initial chat view, returned oldest-first.
+ * @param {string} eventId
+ * @param {number} [limit=20]
+ * @returns {Promise<object[]>}
+ * @throws {Error} If eventId is missing.
  */
 export const getRecentMessages = async (eventId, limit = 20) => {
     if (!eventId) {
@@ -97,7 +107,12 @@ export const getRecentMessages = async (eventId, limit = 20) => {
 };
 
 /**
- * Get unread message count for a user in an event (based on EventMembership.lastSeenChatAt)
+ * Count messages newer than `EventMembership.lastSeenChatAt`. Missing
+ * timestamp = treat all messages as unread.
+ * @param {string} eventId
+ * @param {string} userId
+ * @returns {Promise<number>}
+ * @throws {Error} If either id is missing.
  */
 export const getUnreadCount = async (eventId, userId) => {
     if (!eventId || !userId) {
@@ -121,9 +136,10 @@ export const getUnreadCount = async (eventId, userId) => {
 };
 
 /**
- * Delete all messages for an event (cleanup when event is deleted)
- * @param {string} eventId - The event ID
- * @returns {Object} Deletion result
+ * Wipe every chat message for an event. Called during event cleanup.
+ * @param {string} eventId
+ * @returns {Promise<{ deletedCount?: number }>}
+ * @throws {Error} If eventId is missing.
  */
 export const deleteEventMessages = async (eventId) => {
     if (!eventId) {

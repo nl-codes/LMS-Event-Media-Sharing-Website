@@ -1,3 +1,14 @@
+/**
+ * @module server
+ * @description Express + socket.io entrypoint.
+ *  Boot order matters:
+ *  1. Webhook router is mounted BEFORE `express.json()` so Stripe can verify the raw body signature.
+ *  2. JSON parser, cookie parser, and CORS gate the rest of the stack.
+ *  3. socket.io is wired with the same FRONTEND_URL origin and stashed in {@link module:config/socketConfig} for services to use.
+ *  4. Routes mount last (all REST routers).
+ *  5. `startServer` connects to Mongo, runs the startup-sync reconciliation, then spawns every BullMQ worker, each worker boot is wrapped in try/catch so a single missing dep doesn't take the whole API down.
+ */
+
 import express from "express";
 import http from "http";
 import dotenv from "dotenv";
@@ -65,6 +76,8 @@ setIO(io);
  * Manages real-time connections, chat, and gallery events
  */
 io.on("connection", (socket) => {
+    // Chat rooms get a prefixed name so they don't collide with the
+    // gallery rooms (which use the raw eventId as their key).
     const getChatRoomName = (eventId) => `chat_${eventId}`;
 
     // Gallery events (existing functionality)
@@ -189,6 +202,12 @@ app.use("/appeals", appealRoutes);
 
 const port = process.env.PORT;
 
+/**
+ * Boot Mongo → run startup reconciliation → spawn each BullMQ worker
+ * (failures logged and isolated so one bad dep doesn't take the API
+ * down) → start listening.
+ * @returns {Promise<void>}
+ */
 const startServer = async () => {
     await connectDB();
     await runStartupSync();
@@ -241,10 +260,7 @@ const startServer = async () => {
     } catch (err) {
         // Non-fatal: deletion still happens once the worker recovers and
         // the startup/periodic scanner re-enqueues outstanding events.
-        console.error(
-            "Failed to start media retention worker:",
-            err.message,
-        );
+        console.error("Failed to start media retention worker:", err.message);
     }
 
     server.listen(port, () => {

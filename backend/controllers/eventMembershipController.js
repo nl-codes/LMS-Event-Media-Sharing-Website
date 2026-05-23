@@ -1,8 +1,24 @@
+/**
+ * @module controllers/eventMembershipController
+ * @description Registered-user event participation: join (upsert) and
+ * "my joined events" listing. Guest participation lives on
+ * {@link module:controllers/eventController}.joinAsGuest.
+ */
+
 import {
     getUserMemberships,
     joinEvent,
 } from "../services/eventMembershipService.js";
 
+/**
+ * POST /event-memberships
+ *
+ * Upsert the caller's membership in an event (idempotent — re-joining is
+ * a no-op `lastAccessedAt` refresh).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const joinEventController = async (req, res) => {
     try {
         const userId = req.user?._id || req.user?.id;
@@ -30,6 +46,15 @@ export const joinEventController = async (req, res) => {
     }
 };
 
+/**
+ * GET /event-memberships/me
+ *
+ * "My joined events" feed. Filters out memberships whose populated event
+ * is missing (the parent event was deleted).
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getMyJoinedEvents = async (req, res) => {
     try {
         const userId = req.user?._id || req.user?.id;
@@ -42,6 +67,8 @@ export const getMyJoinedEvents = async (req, res) => {
         }
 
         const memberships = await getUserMemberships(userId);
+        // membership.eventId may be null if the parent event was deleted —
+        // drop those rows so the frontend doesn't render empty cards.
         const joinedEvents = memberships
             .map((membership) => membership.eventId)
             .filter(Boolean);

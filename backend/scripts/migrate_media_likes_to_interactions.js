@@ -1,3 +1,14 @@
+/**
+ * @module scripts/migrate_media_likes_to_interactions
+ * @description One-shot migration: lifts the legacy `Media.likedBy[]`
+ * array into individual `Interaction { type: "like" }` rows. Idempotent
+ * thanks to the partial unique index on (author, media, type) — re-runs
+ * upsert against existing rows instead of duplicating.
+ *
+ * Bulk-writes in batches of 1000 so a large source collection doesn't
+ * blow up worker memory.
+ */
+
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import connectDB from "../database/connection.js";
@@ -6,8 +17,18 @@ import Interaction from "../models/interactionModel.js";
 
 dotenv.config();
 
+/**
+ * Coerce a raw id string to a Mongo ObjectId.
+ * @param {string|object} value
+ * @returns {import("mongoose").Types.ObjectId}
+ */
 const toObjectId = (value) => new mongoose.Types.ObjectId(String(value));
 
+/**
+ * Stream every Media with non-empty `likedBy`, emit one Interaction
+ * upsert per (author, media), and flush every 1000 ops.
+ * @returns {Promise<void>}
+ */
 const migrateMediaLikesToInteractions = async () => {
     await connectDB();
 

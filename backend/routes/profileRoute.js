@@ -1,3 +1,12 @@
+/**
+ * @module routes/profileRoute
+ * @description Mounted at `/users/profile`. The caller's own Profile CRUD
+ * plus the public "view another user" endpoint. Multipart uploads
+ * (`profilePicture`) flow through {@link uploadUserProfile} (multer +
+ * Cloudinary storage) BEFORE the controller by the time the controller
+ * runs, `req.file.path` is already a Cloudinary URL.
+ */
+
 import express from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import {

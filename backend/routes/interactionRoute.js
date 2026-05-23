@@ -1,3 +1,10 @@
+/**
+ * @module routes/interactionRoute
+ * @description Mounted at `/interactions`. Comments + likes against
+ * Media. Reads (`GET /:mediaId`) are public so guests can see comments;
+ * mutations require auth — guests cannot interact.
+ */
+
 import express from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import {

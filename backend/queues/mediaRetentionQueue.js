@@ -1,3 +1,10 @@
+/**
+ * @module queues/mediaRetentionQueue
+ * @description BullMQ wiring for tier-based media-retention cleanup
+ * (delete an event's media + cloudinary assets while keeping the Event
+ * row). Processor: {@link module:services/mediaRetentionProcessor}.
+ */
+
 import { Queue, Worker } from "bullmq";
 import { getRedisConnection } from "../config/redisConfig.js";
 import { processMediaRetentionJob } from "../services/mediaRetentionProcessor.js";
@@ -8,6 +15,10 @@ export const MEDIA_RETENTION_QUEUE_NAME = "event-media-retention-cleanup";
 let queue = null;
 let worker = null;
 
+/**
+ * Lazy-singleton accessor for the retention queue.
+ * @returns {import("bullmq").Queue}
+ */
 export const getMediaRetentionQueue = () => {
     if (queue) return queue;
     queue = new Queue(MEDIA_RETENTION_QUEUE_NAME, {
@@ -24,17 +35,22 @@ export const getMediaRetentionQueue = () => {
     return queue;
 };
 
-// Schedule a single retention job for an event. `delayMs` lets callers
-// register the job ahead of the deletion deadline (BullMQ delayed jobs)
-// while the startup scanner enqueues with delay 0 for events already past
-// their retention.
-//
-// We intentionally do NOT use a per-event jobId here. BullMQ keeps completed
-// jobs around for `removeOnComplete.age`, so a stable jobId would cause every
-// re-enqueue (scanner tick, startup sync, etc.) to silently de-dup against
-// the old job and never schedule a new one. The processor itself short-
-// circuits on `mediaDeletionStatus === "completed"`, so duplicate work is
-// already prevented at the application layer.
+/**
+ * Schedule a retention cleanup job for one event. `delayMs` is used to
+ * register the job ahead of the deletion deadline (BullMQ delayed job)
+ * for newly-created events; the startup/periodic scanner enqueues with
+ * no delay for events already past their retention.
+ *
+ * Notably does NOT use a per-event jobId — BullMQ keeps completed jobs
+ * around for `removeOnComplete.age`, so a stable jobId would cause every
+ * re-enqueue to silently de-dup against the old job. The processor
+ * short-circuits on `mediaDeletionStatus === "completed"`, so duplicate
+ * work is already prevented at the application layer.
+ *
+ * @param {{ eventId: string }} payload
+ * @param {{ delayMs?: number }} [opts]
+ * @returns {Promise<import("bullmq").Job>}
+ */
 export const enqueueMediaRetentionJob = async (payload, { delayMs } = {}) => {
     const q = getMediaRetentionQueue();
     const opts = {};
@@ -56,6 +72,10 @@ export const enqueueMediaRetentionJob = async (payload, { delayMs } = {}) => {
     return job;
 };
 
+/**
+ * Boot the worker. Idempotent.
+ * @returns {Promise<import("bullmq").Worker>}
+ */
 export const startMediaRetentionWorker = async () => {
     if (worker) return worker;
 
@@ -86,6 +106,10 @@ export const startMediaRetentionWorker = async () => {
     return worker;
 };
 
+/**
+ * Tear down worker + queue.
+ * @returns {Promise<void>}
+ */
 export const stopMediaRetentionWorker = async () => {
     if (worker) {
         await worker.close();

@@ -2,6 +2,26 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
+/**
+ * Appeal
+ * ------
+ * Petition a suspended User files to request reinstatement. Lives outside
+ * the normal Report flow because the suspended user cannot log in, so the
+ * appeal is submitted through a dedicated unauthenticated endpoint guarded
+ * by the user's email.
+ *
+ *  Relationships:
+ *  - userId     → User (the suspended account).
+ *  - reviewedBy → User (the admin who issued the verdict; null while pending).
+ *  - `email` is snapshotted at submission time so admins can see what the
+ *    suspended user typed.
+ *
+ *  Workflow:
+ *  - "pending"  : fresh appeal in the admin queue.
+ *  - "approved" : admin reinstates the user;
+ *                 the appeal service flips User.status back to "active".
+ *  - "rejected" : User stays suspended; `adminNote` carries the rationale.
+ */
 const appealSchema = new Schema(
     {
         userId: {
@@ -10,6 +30,7 @@ const appealSchema = new Schema(
             required: true,
             index: true,
         },
+        // Snapshot of the email at submission
         email: {
             type: String,
             required: true,
@@ -41,6 +62,7 @@ const appealSchema = new Schema(
     { timestamps: true },
 );
 
+// Admin queue: newest-first within a status bucket.
 appealSchema.index({ status: 1, createdAt: -1 });
 
 const Appeal = mongoose.model("Appeal", appealSchema);

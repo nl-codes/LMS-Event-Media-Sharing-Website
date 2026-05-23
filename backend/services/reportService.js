@@ -11,6 +11,14 @@ import sendEmail from "../utils/sendEmail.js";
 import { getSuspensionEmailHTML } from "../utils/longText.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 
+/**
+ * @module services/reportService
+ * @description Moderation over the polymorphic Report model. On create →
+ * notify admins; on verify → run the verdict action (hideMedia /
+ * deleteComment / suspendUser) and notify reporter; suspendUser also
+ * emails the affected user.
+ */
+
 const TARGET_MODELS = {
     Media,
     Interaction,
@@ -46,6 +54,13 @@ async function notifyAllAdmins(message, link, type) {
     );
 }
 
+/**
+ * File a new moderation report and fan a "report_filed" notification out
+ * to all admins/superadmins.
+ * @param {{ reporterId: string, targetId: string, targetType: "Media"|"Interaction"|"User", reason: string, description?: string }} input
+ * @returns {Promise<import("mongoose").Document>} The persisted Report.
+ * @throws {Error} 400 on invalid ids/target type, 404 if target missing.
+ */
 export async function createReport({
     reporterId,
     targetId,
@@ -82,6 +97,11 @@ export async function createReport({
     return report;
 }
 
+/**
+ * Admin moderation queue (newest first, capped at 500).
+ * @param {{ status?: string, targetType?: string }} [filters]
+ * @returns {Promise<object[]>}
+ */
 export async function listReports({ status, targetType } = {}) {
     const filter = {};
     if (status) filter.status = status;
@@ -94,6 +114,13 @@ export async function listReports({ status, targetType } = {}) {
         .populate("verifiedBy", "userName email");
 }
 
+/**
+ * Detail view: report row + hydrated target. For User targets the response
+ * includes `profilePicture` so the UI can link the avatar to the profile.
+ * @param {string} reportId
+ * @returns {Promise<{ report: object, target: object|null }>}
+ * @throws {Error} 404 if missing.
+ */
 export async function getReportById(reportId) {
     validateObjectId(reportId, "report id");
 
@@ -153,6 +180,11 @@ export async function getReportById(reportId) {
     return { report, target: targetDoc };
 }
 
+/**
+ * All hidden Media uploaded by a given user (admin moderation view).
+ * @param {string} userId
+ * @returns {Promise<object[]>}
+ */
 export async function listFlaggedMediaForUser(userId) {
     validateObjectId(userId, "user id");
 
@@ -256,6 +288,14 @@ const ACTION_HANDLERS = {
     suspendUser: performSuspendUser,
 };
 
+/**
+ * Apply an admin verdict to a pending report. Dispatches the action
+ * handler (hideMedia / deleteComment / suspendUser) then closes the
+ * report and notifies the reporter.
+ * @param {{ reportId: string, adminId: string, reasoning: string, action: "hideMedia"|"deleteComment"|"suspendUser" }} input
+ * @returns {Promise<import("mongoose").Document>} The closed Report.
+ * @throws {Error} 400 on bad input or status, 404 on missing report.
+ */
 export async function verifyReport({ reportId, adminId, reasoning, action }) {
     validateObjectId(reportId, "report id");
     validateObjectId(adminId, "admin id");
@@ -300,6 +340,12 @@ export async function verifyReport({ reportId, adminId, reasoning, action }) {
     return report;
 }
 
+/**
+ * Close a pending report as dismissed and notify the reporter.
+ * @param {{ reportId: string, adminId: string, reasoning: string }} input
+ * @returns {Promise<import("mongoose").Document>} The closed Report.
+ * @throws {Error} 400 on bad input/status, 404 on missing report.
+ */
 export async function dismissReport({ reportId, adminId, reasoning }) {
     validateObjectId(reportId, "report id");
     validateObjectId(adminId, "admin id");
@@ -329,6 +375,12 @@ export async function dismissReport({ reportId, adminId, reasoning }) {
     return report;
 }
 
+/**
+ * Hard-delete a report row (superadmin housekeeping only).
+ * @param {string} reportId
+ * @returns {Promise<{ deletedId: string }>}
+ * @throws {Error} 404 if missing.
+ */
 export async function deleteReport(reportId) {
     validateObjectId(reportId, "report id");
     const report = await Report.findByIdAndDelete(reportId);

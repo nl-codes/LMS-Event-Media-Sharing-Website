@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * SuperAdmin Setup Script
+ * @module scripts/create_superadmin
+ * @description Interactive CLI that creates (or rotates) the singleton
+ * SuperAdmin account.
  *
- * Usage:
- * node backend/scripts/create_superadmin.js
- *            or
- * npm run setup:superadmin
+ *   node backend/scripts/create_superadmin.js
+ *   # or
+ *   npm run setup:superadmin
  *
- * This script creates a SuperAdmin user in the database.
- * It will prompt for email and password securely.
- * Prevents creation of multiple SuperAdmins.
+ * Prompts for email/password/username, bcrypt-hashes the password,
+ * and writes a User row with `role: "superadmin"`. The model's
+ * pre-save hook enforces the singleton invariant — if one already
+ * exists, the script offers to replace it.
  */
 
 import readline from "readline";
@@ -28,6 +30,11 @@ const rl = readline.createInterface({
 
 const prompt = (q) => new Promise((r) => rl.question(q, r));
 
+/**
+ * Run the interactive setup flow end-to-end. Exits the process on any
+ * input error so the shell exit code is meaningful in scripts.
+ * @returns {Promise<void>}
+ */
 async function createSuperAdmin() {
     try {
         console.log("\n🔐 SuperAdmin Setup Script\n");

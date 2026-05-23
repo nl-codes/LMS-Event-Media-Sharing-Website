@@ -1,3 +1,12 @@
+/**
+ * @module routes/reportRoute
+ * @description Mounted at `/reports`. End users file reports + view
+ * their own hidden media; admins and superadmins triage the queue.
+ *
+ * Order matters: the literal `/flagged-media` route comes BEFORE the
+ * generic `/:reportId` catch so it isn't shadowed.
+ */
+
 import express from "express";
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 import {
@@ -12,13 +21,10 @@ import {
 
 const router = express.Router();
 
-// Any authenticated user can file a report
 router.post("/", requireAuth, createReportController);
 
-// A user can list their own flagged media
 router.get("/flagged-media", requireAuth, getFlaggedMediaController);
 
-// Admin moderation queue
 router.get(
     "/",
     requireAuth,
@@ -26,8 +32,6 @@ router.get(
     listReportsController,
 );
 
-// Report detail (admins + reporters can view; service does not filter,
-// frontend gates by role — keep simple here and allow any authenticated user)
 router.get("/:reportId", requireAuth, getReportController);
 
 router.post(

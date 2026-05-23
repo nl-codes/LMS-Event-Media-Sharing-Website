@@ -1,8 +1,19 @@
+/**
+ * @module config/redisConfig
+ * @description Single shared Redis client used by every BullMQ queue.
+ * `maxRetriesPerRequest: null` is required by BullMQ — otherwise blocking
+ * commands like `blpop` reject prematurely and the worker stream stops.
+ */
+
 import IORedis from "ioredis";
 
-// Single shared Redis client for BullMQ. maxRetriesPerRequest must be null per BullMQ requirements; otherwise commands like `blpop` reject prematurely.
 let connection = null;
 
+/**
+ * Lazy-singleton accessor. Connects on first use; falls back to
+ * `redis://127.0.0.1:6379` if `REDIS_URL` is unset.
+ * @returns {import("ioredis").Redis}
+ */
 export const getRedisConnection = () => {
     if (connection) return connection;
 
@@ -19,6 +30,11 @@ export const getRedisConnection = () => {
     return connection;
 };
 
+/**
+ * Gracefully close the singleton connection. Used in tests and on
+ * intentional shutdown.
+ * @returns {Promise<void>}
+ */
 export const closeRedisConnection = async () => {
     if (!connection) return;
     await connection.quit();

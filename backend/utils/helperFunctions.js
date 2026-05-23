@@ -1,24 +1,47 @@
+/**
+ * @module utils/helperFunctions
+ * @description Grab-bag of small helpers used across the backend: error
+ * construction, Cloudinary URL parsing, sanitised admin user shapes, and
+ * the bucket-unit picker for event analytics charts.
+ */
+
+/**
+ * Build a plain Error decorated with `.statusCode` so controllers can
+ * map service errors straight to HTTP responses.
+ * @param {number} statusCode
+ * @param {string} message
+ * @returns {Error & { statusCode: number }}
+ */
 export function makeError(statusCode, message) {
     const error = new Error(message);
     error.statusCode = statusCode;
     return error;
 }
 
+/**
+ * Parse a Cloudinary asset URL into its `public_id` so we can issue
+ * destroy calls. Best-effort: returns `null` if the URL shape isn't
+ * recognised, and callers must skip the delete in that case.
+ *
+ * Strategy:
+ *  1. Match `/v<digits>/<folder/path>.<ext>` (the canonical shape).
+ *  2. Fallback: anything after `/upload/`, with leading version stripped.
+ *
+ * @param {string} url
+ * @returns {string|null}
+ */
 export const extractPublicIdFromUrl = (url) => {
     if (!url || typeof url !== "string") return null;
 
     try {
-        // Regex Explanation:
-        // 1. Look for "/v" followed by digits (the version tag)
-        // 2. Capture everything after that (the folder path and filename)
-        // 3. Stop before the file extension (the last dot)
+        // Canonical shape: `/v<version>/<folder/...>/<name>.<ext>`.
         const match = url.match(/\/v\d+\/(.+)\.[a-z]+$/i);
 
         if (match && match[1]) {
             return match[1];
         }
 
-        // Fallback: If no version tag is found, try to get everything after /upload/
+        // Fallback for URLs missing the version tag.
         const uploadParts = url.split("/upload/");
         if (uploadParts.length > 1) {
             return uploadParts[1].split(".")[0].replace(/^v\d+\//, "");
@@ -31,6 +54,13 @@ export const extractPublicIdFromUrl = (url) => {
     }
 };
 
+/**
+ * Project a User into the shape admin dashboards expect. Superadmins see
+ * a few extra moderation fields; regular admins see the safe subset.
+ * @param {object} user
+ * @param {string} [requesterRole]
+ * @returns {object|null}
+ */
 export const safeUserForAdmin = (user, requesterRole) => {
     if (!user) return null;
 
@@ -51,6 +81,12 @@ export const safeUserForAdmin = (user, requesterRole) => {
     return userData;
 };
 
+/**
+ * Pick a chart bucket size ("minute" | "hour" | "day") so a series
+ * spanning the event's full duration stays under ~10k points.
+ * @param {{ startTime: Date|string, endTime: Date|string }} event
+ * @returns {"minute"|"hour"|"day"}
+ */
 export const getEventBucketUnit = (event) => {
     const start = new Date(event.startTime).getTime();
     const end = new Date(event.endTime).getTime();

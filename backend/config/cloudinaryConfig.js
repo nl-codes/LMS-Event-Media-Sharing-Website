@@ -1,3 +1,10 @@
+/**
+ * @module config/cloudinaryConfig
+ * @description Configures and exports the shared Cloudinary v2 client.
+ * Loaded once at module init so every upload / destroy call hits the
+ * same configured account.
+ */
+
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 

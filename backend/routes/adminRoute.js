@@ -1,3 +1,11 @@
+/**
+ * @module routes/adminRoute
+ * @description Mounted at `/admins`. Admin signup/login are public (no
+ * session yet); everything else is gated by
+ * `requireAuth + requireRole("admin")`. Superadmin endpoints live in
+ * the separate `/superadmins` router.
+ */
+
 import express from "express";
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 import {

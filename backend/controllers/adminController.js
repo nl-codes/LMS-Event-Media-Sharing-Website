@@ -1,3 +1,10 @@
+/**
+ * @module controllers/adminController
+ * @description Admin auth (signup → superadmin approval, password + OTP
+ * MFA login) and admin-on-user moderation surfaces (suspend/unsuspend,
+ * list users/events, event detail with stats).
+ */
+
 import {
     getEventDetails,
     getEventsList,
@@ -11,6 +18,14 @@ import { setAuthCookie } from "../utils/auth/cookieAuth.js";
 import { generateJWTtoken } from "../utils/auth/generateJWTtoken.js";
 import sendEmail from "../utils/sendEmail.js";
 
+/**
+ * POST /admins/signup
+ *
+ * Create a pending admin awaiting superadmin approval.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function registerAdminController(req, res) {
     try {
         const user = await registerAdmin(req.body || {});
@@ -29,6 +44,20 @@ export async function registerAdminController(req, res) {
     }
 }
 
+/**
+ * POST /admins/login
+ *
+ * Two-phase admin login:
+ *
+ *  1. Caller submits `{ email, password }`. Service issues a fresh OTP
+ *     and we email it (or log it in dev). Response: `mfaRequired: true`.
+ *  2. Caller resubmits `{ email, password, otp }`. Service verifies the
+ *     OTP, we mint a JWT and set the cookie. Superadmins skip phase 1.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function loginAdminController(req, res) {
     try {
         const { email, password, otp } = req.body;
@@ -42,6 +71,8 @@ export async function loginAdminController(req, res) {
         // Scenario 1: OTP is required and was just generated
         let SuccessMessage;
         if (result.mfaRequired) {
+            // Dev-only: print the OTP to the console so local devs don't
+            // need a working mail server to test admin login.
             if (process.env.NODE_ENV === "development") {
                 SuccessMessage =
                     "Development Mode: Check Backend Console for OTP.";
@@ -98,6 +129,14 @@ export async function loginAdminController(req, res) {
     }
 }
 
+/**
+ * GET /admins/users?search=...
+ *
+ * Admin user-management table.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function getUsersListController(req, res) {
     try {
         const search = String(req.query.search || "").trim();
@@ -113,7 +152,14 @@ export async function getUsersListController(req, res) {
     }
 }
 
-// Util function used to call both suspendUser and unsuspendUser service functions
+/**
+ * Express-handler factory shared by suspend / unsuspend so the two
+ * endpoints don't repeat the same `{ userId, reason }` validation.
+ * @param {(userId: string, reason: string) => Promise<object>} actionFn
+ *   The underlying service call (suspendUser or unsuspendUser).
+ * @param {string} successMessage Human-readable response message.
+ * @returns {import("express").RequestHandler}
+ */
 const handleUserAction = (actionFn, successMessage) => {
     return async (req, res) => {
         try {
@@ -142,16 +188,26 @@ const handleUserAction = (actionFn, successMessage) => {
     };
 };
 
+/** POST /admins/users/suspend — admin suspends an end user. */
 export const suspendUserController = handleUserAction(
     suspendUser,
     "User suspended",
 );
 
+/** POST /admins/users/unsuspend — admin lifts an end-user suspension. */
 export const unsuspendUserController = handleUserAction(
     unsuspendUser,
     "User un-suspended",
 );
 
+/**
+ * GET /admins/events?search=...&tier=...
+ *
+ * Admin events table.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function getEventsListController(req, res) {
     try {
         const events = await getEventsList(req.query.search, req.query.tier);
@@ -167,6 +223,14 @@ export async function getEventsListController(req, res) {
     }
 }
 
+/**
+ * GET /admins/events/:eventId
+ *
+ * Admin event detail with aggregate stats + uploads timeseries.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export async function getEventDetailsController(req, res) {
     try {
         const { eventId } = req.params || {};

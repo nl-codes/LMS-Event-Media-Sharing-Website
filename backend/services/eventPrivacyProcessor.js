@@ -1,14 +1,18 @@
 import { Event } from "../models/eventModel.js";
 import Media from "../models/mediaModel.js";
 
-// Worker entrypoint for the event-privacy-update queue. Cascades the event's
-// current privacy to every Media doc's isPublic field.
-//
-// Race-safety: a host can toggle privacy faster than the worker drains. The
-// job payload carries the privacy that was intended *when the job was queued*,
-// but by the time it runs the host may have flipped again. We re-read the
-// event at processing time and use the live value — stale jobs short-circuit
-// instead of clobbering a newer toggle.
+/**
+ * @module services/eventPrivacyProcessor
+ * @description BullMQ worker that cascades Event.privacy to each Media's
+ * `isPublic`. Race-safe via a stale-job check against the live event.
+ */
+
+/**
+ * Worker entrypoint. Re-reads event privacy at run time and short-circuits
+ * if the job is stale (host toggled privacy again before this job ran).
+ * @param {import("bullmq").Job<{ eventId: string, targetIsPublic: boolean }>} job
+ * @returns {Promise<{ eventId: string, skipped?: boolean, reason?: string, targetIsPublic?: boolean, matchedCount?: number, modifiedCount?: number, currentPrivacy?: string }>}
+ */
 export const processEventPrivacyJob = async (job) => {
     const { eventId, targetIsPublic } = job.data;
 
