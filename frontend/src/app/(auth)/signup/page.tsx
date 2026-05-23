@@ -27,7 +27,7 @@ export default function Home() {
                         Sign up
                     </h1>
 
-                    <p className="font-medium text-base sm:text-lg lg:text-xl text-cusviolet/80 leading-relaxed">
+                    <p className="hidden md:block lg:block font-medium text-base sm:text-lg lg:text-xl text-cusviolet/80 leading-relaxed">
                         Ready to begin? Share, upload, and relive your moments
                         anytime with a community that cares.
                     </p>
@@ -35,7 +35,7 @@ export default function Home() {
                     <LoginOptions />
 
                     {/* Feature Badges */}
-                    <div className="flex flex-col sm:flex-row gap-4 pt-8 justify-start border-t border-cusblue/5 mt-4">
+                    <div className="hidden md:flex lg:flex flex-row gap-4 pt-8 justify-start border-t border-cusblue/5 mt-4">
                         <div className="flex items-center gap-3 text-sm text-slate-500">
                             <div className="w-8 h-8 rounded-full bg-cusblue/10 flex items-center justify-center shrink-0">
                                 <Zap className="w-4 h-4 text-cusblue" />
