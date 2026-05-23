@@ -12,11 +12,13 @@ import { useUser } from "@/context/UserContext";
 type LogoutButtonProps = {
     className?: string;
     redirectTo?: string;
+    showText?: boolean;
 };
 
 export default function LogoutButton({
     className,
     redirectTo = "/login",
+    showText = true,
 }: LogoutButtonProps) {
     const router = useRouter();
     const { setUser } = useUser();
@@ -56,7 +58,7 @@ export default function LogoutButton({
                 className,
             )}>
             <LogOut className="h-5 w-5" />
-            Logout
+            {showText && "Logout"}
         </button>
     );
 }
