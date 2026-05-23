@@ -41,7 +41,7 @@ export default function ReactivateClient() {
     };
 
     return (
-        <div className="max-w-sm mx-auto mt-32 font-sans p-4 text-center">
+        <div className="max-w-sm mx-auto mt-16 sm:mt-24 lg:mt-32 font-sans p-4 text-center">
             <h2 className="text-xl font-semibold">Resend Activation Link</h2>
 
             <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">

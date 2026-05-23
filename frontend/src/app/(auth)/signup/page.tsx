@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function Home() {
     return (
-        <main className="bg-cuscream/30 flex items-center justify-center py-20 px-6">
-            <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 justify-center items-start max-w-6xl w-full">
+        <main className="bg-cuscream/30 flex items-center justify-center py-10 sm:py-16 lg:py-20 px-4 sm:px-6">
+            <div className="flex flex-col lg:flex-row gap-10 sm:gap-12 lg:gap-24 justify-center items-start max-w-6xl w-full">
                 {/* Left Side: Information */}
                 <div className="flex flex-col w-full lg:w-[400px] gap-6">
                     {/* Journey Badge */}
@@ -23,11 +23,11 @@ export default function Home() {
                         Start Your Journey
                     </div>
 
-                    <h1 className="font-extrabold text-5xl text-cusblue tracking-tight">
+                    <h1 className="font-extrabold text-3xl sm:text-4xl lg:text-5xl text-cusblue tracking-tight">
                         Sign up
                     </h1>
 
-                    <p className="font-medium text-xl text-cusviolet/80 leading-relaxed">
+                    <p className="font-medium text-base sm:text-lg lg:text-xl text-cusviolet/80 leading-relaxed">
                         Ready to begin? Share, upload, and relive your moments
                         anytime with a community that cares.
                     </p>
@@ -52,7 +52,7 @@ export default function Home() {
                 </div>
 
                 {/* Right Side: Form */}
-                <div className="w-full lg:w-[500px] bg-white/40 backdrop-blur-md p-8 lg:p-10 rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5">
+                <div className="w-full lg:w-[500px] bg-white/40 backdrop-blur-md p-6 sm:p-8 lg:p-10 rounded-3xl sm:rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5">
                     <SignupForm />
                 </div>
             </div>
