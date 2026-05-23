@@ -77,8 +77,8 @@ export default function EventDetailsPage() {
 
     if (error || !event) {
         return (
-            <main className="max-w-4xl mx-auto px-6 py-20 text-center text-cusblue">
-                <div className="bg-red-50 border border-red-100 p-8 rounded-2xl">
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20 text-center text-cusblue">
+                <div className="bg-red-50 border border-red-100 p-5 sm:p-8 rounded-2xl">
                     <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-2xl font-bold mb-2">Oops!</h2>
                     <p className="text-cusviolet mb-6">
@@ -95,8 +95,8 @@ export default function EventDetailsPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 profile-card-animate">
-            <main className="flex flex-col gap-12">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 lg:py-12 profile-card-animate">
+            <main className="flex flex-col gap-6 sm:gap-8 lg:gap-12">
                 {showQR && (
                     <QRModal
                         slug={event.uniqueSlug}

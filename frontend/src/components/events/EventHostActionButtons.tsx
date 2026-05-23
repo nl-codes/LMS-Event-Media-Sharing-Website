@@ -56,16 +56,18 @@ export default function EventHostActionButtons({
     };
 
     return (
-        <div className="flex flex-col md:flex-row md:items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
             <BackButton href="/home/events" replace label="Back to My Events" />
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
                 <Button
+                    className="w-full sm:w-auto justify-center"
                     onClick={() =>
                         router.push(`/home/events/${event._id}/participants`)
                     }>
                     <Users className="w-4 h-4" /> Participants
                 </Button>
                 <Button
+                    className="w-full sm:w-auto justify-center"
                     onClick={() =>
                         router.push(`/home/events/${event._id}/insights`)
                     }>
@@ -73,29 +75,37 @@ export default function EventHostActionButtons({
                 </Button>
                 {!event.isPremium && (
                     <Button
+                        className="w-full sm:w-auto justify-center"
                         onClick={() =>
                             router.push(`/home/events/${event._id}/upgrade`)
                         }>
                         <Zap className="w-4 h-4 fill-current" /> Upgrade
                     </Button>
                 )}
-                <Button onClick={() => setShowQR(true)}>
+                <Button
+                    className="w-full sm:w-auto justify-center"
+                    onClick={() => setShowQR(true)}>
                     <QrCode className="w-4 h-4" /> QR Code
                 </Button>
                 <Button
+                    className="w-full sm:w-auto justify-center"
                     onClick={() =>
                         router.push(`/home/events/${event._id}/gallery`)
                     }>
                     <Images className="w-4 h-4" /> Gallery
                 </Button>
                 <Button
+                    className="w-full sm:w-auto justify-center"
                     onClick={() =>
                         router.push(`/home/events/${event._id}/edit`)
                     }>
                     <Edit3 className="w-4 h-4" /> Edit
                 </Button>
                 {canFinish && (
-                    <Button onClick={handleFinish} loading={finishing}>
+                    <Button
+                        className="w-full sm:w-auto justify-center"
+                        onClick={handleFinish}
+                        loading={finishing}>
                         <CheckCircle2 className="w-4 h-4" /> Finish Event
                     </Button>
                 )}
