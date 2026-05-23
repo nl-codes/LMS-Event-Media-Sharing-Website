@@ -14,8 +14,11 @@ import { Loader2, XCircle, ExternalLink } from "lucide-react";
 import Button from "@/components/buttons/Button";
 import EventDetailsLayout from "@/components/events/EventDetailsLayout";
 import EventHostActionButtons from "../../../../components/events/EventHostActionButtons";
+import { useUser } from "@/context/UserContext";
 
 export default function EventDetailsPage() {
+    const { user } = useUser();
+
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -27,6 +30,10 @@ export default function EventDetailsPage() {
     const eventId = typeof params?.id === "string" ? params.id : "";
     const paymentStatus = searchParams.get("payment");
     const sessionId = searchParams.get("session_id");
+
+    const host = event?.hostId;
+    const isHost =
+        typeof host === "object" ? user?._id == host._id : user?._id == host;
 
     useEffect(() => {
         if (!paymentStatus || paymentStatus === lastHandledPaymentRef.current)
@@ -77,8 +84,8 @@ export default function EventDetailsPage() {
 
     if (error || !event) {
         return (
-            <main className="max-w-4xl mx-auto px-6 py-20 text-center text-cusblue">
-                <div className="bg-red-50 border border-red-100 p-8 rounded-2xl">
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20 text-center text-cusblue">
+                <div className="bg-red-50 border border-red-100 p-5 sm:p-8 rounded-2xl">
                     <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-2xl font-bold mb-2">Oops!</h2>
                     <p className="text-cusviolet mb-6">
@@ -95,8 +102,8 @@ export default function EventDetailsPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 profile-card-animate">
-            <main className="flex flex-col gap-12">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 lg:py-12 profile-card-animate">
+            <main className="flex flex-col gap-6 sm:gap-8 lg:gap-12">
                 {showQR && (
                     <QRModal
                         slug={event.uniqueSlug}
@@ -105,18 +112,22 @@ export default function EventDetailsPage() {
                     />
                 )}
 
-                <EventHostActionButtons
-                    event={event}
-                    setShowQR={setShowQR}
-                    onEventUpdated={setEvent}
-                />
+                {isHost && (
+                    <>
+                        <EventHostActionButtons
+                            event={event}
+                            setShowQR={setShowQR}
+                            onEventUpdated={setEvent}
+                        />
 
-                <EventCapacityAlert eventId={event._id} />
+                        <EventCapacityAlert eventId={event._id} />
 
-                <EventPrivacyControl
-                    eventId={event._id}
-                    initialPrivacy={event.privacy || "private"}
-                />
+                        <EventPrivacyControl
+                            eventId={event._id}
+                            initialPrivacy={event.privacy || "private"}
+                        />
+                    </>
+                )}
 
                 <EventDetailsLayout event={event}>
                     <Link

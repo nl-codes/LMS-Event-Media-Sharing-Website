@@ -105,15 +105,15 @@ export default function ProfileEditPage() {
         );
 
     return (
-        <main className="min-h-screen bg-cuscream py-12 px-4">
+        <main className="min-h-screen bg-cuscream py-8 sm:py-12 px-4">
             <div className="max-w-xl mx-auto">
-                <div className="mb-8 flex items-center justify-between">
+                <div className="mb-6 sm:mb-8 flex items-center justify-between gap-3">
                     <BackButton label="Cancel" />
-                    <div className="text-right">
-                        <h1 className="text-2xl font-black text-gray-800 tracking-tight">
+                    <div className="text-right min-w-0">
+                        <h1 className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">
                             Settings
                         </h1>
-                        <p className="text-sm text-gray-500 font-medium">
+                        <p className="text-xs sm:text-sm text-gray-500 font-medium">
                             {profileExists
                                 ? "Update your personal info"
                                 : "Set up your public identity"}
@@ -123,8 +123,8 @@ export default function ProfileEditPage() {
 
                 <form
                     onSubmit={handleSubmit}
-                    className="relative bg-white shadow-2xl rounded-[2.5rem] p-10 pt-16 overflow-visible border border-white">
-                    <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-r from-cusblue to-cusviolet rounded-t-[2.5rem]" />
+                    className="relative bg-white shadow-2xl rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 pt-14 sm:pt-16 overflow-visible border border-white">
+                    <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-r from-cusblue to-cusviolet rounded-t-3xl sm:rounded-t-[2.5rem]" />
 
                     <ProfileForm
                         initialData={formData}

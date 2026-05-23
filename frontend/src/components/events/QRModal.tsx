@@ -57,12 +57,12 @@ export default function QRModal({ slug, eventName, onClose }: QRModalProps) {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={handleBackdrop}
             aria-modal="true"
             role="dialog"
             aria-label="Event QR Code">
-            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center gap-6">
+            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 sm:p-8 flex flex-col items-center gap-5 sm:gap-6 max-h-[90vh] overflow-y-auto">
                 {/* Close */}
                 <button
                     onClick={onClose}

@@ -37,7 +37,8 @@ export const createProfile = async (userId, profileData) => {
     if (existingProfile)
         throw new Error("Profile already exists for this user");
 
-    const { firstName, lastName, bio, profilePicture, gender, country } = profileData;
+    const { firstName, lastName, bio, profilePicture, gender, country } =
+        profileData;
 
     const newProfile = new Profile({
         user: userId,
@@ -110,7 +111,9 @@ export const updateProfile = async (userId, updateData, newImageUrl) => {
  * @throws {Error} If the user is missing or suspended.
  */
 export const getPublicProfile = async (userId) => {
-    const user = await User.findById(userId).select("userName createdAt status");
+    const user = await User.findById(userId).select(
+        "userName createdAt status",
+    );
     if (!user || user.status === "suspended") throw new Error("User not found");
 
     const profile = await Profile.findOne({ user: userId }).select(
@@ -118,15 +121,18 @@ export const getPublicProfile = async (userId) => {
     );
 
     const [createdEvents, memberships] = await Promise.all([
-        Event.find({ hostId: userId })
-            .select("eventName description location startTime endTime thumbnail uniqueSlug status isPremium")
+        Event.find({ hostId: userId, privacy: "public" })
+            .select(
+                "eventName description location startTime endTime thumbnail uniqueSlug status isPremium",
+            )
             .sort({ createdAt: -1 })
             .limit(20),
         EventMembership.find({ userId })
-            .populate(
-                "eventId",
-                "eventName description location startTime endTime thumbnail uniqueSlug status isPremium hostId",
-            )
+            .populate({
+                path: "eventId",
+                select: "eventName description location startTime endTime thumbnail uniqueSlug status isPremium hostId privacy",
+                match: { privacy: "public" },
+            })
             .sort({ joinedAt: -1 })
             .limit(20),
     ]);

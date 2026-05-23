@@ -44,8 +44,8 @@ export default function ForgotPasswordClient() {
     };
 
     return (
-        <main className="flex items-center justify-center bg-cuscream/30 px-6 py-20">
-            <div className="flex w-full max-w-6xl flex-col items-start justify-center gap-16 lg:flex-row lg:gap-24">
+        <main className="flex items-center justify-center bg-cuscream/30 px-4 sm:px-6 py-10 sm:py-16 lg:py-20">
+            <div className="flex w-full max-w-6xl flex-col items-start justify-center gap-10 sm:gap-12 lg:flex-row lg:gap-24">
                 <div className="flex w-full flex-col gap-6 lg:w-[410px]">
                     <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cusblue/10 bg-white/60 px-4 py-1.5 text-sm font-medium text-cusblue shadow-sm backdrop-blur-sm">
                         <span className="relative flex h-2 w-2">
@@ -55,11 +55,11 @@ export default function ForgotPasswordClient() {
                         Account Recovery
                     </div>
 
-                    <h1 className="text-5xl font-extrabold tracking-tight text-cusblue">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-cusblue">
                         Recover your password
                     </h1>
 
-                    <p className="text-xl font-medium leading-relaxed text-cusviolet/80">
+                    <p className="text-base sm:text-lg lg:text-xl font-medium leading-relaxed text-cusviolet/80">
                         Enter your account email and we will send a secure reset
                         link so you can get back to your event memories.
                     </p>
@@ -82,7 +82,7 @@ export default function ForgotPasswordClient() {
 
                 <form
                     onSubmit={handleSubmit}
-                    className="w-full rounded-[2.5rem] border border-white bg-white/40 p-8 shadow-2xl shadow-cusblue/5 backdrop-blur-md lg:w-[470px] lg:p-10">
+                    className="w-full rounded-3xl sm:rounded-[2.5rem] border border-white bg-white/40 p-6 sm:p-8 shadow-2xl shadow-cusblue/5 backdrop-blur-md lg:w-[470px] lg:p-10">
                     <div className="mb-8 flex flex-row items-center gap-4">
                         <BackButton href="/login" label="Back to login" />
                     </div>

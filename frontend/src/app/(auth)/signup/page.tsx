@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function Home() {
     return (
-        <main className="bg-cuscream/30 flex items-center justify-center py-20 px-6">
-            <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 justify-center items-start max-w-6xl w-full">
+        <main className="bg-cuscream/30 flex items-center justify-center py-10 sm:py-16 lg:py-20 px-4 sm:px-6">
+            <div className="flex flex-col lg:flex-row gap-10 sm:gap-12 lg:gap-24 justify-center items-start max-w-6xl w-full">
                 {/* Left Side: Information */}
                 <div className="flex flex-col w-full lg:w-[400px] gap-6">
                     {/* Journey Badge */}
@@ -23,19 +23,21 @@ export default function Home() {
                         Start Your Journey
                     </div>
 
-                    <h1 className="font-extrabold text-5xl text-cusblue tracking-tight">
+                    <h1 className="font-extrabold text-3xl sm:text-4xl lg:text-5xl text-cusblue tracking-tight">
                         Sign up
                     </h1>
 
-                    <p className="font-medium text-xl text-cusviolet/80 leading-relaxed">
+                    <p className="hidden md:block lg:block font-medium text-base sm:text-lg lg:text-xl text-cusviolet/80 leading-relaxed">
                         Ready to begin? Share, upload, and relive your moments
                         anytime with a community that cares.
                     </p>
 
-                    <LoginOptions />
+                    <div className="hidden md:block">
+                        <LoginOptions />
+                    </div>
 
                     {/* Feature Badges */}
-                    <div className="flex flex-col sm:flex-row gap-4 pt-8 justify-start border-t border-cusblue/5 mt-4">
+                    <div className="hidden md:flex lg:flex flex-row gap-4 pt-8 justify-start border-t border-cusblue/5 mt-4">
                         <div className="flex items-center gap-3 text-sm text-slate-500">
                             <div className="w-8 h-8 rounded-full bg-cusblue/10 flex items-center justify-center shrink-0">
                                 <Zap className="w-4 h-4 text-cusblue" />
@@ -52,8 +54,15 @@ export default function Home() {
                 </div>
 
                 {/* Right Side: Form */}
-                <div className="w-full lg:w-[500px] bg-white/40 backdrop-blur-md p-8 lg:p-10 rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5">
-                    <SignupForm />
+                <div className="w-full lg:w-[500px] flex flex-col gap-6">
+                    <div className="w-full bg-white/40 backdrop-blur-md p-6 sm:p-8 lg:p-10 rounded-3xl sm:rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5">
+                        <SignupForm />
+                    </div>
+
+                    {/* Login link — shown only on small screens, after the form */}
+                    <div className="md:hidden flex flex-col items-center gap-2 text-sm text-cusviolet/80">
+                        <LoginOptions />
+                    </div>
                 </div>
             </div>
         </main>

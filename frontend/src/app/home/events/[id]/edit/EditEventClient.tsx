@@ -141,13 +141,13 @@ export default function EditEventPage() {
     }
 
     return (
-        <main className="min-h-screen py-12 px-4 sm:px-6">
+        <main className="min-h-screen py-6 sm:py-12 px-4 sm:px-6">
             <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                     <BackButton label="Cancel and go back" />
                 </div>
 
-                <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5 overflow-hidden profile-card-animate">
+                <div className="bg-white/70 backdrop-blur-xl rounded-3xl sm:rounded-[2.5rem] border border-white shadow-2xl shadow-cusblue/5 overflow-hidden profile-card-animate">
                     {/* Header Banner */}
                     <div className="bg-cusblue h-28 flex items-center justify-center relative">
                         <Settings2 className="absolute top-4 right-6 text-white/20 w-12 h-12" />
@@ -161,10 +161,10 @@ export default function EditEventPage() {
                         </div>
                     </div>
 
-                    <form onSubmit={onSubmit} className="p-8 lg:p-10">
-                        <div className="flex flex-col lg:flex-row gap-10">
+                    <form onSubmit={onSubmit} className="p-5 sm:p-8 lg:p-10">
+                        <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 lg:gap-10">
                             {/* Thumbnail */}
-                            <div className="w-1/2 lg:w-1/2 space-y-4">
+                            <div className="w-full lg:w-2/5 space-y-4">
                                 <label className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cusblue/60 ml-1">
                                     <ImageIcon size={16} />
                                     Cover Image

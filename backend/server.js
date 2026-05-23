@@ -55,16 +55,21 @@ app.use("/webhooks", webhookRoutes);
 
 app.use(express.json());
 app.use(cookieParser());
+const allowedOrigins = [
+    process.env.FRONTEND_LAN_URL,
+    process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL,
+        origin: allowedOrigins,
         credentials: true,
     }),
 );
 
 const io = new Server(server, {
     cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:8080",
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
     },
 });

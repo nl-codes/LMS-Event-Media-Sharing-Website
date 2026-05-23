@@ -45,9 +45,9 @@ export default function EventDetailsLayout({
     );
 
     return (
-        <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row items-center">
+        <div className="bg-white/70 backdrop-blur-xl rounded-3xl sm:rounded-[2.5rem] border border-white shadow-2xl overflow-hidden flex flex-col lg:flex-row lg:items-center">
             {/* Thumbnail */}
-            <div className="w-1/2 lg:w-[50%] p-6 lg:p-8">
+            <div className="w-full lg:w-1/2 p-4 sm:p-6 lg:p-8">
                 <div className="relative aspect-video w-full rounded-4xl overflow-hidden bg-slate-100 shadow-inner group">
                     {event.thumbnail ? (
                         <Image
@@ -77,9 +77,9 @@ export default function EventDetailsLayout({
             </div>
 
             {/* Right column */}
-            <div className="flex-1 max-w-1/2 p-8 lg:p-10 lg:pl-4 space-y-8">
-                <div className="flex flex-col gap-4">
-                    <div className="flex gap-4 items-center">
+            <div className="flex-1 w-full lg:max-w-1/2 p-5 sm:p-8 lg:p-10 lg:pl-4 space-y-6 sm:space-y-8">
+                <div className="flex flex-col gap-3 sm:gap-4">
+                    <div className="flex flex-wrap gap-3 sm:gap-4 items-center">
                         <EventPrivacyStatus
                             showText={true}
                             isPublic={event.privacy === "public"}
@@ -91,7 +91,7 @@ export default function EventDetailsLayout({
                             status={event.status}
                         />
                     </div>
-                    <h1 className="text-4xl font-black text-cusblue tracking-tight leading-tight w-full wrap-break-word">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-cusblue tracking-tight leading-tight w-full wrap-break-word">
                         {event.eventName}
                     </h1>
                     <p className="text-slate-500 text-sm leading-relaxed max-w-xl line-clamp-4">
@@ -127,9 +127,9 @@ export default function EventDetailsLayout({
                 </div>
 
                 {/* Timing Section */}
-                <div className="bg-cusblue rounded-4xl p-6 lg:p-8 text-white relative overflow-hidden">
+                <div className="bg-cusblue rounded-3xl sm:rounded-4xl p-5 sm:p-6 lg:p-8 text-white relative overflow-hidden">
                     <Sparkles className="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 rotate-12" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 relative z-10">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">
                                 Starts

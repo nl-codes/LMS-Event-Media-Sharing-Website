@@ -181,8 +181,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
             </div>
 
             {/* Bottom Bar */}
-            <div className="flex items-center justify-between p-5 bg-linear-to-b from-transparent to-white">
-                <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-2 p-4 sm:p-5 bg-linear-to-b from-transparent to-white">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                     {media.uploaderId?._id ? (
                         <Link
                             href={`/home/profile/${media.uploaderId._id}/others`}
@@ -197,7 +197,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
                     ) : (
                         <UserAvatar name={displayName} size="small" />
                     )}
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                             {uploadedBy}
                         </span>
@@ -205,18 +205,18 @@ const MediaCard: React.FC<MediaCardProps> = ({
                             <Link
                                 href={`/home/profile/${media.uploaderId._id}/others`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-sm font-extrabold text-slate-800 tracking-tight hover:text-cusblue transition-colors hover:underline">
+                                className="text-sm font-extrabold text-slate-800 tracking-tight hover:text-cusblue transition-colors hover:underline truncate">
                                 {displayName}
                             </Link>
                         ) : (
-                            <span className="text-sm font-extrabold text-slate-800 tracking-tight">
+                            <span className="text-sm font-extrabold text-slate-800 tracking-tight truncate">
                                 {displayName}
                             </span>
                         )}
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     {!isSelectionActive && (
                         <button
                             onClick={handleDownload}

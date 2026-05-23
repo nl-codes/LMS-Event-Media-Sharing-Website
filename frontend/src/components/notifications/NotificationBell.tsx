@@ -107,32 +107,32 @@ export default function NotificationBell() {
                     setOpen((prev) => !prev);
             if (!open) void load();
                 }}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full text-cusblue shadow-sm transition"
+                className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-cusblue shadow-sm transition hover:bg-cusblue/10"
                 aria-label="Notifications">
-                <Bell className="h-5 w-5" />
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white shadow">
+                    <span className="absolute -right-0.5 -top-0.5 sm:-right-1 sm:-top-1 flex h-4 min-w-4 sm:h-5 sm:min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] sm:text-[10px] font-black text-white shadow">
                         {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                 )}
             </button>
 
             {open && (
-                <div className="absolute right-0 z-50 mt-2 w-96 max-w-[90vw] overflow-hidden rounded-3xl border border-cusblue/10 bg-white shadow-2xl">
-                    <div className="flex items-center justify-between bg-linear-to-r from-cusblue to-cusviolet px-4 py-3 text-white">
+                <div className="fixed sm:absolute inset-x-2 sm:inset-x-auto sm:right-0 top-16 sm:top-auto z-50 sm:mt-2 w-auto sm:w-96 sm:max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl sm:rounded-3xl border border-cusblue/10 bg-white shadow-2xl">
+                    <div className="flex items-center justify-between gap-2 bg-linear-to-r from-cusblue to-cusviolet px-3 sm:px-4 py-3 text-white">
                         <h3 className="text-sm font-black">Notifications</h3>
                         {unreadCount > 0 && (
                             <button
                                 type="button"
                                 onClick={handleMarkAllRead}
-                                className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-1 text-[11px] font-bold transition hover:bg-white/25">
+                                className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-1 text-[11px] font-bold transition hover:bg-white/25 shrink-0">
                                 <Check className="h-3 w-3" />
                                 Mark all read
                             </button>
                         )}
                     </div>
 
-                    <div className="max-h-[60vh] overflow-y-auto">
+                    <div className="max-h-[70vh] sm:max-h-[60vh] overflow-y-auto">
                         {loading ? (
                             <p className="p-6 text-center text-sm font-semibold text-slate-500">
                                 Loading...

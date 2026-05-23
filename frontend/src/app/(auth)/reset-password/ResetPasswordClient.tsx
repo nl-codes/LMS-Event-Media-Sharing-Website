@@ -64,8 +64,8 @@ export default function ResetPasswordClient() {
 
     if (!token) {
         return (
-            <main className="flex min-h-[70vh] items-center justify-center bg-cuscream/30 px-6 py-20">
-                <div className="w-full max-w-md rounded-4xl border border-red-100 bg-white/70 p-8 text-center shadow-2xl shadow-red-100/60 backdrop-blur-md">
+            <main className="flex min-h-[70vh] items-center justify-center bg-cuscream/30 px-4 sm:px-6 py-12 sm:py-20">
+                <div className="w-full max-w-md rounded-3xl sm:rounded-4xl border border-red-100 bg-white/70 p-6 sm:p-8 text-center shadow-2xl shadow-red-100/60 backdrop-blur-md">
                     <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-500">
                         <AlertCircle className="h-9 w-9" />
                     </div>
@@ -90,8 +90,8 @@ export default function ResetPasswordClient() {
     }
 
     return (
-        <main className="flex items-center justify-center bg-cuscream/30 px-6 py-20">
-            <div className="flex w-full max-w-6xl flex-col items-start justify-center gap-16 lg:flex-row lg:gap-24">
+        <main className="flex items-center justify-center bg-cuscream/30 px-4 sm:px-6 py-10 sm:py-16 lg:py-20">
+            <div className="flex w-full max-w-6xl flex-col items-start justify-center gap-10 sm:gap-12 lg:flex-row lg:gap-24">
                 <div className="flex w-full flex-col gap-6 lg:w-[410px]">
                     <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cusblue/10 bg-white/60 px-4 py-1.5 text-sm font-medium text-cusblue shadow-sm backdrop-blur-sm">
                         <span className="relative flex h-2 w-2">
@@ -101,11 +101,11 @@ export default function ResetPasswordClient() {
                         Secure Reset Portal
                     </div>
 
-                    <h1 className="text-5xl font-extrabold tracking-tight text-cusblue">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-cusblue">
                         Create a new password
                     </h1>
 
-                    <p className="text-xl font-medium leading-relaxed text-cusviolet/80">
+                    <p className="text-base sm:text-lg lg:text-xl font-medium leading-relaxed text-cusviolet/80">
                         Choose a fresh password to protect your LMS 24 account
                         and return to your event spaces securely.
                     </p>
@@ -126,7 +126,7 @@ export default function ResetPasswordClient() {
                     </div>
                 </div>
 
-                <div className="w-full rounded-[2.5rem] border border-white bg-white/40 p-8 shadow-2xl shadow-cusblue/5 backdrop-blur-md lg:w-[470px] lg:p-10">
+                <div className="w-full rounded-3xl sm:rounded-[2.5rem] border border-white bg-white/40 p-6 sm:p-8 shadow-2xl shadow-cusblue/5 backdrop-blur-md lg:w-[470px] lg:p-10">
                     <div className="mb-8">
                         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-cusblue/10 text-cusblue">
                             <KeyRound className="h-6 w-6" />

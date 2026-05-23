@@ -1,7 +1,5 @@
 "use client";
 import { useRouter } from "next/navigation";
-import Button from "../buttons/Button";
-import { FaRegUser } from "react-icons/fa";
 import Link from "next/link";
 import LogoRounded from "../logo/Logo_Rounded";
 import LogoutButton from "@/components/buttons/LogoutButton";
@@ -18,22 +16,27 @@ export default function SignedHeader() {
 
     return (
         <header className="relative z-50 w-full bg-cuscream/80 backdrop-blur-md border-b border-cusblue/10">
-            <div className="flex items-center justify-between gap-6 py-4 px-16">
-                {/* Logo Container */}
-                <Link href="/home" replace>
-                    <LogoRounded size={80} />
+            <div className="flex items-center justify-between gap-3 sm:gap-6 py-3 sm:py-4 px-4 sm:px-8 lg:px-16">
+                {/* Logo */}
+                <Link href="/home" replace className="shrink-0">
+                    <span className="block sm:hidden">
+                        <LogoRounded size={80} className="w-12! h-12!" />
+                    </span>
+                    <span className="hidden sm:block">
+                        <LogoRounded size={80} />
+                    </span>
                 </Link>
 
-                {/* Navigation Actions */}
-                <div className="flex items-center gap-4">
-                    <div className="text-lg font-semibold text-transparent bg-linear-to-r from-cusviolet to-cusblue bg-clip-text">
-                        {userName && (
-                            <>
-                                Welcome, <span className="">{userName}</span>
-                            </>
-                        )}
-                    </div>
+                {/* Right-side actions */}
+                <div className="flex items-center gap-6 ">
+                    {/* Welcome, desktop only */}
+                    {userName && (
+                        <div className="hidden lg:block max-w-[260px] truncate text-base lg:text-lg font-semibold text-transparent bg-linear-to-r from-cusviolet to-cusblue bg-clip-text">
+                            Welcome, <span>{userName}</span>
+                        </div>
+                    )}
 
+                    {/* Avatar */}
                     <button
                         type="button"
                         onClick={handleProfileClick}
@@ -49,16 +52,12 @@ export default function SignedHeader() {
                     {/* Notification Bell */}
                     <NotificationBell />
 
-                    {/* Profile Button */}
-                    <Button
-                        className="flex items-center gap-2"
-                        handleClick={handleProfileClick}>
-                        Profile <FaRegUser />
-                    </Button>
-
-                    {/* div is necessary to hold the logout content */}
-                    <div>
+                    {/* Logout: text hidden on mobile */}
+                    <div className="hidden lg:block">
                         <LogoutButton />
+                    </div>
+                    <div className="lg:hidden">
+                        <LogoutButton showText={false} />
                     </div>
                 </div>
             </div>

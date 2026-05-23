@@ -110,7 +110,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     const containerClasses = {
         minimized:
             "w-0 h-0 opacity-0 pointer-events-none scale-90 translate-y-10",
-        window: "w-[380px] sm:w-[420px] h-[580px] opacity-100 scale-100 translate-y-0 bottom-24 right-6 rounded-[2.5rem]",
+        window: "w-[calc(100vw-1.5rem)] max-w-[420px] sm:w-[420px] h-[min(580px,calc(100vh-7rem))] sm:h-[580px] opacity-100 scale-100 translate-y-0 bottom-24 right-3 sm:right-6 rounded-3xl sm:rounded-[2.5rem]",
         full: "fixed inset-0 w-full h-full z-[100] bg-white opacity-100 scale-100 sm:inset-4 sm:w-[calc(100%-2rem)] sm:h-[calc(100%-2rem)] sm:rounded-[3rem]",
     };
 
@@ -129,7 +129,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             `}>
                 {/* Header */}
                 <div
-                    className={`px-6 py-5 border-b border-slate-50 flex items-center justify-between ${viewMode === "full" ? "bg-white" : "bg-slate-50/50"}`}>
+                    className={`px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-50 flex items-center justify-between gap-3 ${viewMode === "full" ? "bg-white" : "bg-slate-50/50"}`}>
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-2xl bg-linear-to-br from-cusblue to-cusviolet flex items-center justify-center text-white shadow-lg">
                             <MessageSquare size={20} />
@@ -182,7 +182,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                 <div
                     ref={messagesContainerRef}
                     onScroll={handleMessagesScroll}
-                    className={`flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth ${viewMode === "full" ? "max-w-4xl mx-auto w-full" : ""}`}>
+                    className={`flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 scroll-smooth ${viewMode === "full" ? "max-w-4xl mx-auto w-full" : ""}`}>
                     {isLoadingOlder && (
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
                             Loading older messages...
@@ -266,7 +266,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             </div>
 
             {viewMode !== "full" && (
-                <div className="fixed bottom-6 right-6 z-110">
+                <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-110">
                     <button
                         onClick={() =>
                             setViewMode(
@@ -275,21 +275,21 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                                     : "minimized",
                             )
                         }
-                        className={`group relative h-16 w-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 active:scale-90 bg-cusblue text-cuscream`}>
+                        className={`group relative h-11 w-11 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 active:scale-90 bg-cusblue text-cuscream`}>
                         {/* --- UNREAD BADGE --- */}
                         {viewMode === "minimized" && unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-cuscream ring-4 ring-cuscream animate-in zoom-in duration-300">
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-cuscream ring-2 ring-cuscream animate-in zoom-in duration-300">
                                 {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
                         )}
 
                         {viewMode === "minimized" ? (
                             <MessageSquare
-                                size={28}
+                                size={20}
                                 className="group-hover:scale-110"
                             />
                         ) : (
-                            <X size={28} />
+                            <X size={20} />
                         )}
                     </button>
                 </div>
