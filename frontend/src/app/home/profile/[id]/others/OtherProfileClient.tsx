@@ -312,7 +312,7 @@ export default function OthersProfilePage() {
                             {createdEvents.length === 0 ? (
                                 <EmptyEvents label="No events hosted yet" />
                             ) : (
-                                <div className="space-y-3">
+                                <div className="flex flex-col gap-3">
                                     {createdEvents.map((event) => (
                                         <EventPill
                                             key={event._id}
@@ -333,7 +333,7 @@ export default function OthersProfilePage() {
                             {joinedEvents.length === 0 ? (
                                 <EmptyEvents label="No events joined yet" />
                             ) : (
-                                <div className="space-y-3">
+                                <div className="flex flex-col gap-4">
                                     {joinedEvents.map((event) => (
                                         <EventPill
                                             key={event._id}
