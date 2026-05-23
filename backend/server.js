@@ -191,6 +191,11 @@ io.on("connection", (socket) => {
     });
 });
 
+// Health check — used by Render and uptime monitors
+app.get("/health", (req, res) => {
+    res.json({ status: "ok", uptime: process.uptime() });
+});
+
 app.use("/users", userRoutes);
 app.use("/users/profile", profileRoutes);
 app.use("/events", eventRoutes);
@@ -232,13 +237,19 @@ const startServer = async () => {
         console.error("Failed to start event privacy worker:", err.message);
     }
 
-    try {
-        await startHighlightWorker();
-        console.log("✨ Highlight worker started");
-    } catch (err) {
-        // Non-fatal: API stays online, paid events queue but won't process
-        // until the worker (and its AI deps) come up.
-        console.error("Failed to start highlight worker:", err.message);
+    if (process.env.DISABLE_HIGHLIGHT_WORKER === "true") {
+        console.log(
+            "✨ Highlight worker disabled by DISABLE_HIGHLIGHT_WORKER env flag",
+        );
+    } else {
+        try {
+            await startHighlightWorker();
+            console.log("✨ Highlight worker started");
+        } catch (err) {
+            // Non-fatal: API stays online, paid events queue but won't process
+            // until the worker (and its AI deps) come up.
+            console.error("Failed to start highlight worker:", err.message);
+        }
     }
 
     try {
