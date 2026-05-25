@@ -218,7 +218,7 @@ export const resetPassword = async (token, newPassword) => {
     if (user.password === newPassword)
         throw new Error("Can't use old password");
 
-    if (!passwordRegex.test(password)) {
+    if (!passwordRegex.test(newPassword)) {
         throw new Error(
             "Password must contain at least: 1 uppercase, 1 lowercase, 1 number and 1 special character",
         );
