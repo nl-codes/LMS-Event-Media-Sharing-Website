@@ -26,6 +26,7 @@ import {
     getReactivationEmailHTML,
 } from "../utils/longText.js";
 import sendEmail from "../utils/sendEmail.js";
+import { getAuthCookieOptions } from "../utils/auth/cookieAuth.js";
 
 /**
  * POST /users/signup
@@ -105,11 +106,8 @@ export const loginUser = async (req, res) => {
             profilePicture: profile?.profilePicture || "",
         });
         res.cookie("token", token, {
-            httpOnly: true, // Prevents JS access (XSS protection)
-            secure: process.env.NODE_ENV === "production", // Only send over HTTPS in production
-            sameSite: "lax", // Or "strict" for more security
+            ...getAuthCookieOptions(),
             maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day (adjust as needed)
-            path: "/",
         });
         res.status(200).json({ message: "Login Successful" });
     } catch (err) {
@@ -245,12 +243,7 @@ export const resetPasswordController = async (req, res) => {
  * @param {import("express").Response} res
  */
 export const logoutUser = (req, res) => {
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-    });
+    res.clearCookie("token", getAuthCookieOptions());
     res.json({ message: "Logged out successfully" });
 };
 
