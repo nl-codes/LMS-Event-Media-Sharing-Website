@@ -31,14 +31,23 @@ export function useGalleryState({
 }: UseGalleryStateOpts) {
     const [gallery, setGallery] = useState<Media[]>([]);
 
+    const mergeNewMedia = useCallback((mediaItems: Media[]) => {
+        if (!mediaItems.length) return;
+
+        setGallery((prev) => {
+            const existingIds = new Set(prev.map((media) => media._id));
+            const freshItems = mediaItems
+                .filter((media) => !existingIds.has(media._id))
+                .map(normalizeMediaLikes);
+
+            return freshItems.length ? [...freshItems, ...prev] : prev;
+        });
+    }, []);
+
     useGallerySocket({
         eventId,
         onNewMedia: (media) => {
-            setGallery((prev) =>
-                prev.find((m) => m._id === media._id)
-                    ? prev
-                    : [normalizeMediaLikes(media), ...prev],
-            );
+            mergeNewMedia([media]);
         },
         onMediaDeleted: (mediaId) => {
             setGallery((prev) => prev.filter((m) => m._id !== mediaId));
@@ -151,5 +160,6 @@ export function useGalleryState({
         handleDelete,
         handleLike,
         handleToggleHighlight,
+        mergeNewMedia,
     };
 }

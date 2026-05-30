@@ -60,6 +60,7 @@ export default function EventPublicGallery() {
         handleDelete,
         handleLike,
         handleToggleHighlight,
+        mergeNewMedia,
     } = useGalleryState({
         eventId,
         currentUserId,
@@ -217,8 +218,9 @@ export default function EventPublicGallery() {
                         ? handleClearSelection
                         : handleStartSelection
                 }
-                onUploadSuccess={(hasVideos) => {
-                    if (hasVideos) void fetchGallery(eventId);
+                onUploadSuccess={(result) => {
+                    mergeNewMedia(result.media);
+                    if (result.hasVideos) void fetchGallery(eventId);
                 }}
                 onDownload={handleDownload}
                 onBulkDelete={handleBulkDelete}

@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { getEventUsage, uploadMedia, type EventUsage } from "@/lib/mediaApi";
+import {
+    getEventUsage,
+    uploadMedia,
+    type EventUsage,
+    type UploadMediaResult,
+} from "@/lib/mediaApi";
 import { compressImageIfNeeded } from "@/lib/compressImage";
 import { probeVideoDuration } from "@/lib/probeVideo";
 import { formatBytes } from "@/constants/tierLimits";
@@ -13,7 +18,7 @@ interface MediaUploadButtonProps {
     eventSlug?: string;
     eventEndTime?: string;
     eventStatus?: EventStatus;
-    onUploadSuccess: (hasVideos: boolean) => void;
+    onUploadSuccess: (result: UploadMediaResult) => void;
 }
 
 const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
@@ -177,7 +182,7 @@ const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({
                         err instanceof Error ? err.message : "Upload failed",
                 },
             );
-            onUploadSuccess(result.hasVideos);
+            onUploadSuccess(result);
         } catch {
             // toast.promise already surfaced the error; keep gallery state intact.
         } finally {

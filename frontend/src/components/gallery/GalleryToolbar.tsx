@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import MediaUploadButton from "@/components/media/MediaUploadButton";
 import SelectionActionBar from "@/components/events/SelectionActionBar";
 import type { EventStatus } from "@/types/Event";
+import type { UploadMediaResult } from "@/lib/mediaApi";
 
 interface GalleryToolbarProps {
     eventId: string;
@@ -17,7 +18,7 @@ interface GalleryToolbarProps {
     galleryCount: number;
     canShowSelectionBar: boolean;
     onToggleSelection: () => void;
-    onUploadSuccess: (hasVideos: boolean) => void;
+    onUploadSuccess: (result: UploadMediaResult) => void;
     onDownload: () => void;
     onBulkDelete: () => void;
     /** Disables Download All until the gallery has something to zip. */
