@@ -6,15 +6,26 @@
  */
 
 /**
- * Shared auth-cookie attributes. Production uses `SameSite=None` so the
- * Vercel frontend can send the Render API cookie on cross-site requests.
+ * Shared auth-cookie attributes. Production uses a parent-domain cookie so
+ * www.lms.narayanlohani.com.np and api.lms.narayanlohani.com.np share the
+ * same first-party session without exposing the JWT to client JavaScript.
  */
-export const getAuthCookieOptions = () => ({
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/",
-});
+export const getAuthCookieOptions = () => {
+    const isProduction = process.env.NODE_ENV === "production";
+
+    return {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        path: "/",
+        ...(isProduction
+            ? {
+                  domain:
+                      process.env.COOKIE_DOMAIN || ".narayanlohani.com.np",
+              }
+            : {}),
+    };
+};
 
 /**
  * Set the httpOnly auth cookie. `secure` is only enabled in production
