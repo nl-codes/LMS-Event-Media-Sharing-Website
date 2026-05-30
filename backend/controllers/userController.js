@@ -109,7 +109,7 @@ export const loginUser = async (req, res) => {
             ...getAuthCookieOptions(),
             maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day (adjust as needed)
         });
-        res.status(200).json({ message: "Login Successful" });
+        res.status(200).json({ message: "Login Successful", token });
     } catch (err) {
         let status = 400;
         if (
