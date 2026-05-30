@@ -146,7 +146,11 @@ export default function AdminInsightsPage() {
                         </p>
                     </div>
                     <p className="text-xs font-bold uppercase tracking-widest text-cusviolet/50">
-                        {granularity === "month" ? "Monthly" : "Daily"}
+                        {granularity === "hour"
+                            ? "Hourly"
+                            : granularity === "month"
+                              ? "Monthly"
+                              : "Daily"}
                     </p>
                 </div>
 

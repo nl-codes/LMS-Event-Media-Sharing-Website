@@ -39,8 +39,18 @@ interface InsightsChartProps {
 }
 
 const formatLabel = (dateStr: string, granularity: AnalyticsGranularity) => {
-    // Daily keys are YYYY-MM-DD; monthly keys are YYYY-MM. Parse in UTC to
-    // avoid the date silently shifting by one in negative timezones.
+    // Hourly keys are ISO hour strings; daily keys are YYYY-MM-DD; monthly
+    // keys are YYYY-MM. Parse in UTC to avoid timezone shifts.
+    if (granularity === "hour") {
+        const d = new Date(dateStr);
+        return d.toLocaleString("en-US", {
+            hour: "numeric",
+            month: "short",
+            day: "numeric",
+            timeZone: "UTC",
+        });
+    }
+
     if (granularity === "month") {
         const [y, m] = dateStr.split("-").map(Number);
         const d = new Date(Date.UTC(y, m - 1, 1));
