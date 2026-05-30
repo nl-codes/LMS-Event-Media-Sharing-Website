@@ -11,6 +11,7 @@ import { useUser } from "@/context/UserContext";
 import { getEventById } from "@/lib/eventApi";
 import {
     getEventInsights,
+    type AnalyticsGranularity,
     type EventInsightsResponse,
 } from "@/lib/analyticsApi";
 
@@ -26,6 +27,20 @@ const formatWindow = (fromIso: string, toIso: string) => {
     const f = new Date(fromIso).toLocaleString("en-US", opts);
     const t = new Date(toIso).toLocaleString("en-US", opts);
     return `${f} → ${t}`;
+};
+
+const granularityLabel = (granularity?: AnalyticsGranularity) => {
+    if (granularity === "hour") return "Hourly";
+    if (granularity === "month") return "Monthly";
+    return "Daily";
+};
+
+const chartSubtitle = (
+    noun: "members" | "uploads",
+    granularity?: AnalyticsGranularity,
+) => {
+    const cadence = granularityLabel(granularity).toLowerCase();
+    return `New ${noun} grouped ${cadence}`;
 };
 
 export default function EventInsightsPage() {
@@ -136,9 +151,17 @@ export default function EventInsightsPage() {
                         {data?.event.eventName ?? "Loading..."}
                     </h1>
                     {data?.window && (
-                        <p className="mt-2 text-sm font-bold text-cusviolet/70">
-                            {formatWindow(data.window.from, data.window.to)}
-                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-bold text-cusviolet/70">
+                                {formatWindow(
+                                    data.window.from,
+                                    data.window.to,
+                                )}
+                            </p>
+                            <span className="rounded-full border border-cusblue/10 bg-white/70 px-3 py-1 text-xs font-black uppercase tracking-widest text-cusblue">
+                                {granularityLabel(data.window.granularity)}
+                            </span>
+                        </div>
                     )}
                 </header>
 
@@ -160,7 +183,10 @@ export default function EventInsightsPage() {
 
                 <ChartCard
                     title="Members joined"
-                    subtitle="New members over time"
+                    subtitle={chartSubtitle(
+                        "members",
+                        data?.members.granularity,
+                    )}
                     isLoading={isLoading}
                     isEmpty={!data || data.members.data.length === 0}
                     chart={
@@ -176,7 +202,10 @@ export default function EventInsightsPage() {
 
                 <ChartCard
                     title="Media uploaded"
-                    subtitle="New uploads over time"
+                    subtitle={chartSubtitle(
+                        "uploads",
+                        data?.media.granularity,
+                    )}
                     isLoading={isLoading}
                     isEmpty={!data || data.media.data.length === 0}
                     chart={

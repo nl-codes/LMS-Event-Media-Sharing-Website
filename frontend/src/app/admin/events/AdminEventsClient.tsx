@@ -57,10 +57,14 @@ export default function AdminEventsPage() {
             confirmText: "Suspend Event",
             cancelText: "Keep Event",
             isDanger: true,
-            onConfirm: async () => {
+            reasonRequired: true,
+            reasonLabel: "Suspension reason",
+            reasonPlaceholder:
+                "Explain why this event is being suspended. The host will receive this reason.",
+            onConfirm: async (reason) => {
                 const toastId = toast.loading("Suspending event...");
                 try {
-                    await suspendEvent(event._id);
+                    await suspendEvent(event._id, reason || "");
                     await loadEvents();
                     toast.success("Event suspended", { id: toastId });
                 } catch (error) {

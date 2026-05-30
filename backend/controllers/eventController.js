@@ -15,6 +15,8 @@ import {
     getEventParticipants,
     listPublicEvents,
     removeEvent,
+    searchEventInviteUsers,
+    sendEventInvite,
     updateEvent,
     updateEventPrivacy,
     updateEventStatus,
@@ -226,6 +228,74 @@ export const finishEvent = async (req, res) => {
               ? 404
               : 400;
 
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+/**
+ * GET /events/:id/invite-users?search=...
+ *
+ * Host-only searchable registered-user list for event invites. Only userName
+ * is exposed to the frontend.
+ */
+export const searchEventInviteUsersController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const users = await searchEventInviteUsers(id, req.user.id, {
+            search: req.query.search,
+            limit: req.query.limit,
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: users,
+        });
+    } catch (error) {
+        const statusCode = error.message.includes("Unauthorized")
+            ? 403
+            : error.message.includes("not found")
+              ? 404
+              : 400;
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+/**
+ * POST /events/:id/invite
+ *
+ * Host-only notification invite to a registered user.
+ */
+export const sendEventInviteController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User id is required",
+            });
+        }
+
+        const notification = await sendEventInvite(id, req.user.id, userId);
+
+        return res.status(201).json({
+            success: true,
+            message: "Invite sent",
+            data: notification,
+        });
+    } catch (error) {
+        const statusCode = error.message.includes("Unauthorized")
+            ? 403
+            : error.message.includes("not found")
+              ? 404
+              : 400;
         return res.status(statusCode).json({
             success: false,
             message: error.message,

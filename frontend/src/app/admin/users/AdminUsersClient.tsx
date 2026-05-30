@@ -16,7 +16,6 @@ import { listUsers, suspendUser, unsuspendUser } from "@/lib/adminApi";
 import type { ManagedUser } from "@/types/Admin";
 import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
 
-const DEFAULT_SUSPEND_REASON = "Suspended by admin review";
 const DEFAULT_UNSUSPEND_REASON = "Restored by admin review";
 
 export default function AdminUsersPage() {
@@ -63,7 +62,11 @@ export default function AdminUsersPage() {
             confirmText: isSuspended ? "Unsuspend User" : "Suspend User",
             cancelText: "Cancel",
             isDanger: !isSuspended,
-            onConfirm: async () => {
+            reasonRequired: !isSuspended,
+            reasonLabel: "Suspension reason",
+            reasonPlaceholder:
+                "Explain why this user is being suspended. This will be included in their email.",
+            onConfirm: async (reason) => {
                 const toastId = toast.loading(
                     isSuspended ? "Restoring user..." : "Suspending user...",
                 );
@@ -71,7 +74,7 @@ export default function AdminUsersPage() {
                     if (isSuspended) {
                         await unsuspendUser(user._id, DEFAULT_UNSUSPEND_REASON);
                     } else {
-                        await suspendUser(user._id, DEFAULT_SUSPEND_REASON);
+                        await suspendUser(user._id, reason || "");
                     }
                     await loadUsers();
                     toast.success("User updated", { id: toastId });

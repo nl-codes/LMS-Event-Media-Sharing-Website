@@ -7,7 +7,7 @@ import { Profile } from "../models/profileModel.js";
 import { makeError } from "../utils/helperFunctions.js";
 import { createNotification } from "./notificationService.js";
 import { suspendUser } from "./adminService.js";
-import sendEmail from "../utils/sendEmail.js";
+import { enqueueEmailJob } from "../queues/emailQueue.js";
 import { getSuspensionEmailHTML } from "../utils/longText.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
 
@@ -270,12 +270,16 @@ async function performSuspendUser(report, admin, reasoning) {
 
         const appealUrl = `${process.env.FRONTEND_URL || ""}/request/unsuspend`;
         try {
-            await sendEmail(
-                user.email,
-                "Your account has been suspended",
-                `Hello ${user.userName},\n\nYour account has been suspended for the following reason:\n${reasoning}\n\nYou may appeal at: ${appealUrl}`,
-                getSuspensionEmailHTML(user.userName, reasoning, appealUrl),
-            );
+            await enqueueEmailJob({
+                to: user.email,
+                subject: "Your account has been suspended",
+                text: `Hello ${user.userName},\n\nYour account has been suspended for the following reason:\n${reasoning}\n\nYou may appeal at: ${appealUrl}`,
+                html: getSuspensionEmailHTML(
+                    user.userName,
+                    reasoning,
+                    appealUrl,
+                ),
+            });
         } catch (err) {
             console.error("Failed to send suspension email:", err.message);
         }

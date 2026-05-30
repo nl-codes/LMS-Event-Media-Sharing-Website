@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
 import Notification from "../models/notificationModel.js";
+import { Event } from "../models/eventModel.js";
+import { EventMembership } from "../models/eventMembershipModel.js";
 import { makeError } from "../utils/helperFunctions.js";
 
 /**
  * @module services/notificationService
- * @description Single-recipient in-app notifications. Fan-out is the
- * caller's responsibility (see reportService.notifyAllAdmins).
+ * @description Single-recipient in-app notifications plus a few domain
+ * fan-out helpers for notifications that are anchored to another aggregate.
  */
 
 const validateObjectId = (id, label) => {
@@ -39,6 +41,65 @@ export async function createNotification({
         type,
         link,
     });
+}
+
+/**
+ * Notify every registered participant that an event has ended. The event row
+ * is stamped first so host/manual finish and the periodic lifecycle worker do
+ * not send duplicate notifications for the same event.
+ * @param {string|import("mongoose").Document} eventOrId
+ * @returns {Promise<{ sent: number, skipped?: boolean }>}
+ */
+export async function notifyEventEndedParticipants(eventOrId) {
+    const eventId = eventOrId?._id || eventOrId;
+    validateObjectId(eventId, "event id");
+
+    const event = await Event.findOneAndUpdate(
+        {
+            _id: eventId,
+            status: "Completed",
+            endNotificationSentAt: null,
+        },
+        {
+            $set: { endNotificationSentAt: new Date() },
+        },
+        { new: true },
+    ).select("_id eventName uniqueSlug");
+
+    if (!event) {
+        return { sent: 0, skipped: true };
+    }
+
+    const userIds = await EventMembership.distinct("userId", {
+        eventId: event._id,
+    });
+    const recipientIds = [
+        ...new Set(userIds.map((id) => String(id)).filter(Boolean)),
+    ].filter((id) => mongoose.isValidObjectId(id));
+
+    if (recipientIds.length === 0) {
+        return { sent: 0 };
+    }
+
+    try {
+        await Notification.insertMany(
+            recipientIds.map((recipientId) => ({
+                recipientId,
+                message: `${event.eventName} has ended. View all the shared moments`,
+                type: "event_ended",
+                link: `/events/${event.uniqueSlug}/gallery`,
+            })),
+            { ordered: false },
+        );
+    } catch (err) {
+        await Event.updateOne(
+            { _id: event._id },
+            { $set: { endNotificationSentAt: null } },
+        );
+        throw err;
+    }
+
+    return { sent: recipientIds.length };
 }
 
 /**

@@ -9,7 +9,8 @@ import nodemailerTransporter, {
     buildNodeMailerTransporter,
 } from "../config/nodeMailerConfig.js";
 
-const DEFAULT_PORT = Number(process.env.MAILTRAP_PORT) || 2525;
+const DEFAULT_PORT =
+    Number(process.env.SMTP_PORT) || Number(process.env.MAILTRAP_PORT) || 2525;
 const FALLBACK_PORTS = [587, 25, 465];
 
 /**

@@ -25,8 +25,8 @@ import {
     getPasswordResetEmailHTML,
     getReactivationEmailHTML,
 } from "../utils/longText.js";
-import sendEmail from "../utils/sendEmail.js";
 import { getAuthCookieOptions } from "../utils/auth/cookieAuth.js";
+import { enqueueEmailJob } from "../queues/emailQueue.js";
 
 /**
  * POST /users/signup
@@ -58,12 +58,12 @@ export const registerUser = async (req, res) => {
         } else {
             const activationUrl = `${process.env.FRONTEND_URL}/signup/activate?token=${token}`;
 
-            await sendEmail(
-                registeredUser.email,
-                "Activate your account",
-                `Your activation link: ${activationUrl}`,
-                getActivationEmailHTML(activationUrl),
-            );
+            await enqueueEmailJob({
+                to: registeredUser.email,
+                subject: "Activate your account",
+                text: `Your activation link: ${activationUrl}`,
+                html: getActivationEmailHTML(activationUrl),
+            });
         }
 
         res.status(201).json({
@@ -165,12 +165,12 @@ export const reactivateUser = async (req, res) => {
 
         const activationUrl = `${process.env.FRONTEND_URL}/signup/activate?token=${token}`;
 
-        await sendEmail(
-            user.email,
-            "Activate Your Account — Link Resent",
-            `Your activation link: ${activationUrl}`,
-            getReactivationEmailHTML(activationUrl),
-        );
+        await enqueueEmailJob({
+            to: user.email,
+            subject: "Activate Your Account — Link Resent",
+            text: `Your activation link: ${activationUrl}`,
+            html: getReactivationEmailHTML(activationUrl),
+        });
 
         res.json({ message: "Activation link resent." });
     } catch (err) {
@@ -193,15 +193,17 @@ export const forgotPassword = async (req, res) => {
         const { email } = req.body;
         if (!email) throw new Error("Email is required");
 
-        const { user, token } = await requestPasswordReset(email);
+        const { user, token } = await requestPasswordReset(
+            email.trim().toLowerCase(),
+        );
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
-        await sendEmail(
-            user.email,
-            "Reset your password",
-            `Reset link: ${resetUrl}`,
-            getPasswordResetEmailHTML(resetUrl),
-        );
+        await enqueueEmailJob({
+            to: user.email,
+            subject: "Reset your password",
+            text: `Reset link: ${resetUrl}`,
+            html: getPasswordResetEmailHTML(resetUrl),
+        });
 
         res.json({ message: "Password reset link sent" });
     } catch (err) {

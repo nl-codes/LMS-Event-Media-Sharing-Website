@@ -3,6 +3,7 @@ import { Event } from "../models/eventModel.js";
 import { EventMembership } from "../models/eventMembershipModel.js";
 import { Guest } from "../models/guestModel.js";
 import { Profile } from "../models/profileModel.js";
+import { User } from "../models/userModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import { extractPublicIdFromUrl } from "../utils/helperFunctions.js";
 import { attachAvatars } from "../utils/attachAvatars.js";
@@ -12,6 +13,10 @@ import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
 import { enqueueEventCleanupJob } from "../queues/eventCleanupQueue.js";
 import { enqueueMediaRetentionJob } from "../queues/mediaRetentionQueue.js";
 import { triggerEventSync } from "../queues/eventSyncQueue.js";
+import {
+    createNotification,
+    notifyEventEndedParticipants,
+} from "./notificationService.js";
 
 /**
  * @module services/eventService
@@ -254,6 +259,15 @@ export const finishEventByHost = async (eventId, requesterId) => {
     await event.save();
 
     try {
+        await notifyEventEndedParticipants(event);
+    } catch (err) {
+        console.warn(
+            `[notification] failed to notify participants for ended event ${event._id}:`,
+            err.message,
+        );
+    }
+
+    try {
         await triggerEventSync();
     } catch (err) {
         console.warn(
@@ -290,11 +304,25 @@ export const updateEventStatus = async (eventId, status, requesterId) => {
             );
         }
 
+        const shouldNotifyParticipants =
+            status === "Completed" && event.status !== "Completed";
+
         const updatedEvent = await Event.findByIdAndUpdate(
             eventId,
             { status },
             { new: true, runValidators: true },
         ).populate("hostId", "userName email");
+
+        if (shouldNotifyParticipants) {
+            try {
+                await notifyEventEndedParticipants(updatedEvent);
+            } catch (err) {
+                console.warn(
+                    `[notification] failed to notify participants for ended event ${eventId}:`,
+                    err.message,
+                );
+            }
+        }
 
         if (status === "Completed") {
             try {
@@ -311,6 +339,127 @@ export const updateEventStatus = async (eventId, status, requesterId) => {
     } catch (error) {
         throw error;
     }
+};
+
+const assertEventHost = async (eventId, requesterId) => {
+    if (!mongoose.isValidObjectId(eventId)) {
+        throw new Error("Event not found");
+    }
+
+    const event = await Event.findById(eventId).select(
+        "_id hostId eventName uniqueSlug",
+    );
+
+    if (!event) {
+        throw new Error("Event not found");
+    }
+
+    if (event.hostId.toString() !== requesterId) {
+        throw new Error("Unauthorized: Only event host can invite users");
+    }
+
+    return event;
+};
+
+/**
+ * Host-only username search for active registered users who can be invited.
+ * Email is intentionally omitted from the projection.
+ * @param {string} eventId
+ * @param {string} requesterId
+ * @param {{ search?: string, limit?: number }} [opts]
+ * @returns {Promise<Array<{ _id: string, userName: string, profilePicture: string }>>}
+ */
+export const searchEventInviteUsers = async (
+    eventId,
+    requesterId,
+    { search = "", limit = 20 } = {},
+) => {
+    const event = await assertEventHost(eventId, requesterId);
+    const cap = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 50);
+    const joinedUserIds = await EventMembership.distinct("userId", {
+        eventId: event._id,
+    });
+    const filter = {
+        status: "active",
+        role: "user",
+        _id: { $nin: [event.hostId, ...joinedUserIds] },
+    };
+
+    if (search && String(search).trim()) {
+        const escaped = String(search)
+            .trim()
+            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        filter.userName = new RegExp(escaped, "i");
+    }
+
+    const users = await User.find(filter)
+        .select("_id userName")
+        .sort({ userName: 1 })
+        .limit(cap)
+        .lean();
+
+    const profiles = await Profile.find({
+        user: { $in: users.map((user) => user._id) },
+    })
+        .select("user profilePicture")
+        .lean();
+    const profilePictureByUserId = new Map(
+        profiles.map((profile) => [
+            String(profile.user),
+            profile.profilePicture || "",
+        ]),
+    );
+
+    return users.map((user) => ({
+        _id: user._id,
+        userName: user.userName,
+        profilePicture: profilePictureByUserId.get(String(user._id)) || "",
+    }));
+};
+
+/**
+ * Host sends a clickable in-app invite notification to a registered user.
+ * @param {string} eventId
+ * @param {string} requesterId
+ * @param {string} recipientId
+ * @returns {Promise<import("mongoose").Document|null>}
+ */
+export const sendEventInvite = async (eventId, requesterId, recipientId) => {
+    const event = await assertEventHost(eventId, requesterId);
+
+    if (!mongoose.isValidObjectId(recipientId)) {
+        throw new Error("Invalid user id");
+    }
+
+    if (String(event.hostId) === String(recipientId)) {
+        throw new Error("You cannot invite yourself to your own event.");
+    }
+
+    const existingMembership = await EventMembership.exists({
+        eventId: event._id,
+        userId: recipientId,
+    });
+
+    if (existingMembership) {
+        throw new Error("User has already joined this event.");
+    }
+
+    const recipient = await User.findOne({
+        _id: recipientId,
+        status: "active",
+        role: "user",
+    }).select("_id");
+
+    if (!recipient) {
+        throw new Error("User not found");
+    }
+
+    return createNotification({
+        recipientId: recipient._id,
+        message: `You are invited to ${event.eventName}`,
+        type: "event_invite",
+        link: `/events/${event.uniqueSlug}`,
+    });
 };
 
 /**

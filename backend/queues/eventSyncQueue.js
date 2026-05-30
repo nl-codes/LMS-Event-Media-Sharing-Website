@@ -77,11 +77,12 @@ export const startEventSyncWorker = async () => {
 
     worker.on("completed", (job, result) => {
         const c = result?.completed?.modifiedCount ?? 0;
+        const n = result?.completed?.notifiedCount ?? 0;
         const h = result?.highlights?.queued ?? 0;
         const r = result?.retention?.queued ?? 0;
-        if (c > 0 || h > 0 || r > 0) {
+        if (c > 0 || n > 0 || h > 0 || r > 0) {
             console.log(
-                `[event-sync] tick → completed=${c} highlightsQueued=${h} retentionQueued=${r}`,
+                `[event-sync] tick → completed=${c} eventEndNotifications=${n} highlightsQueued=${h} retentionQueued=${r}`,
             );
         }
     });

@@ -10,13 +10,15 @@ import {
     getEventsList,
     getUsersList,
     registerAdmin,
+    suspendEvent,
     suspendUser,
     unsuspendUser,
     verifyAdminCredentials,
 } from "../services/adminService.js";
 import { setAuthCookie } from "../utils/auth/cookieAuth.js";
 import { generateJWTtoken } from "../utils/auth/generateJWTtoken.js";
-import sendEmail from "../utils/sendEmail.js";
+import { enqueueEmailJob } from "../queues/emailQueue.js";
+import { getSuspensionEmailHTML } from "../utils/longText.js";
 
 /**
  * POST /admins/signup
@@ -84,12 +86,12 @@ export async function loginAdminController(req, res) {
                 );
             } else {
                 SuccessMessage = "OTP sent to email";
-                await sendEmail(
-                    result.user.email,
-                    "Your Admin Login OTP",
-                    `Your OTP is: ${result.otpCode}`,
-                    `<p>Your OTP is <b>${result.otpCode}</b>. It expires in 10 minutes.</p>`,
-                );
+                await enqueueEmailJob({
+                    to: result.user.email,
+                    subject: "Your Admin Login OTP",
+                    text: `Your OTP is: ${result.otpCode}`,
+                    html: `<p>Your OTP is <b>${result.otpCode}</b>. It expires in 10 minutes.</p>`,
+                });
             }
 
             return res.status(200).json({
@@ -160,7 +162,23 @@ export async function getUsersListController(req, res) {
  * @param {string} successMessage Human-readable response message.
  * @returns {import("express").RequestHandler}
  */
-const handleUserAction = (actionFn, successMessage) => {
+const sendUserSuspensionEmail = async (user, reason) => {
+    if (!user?.email) return;
+
+    const appealUrl = `${process.env.FRONTEND_URL || ""}/request/unsuspend`;
+    try {
+        await enqueueEmailJob({
+            to: user.email,
+            subject: "Your account has been suspended",
+            text: `Hello ${user.userName},\n\nYour account has been suspended for the following reason:\n${reason}\n\nYou may appeal at: ${appealUrl}`,
+            html: getSuspensionEmailHTML(user.userName, reason, appealUrl),
+        });
+    } catch (err) {
+        console.error("Failed to queue suspension email:", err.message);
+    }
+};
+
+const handleUserAction = (actionFn, successMessage, afterSuccess) => {
     return async (req, res) => {
         try {
             const { userId, reason } = req.body || {};
@@ -173,6 +191,7 @@ const handleUserAction = (actionFn, successMessage) => {
             }
 
             const updated = await actionFn(userId, reason);
+            await afterSuccess?.(updated, reason);
 
             return res.status(200).json({
                 success: true,
@@ -192,6 +211,7 @@ const handleUserAction = (actionFn, successMessage) => {
 export const suspendUserController = handleUserAction(
     suspendUser,
     "User suspended",
+    sendUserSuspensionEmail,
 );
 
 /** POST /admins/users/unsuspend — admin lifts an end-user suspension. */
@@ -247,6 +267,44 @@ export async function getEventDetailsController(req, res) {
         return res.status(200).json({
             success: true,
             data,
+        });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message,
+        });
+    }
+}
+
+/**
+ * POST /admins/events/suspend
+ *
+ * Admin suspends/cancels an event. Requires a reason and notifies the host.
+ */
+export async function suspendEventController(req, res) {
+    try {
+        const { eventId, reason } = req.body || {};
+
+        if (!eventId || !String(eventId).trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "eventId is required",
+            });
+        }
+
+        if (!reason || !String(reason).trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Suspension reason is required",
+            });
+        }
+
+        const event = await suspendEvent(eventId, reason);
+
+        return res.status(200).json({
+            success: true,
+            message: "Event suspended",
+            data: event,
         });
     } catch (err) {
         return res.status(err.statusCode || 500).json({

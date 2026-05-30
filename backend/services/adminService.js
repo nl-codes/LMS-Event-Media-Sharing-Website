@@ -14,6 +14,7 @@ import {
     hashOtp,
 } from "./otpService.js";
 import { getEventParticipationCount } from "./eventMembershipService.js";
+import { createNotification } from "./notificationService.js";
 
 /**
  * @module services/adminService
@@ -296,4 +297,49 @@ export async function getEventDetails(eventId) {
         uploadsSeries: series,
         bucketUnit: unit,
     };
+}
+
+/**
+ * Suspend/cancel an event as an admin and notify its host with the reason.
+ * @param {string} eventId
+ * @param {string} reason
+ * @returns {Promise<import("mongoose").Document>} Updated event.
+ * @throws {Error} 400 on missing reason/already cancelled, 404 if missing.
+ */
+export async function suspendEvent(eventId, reason) {
+    const trimmedReason = String(reason || "").trim();
+    if (!trimmedReason) {
+        throw makeError(400, "Suspension reason is required");
+    }
+
+    const event = await Event.findById(eventId).populate(
+        "hostId",
+        "_id userName email",
+    );
+
+    if (!event) {
+        throw makeError(404, "Event not found");
+    }
+
+    if (event.status === "Cancelled") {
+        throw makeError(400, "Event is already suspended");
+    }
+
+    event.status = "Cancelled";
+    await event.save();
+
+    if (event.hostId?._id) {
+        await createNotification({
+            recipientId: event.hostId._id,
+            message: `Your event "${event.eventName}" has been suspended. Reason: ${trimmedReason}`,
+            type: "event_suspended",
+            link: `/home/events/${event._id}`,
+        });
+    }
+
+    return Event.findById(eventId)
+        .select(
+            "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount createdAt updatedAt",
+        )
+        .populate("hostId", "userName email");
 }

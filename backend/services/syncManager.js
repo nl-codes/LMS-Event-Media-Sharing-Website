@@ -7,6 +7,7 @@ import { findEventsNeedingHighlights } from "./highlightService.js";
 import { enqueueHighlightJob } from "../queues/highlightQueue.js";
 import { findEventsNeedingMediaDeletion } from "./mediaRetentionService.js";
 import { enqueueMediaRetentionJob } from "../queues/mediaRetentionQueue.js";
+import { notifyEventEndedParticipants } from "./notificationService.js";
 
 /**
  * @module services/syncManager
@@ -26,11 +27,14 @@ const toObjectId = (value) => {
  * @returns {Promise<{ name: string, matchedCount: number, modifiedCount: number }>}
  */
 export const syncCompletedEvents = async (now = new Date()) => {
+    const filter = {
+        status: "Active",
+        endTime: { $lt: now },
+    };
+    const endingEvents = await Event.find(filter).select("_id");
+
     const result = await Event.updateMany(
-        {
-            status: "Active",
-            endTime: { $lt: now },
-        },
+        filter,
         {
             $set: {
                 status: "Completed",
@@ -38,10 +42,24 @@ export const syncCompletedEvents = async (now = new Date()) => {
         },
     );
 
+    let notifiedCount = 0;
+    for (const event of endingEvents) {
+        try {
+            const outcome = await notifyEventEndedParticipants(event._id);
+            notifiedCount += outcome.sent || 0;
+        } catch (err) {
+            console.warn(
+                `[notification] failed to notify participants for ended event ${event._id}:`,
+                err.message,
+            );
+        }
+    }
+
     return {
         name: "completedEvents",
         matchedCount: result.matchedCount,
         modifiedCount: result.modifiedCount,
+        notifiedCount,
     };
 };
 
