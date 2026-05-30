@@ -37,6 +37,7 @@ import { startHighlightWorker } from "./queues/highlightQueue.js";
 import { startEventCleanupWorker } from "./queues/eventCleanupQueue.js";
 import { startEventSyncWorker } from "./queues/eventSyncQueue.js";
 import { startMediaRetentionWorker } from "./queues/mediaRetentionQueue.js";
+import { startEmailWorker } from "./queues/emailQueue.js";
 
 import { setIO } from "./config/socketConfig.js";
 import {
@@ -220,6 +221,15 @@ const port = process.env.PORT;
 const startServer = async () => {
     await connectDB();
     await runStartupSync();
+
+    try {
+        await startEmailWorker();
+        console.log("✉️  Email worker started");
+    } catch (err) {
+        // Non-fatal: routes can still serve, but email-dependent flows will
+        // fail to enqueue until Redis/worker configuration is fixed.
+        console.error("Failed to start email worker:", err.message);
+    }
 
     try {
         await startVideoWorker();
