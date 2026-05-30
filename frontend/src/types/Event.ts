@@ -37,6 +37,7 @@ export interface Event {
     mediaRetentionWarningStartsAt?: string | null;
     mediaDeletedAt?: string | null;
     mediaDeletionStatus?: MediaDeletionStatus;
+    adminActionReason?: string;
     createdAt?: string;
     updatedAt?: string;
 }
