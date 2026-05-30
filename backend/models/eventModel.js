@@ -47,6 +47,11 @@ import {
  *  - `mediaDeletedAt` is stamped when the retention worker finishes. The
  *    Event document itself is preserved after retention runs; only Media,
  *    Interactions, and Cloudinary assets are wiped.
+ *
+ * Notifications:
+ *  - `endNotificationSentAt` is stamped when registered participants are
+ *    notified that the event has finished. This keeps host-finish and
+ *    scheduled lifecycle sync idempotent.
  *  - `mediaRetentionDeleteAt` and `mediaRetentionWarningStartsAt` are
  *    computed virtuals — see below.
  *
@@ -170,6 +175,10 @@ const EventSchema = new mongoose.Schema(
         },
         // Stamped on successful retention run.
         mediaDeletedAt: {
+            type: Date,
+            default: null,
+        },
+        endNotificationSentAt: {
             type: Date,
             default: null,
         },
