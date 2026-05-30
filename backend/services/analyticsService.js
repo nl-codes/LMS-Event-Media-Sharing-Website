@@ -21,9 +21,23 @@ const RANGE_CONFIG = {
 };
 
 const DEFAULT_RANGE = "last30days";
+const HOUR_MS = 1000 * 60 * 60;
+const DAY_MS = HOUR_MS * 24;
 
 const resolveRange = (range) =>
     RANGE_CONFIG[range] || RANGE_CONFIG[DEFAULT_RANGE];
+
+const bucketFormatForGranularity = (granularity) => {
+    if (granularity === "hour") return "%Y-%m-%dT%H:00:00.000Z";
+    if (granularity === "month") return "%Y-%m";
+    return "%Y-%m-%d";
+};
+
+const startOfUtcHour = (value) => {
+    const d = new Date(value);
+    d.setUTCMinutes(0, 0, 0);
+    return d;
+};
 
 const startOfRange = (days) => {
     const d = new Date();
@@ -35,7 +49,7 @@ const startOfRange = (days) => {
 // Build the $group stage for either day or month bucketing. $dateToString is
 // used so the output is a plain string and serializes cleanly to JSON.
 const buildGroupStage = (granularity) => {
-    const format = granularity === "month" ? "%Y-%m" : "%Y-%m-%d";
+    const format = bucketFormatForGranularity(granularity);
     return {
         $group: {
             _id: {
@@ -59,9 +73,22 @@ const fillGaps = (buckets, daysOrWindow, granularity) => {
         to.setUTCHours(0, 0, 0, 0);
     } else {
         from = new Date(daysOrWindow.from);
-        from.setUTCHours(0, 0, 0, 0);
         to = new Date(daysOrWindow.to);
-        to.setUTCHours(0, 0, 0, 0);
+        if (granularity !== "hour") {
+            from.setUTCHours(0, 0, 0, 0);
+            to.setUTCHours(0, 0, 0, 0);
+        }
+    }
+
+    if (granularity === "hour") {
+        const c = startOfUtcHour(from);
+        const end = startOfUtcHour(to);
+        while (c <= end) {
+            const key = c.toISOString();
+            out.push({ date: key, count: map.get(key) || 0 });
+            c.setUTCHours(c.getUTCHours() + 1);
+        }
+        return out;
     }
 
     if (granularity === "month") {
@@ -125,17 +152,20 @@ export const getEventGrowth = (range) => aggregateCountsOverTime(Event, range);
  */
 export const getMediaGrowth = (range) => aggregateCountsOverTime(Media, range);
 
-// Pick daily buckets for short windows, monthly for long ones (>90 days),
-// matching the thresholds used by the platform-wide ranges.
-const pickGranularityForWindow = (fromDate, toDate) => {
+// Pick hourly buckets while the event is less than 24 hours old, then daily
+// for short windows and monthly for long ones (>90 days).
+const pickGranularityForWindow = (fromDate, toDate, nowDate = new Date()) => {
+    const elapsedSinceStart = nowDate.getTime() - fromDate.getTime();
+    if (elapsedSinceStart >= 0 && elapsedSinceStart < DAY_MS) return "hour";
+
     const ms = toDate.getTime() - fromDate.getTime();
-    const days = Math.max(1, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+    const days = Math.max(1, Math.ceil(ms / DAY_MS));
     return days > 90 ? "month" : "day";
 };
 
 const aggregateMembershipsInWindow = async (eventId, from, to, granularity) => {
     const eventObjectId = new mongoose.Types.ObjectId(String(eventId));
-    const format = granularity === "month" ? "%Y-%m" : "%Y-%m-%d";
+    const format = bucketFormatForGranularity(granularity);
 
     const bucketStage = (dateField) => [
         {
@@ -178,7 +208,7 @@ const aggregateMembershipsInWindow = async (eventId, from, to, granularity) => {
 
 const aggregateMediaInWindow = async (eventId, from, to, granularity) => {
     const eventObjectId = new mongoose.Types.ObjectId(String(eventId));
-    const format = granularity === "month" ? "%Y-%m" : "%Y-%m-%d";
+    const format = bucketFormatForGranularity(granularity);
 
     const rows = await Media.aggregate([
         {
@@ -210,7 +240,7 @@ const aggregateMediaInWindow = async (eventId, from, to, granularity) => {
 };
 
 /**
- * Per-event host insights: total members + media plus daily/monthly
+ * Per-event host insights: total members + media plus hourly/daily/monthly
  * timeseries for the event's start→end window (clamped to now if live).
  * @param {string} eventId
  * @returns {Promise<{ event: object, host: object|null, totals: { members: number, media: number }, window: { from: string, to: string, granularity: string }, members: object, media: object }>}
@@ -237,7 +267,7 @@ export const getEventInsights = async (eventId) => {
     const from = start;
     const to = end <= now ? end : now;
     const effectiveTo = to < from ? from : to;
-    const granularity = pickGranularityForWindow(from, effectiveTo);
+    const granularity = pickGranularityForWindow(from, effectiveTo, now);
 
     const [members, media, registeredCount, guestCount, totalMedia] =
         await Promise.all([
