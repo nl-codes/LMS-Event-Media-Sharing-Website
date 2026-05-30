@@ -1,4 +1,5 @@
 import { backend_url } from "@/config/backend";
+import { getSessionAuthHeader } from "@/lib/sessionCookie";
 
 export type AnalyticsRange =
     | "last7days"
@@ -26,7 +27,10 @@ async function fetchAnalytics(
     range: AnalyticsRange,
 ): Promise<AnalyticsResponse> {
     const url = `${backend_url}/admins/analytics/${metric}?range=${encodeURIComponent(range)}`;
-    const res = await fetch(url, { credentials: "include" });
+    const res = await fetch(url, {
+        credentials: "include",
+        headers: getSessionAuthHeader(),
+    });
     const json = (await res.json().catch(() => ({}))) as AnalyticsResponse;
     if (!res.ok || !json.success) {
         throw new Error(json.message || `Failed to load ${metric} analytics`);
@@ -80,7 +84,10 @@ export async function getEventInsights(
     eventId: string,
 ): Promise<EventInsightsResponse> {
     const url = `${backend_url}/events/${eventId}/insights`;
-    const res = await fetch(url, { credentials: "include" });
+    const res = await fetch(url, {
+        credentials: "include",
+        headers: getSessionAuthHeader(),
+    });
     const json = (await res.json().catch(() => ({}))) as EventInsightsResponse;
     if (!res.ok || !json.success) {
         throw new Error(json.message || "Failed to load event insights");

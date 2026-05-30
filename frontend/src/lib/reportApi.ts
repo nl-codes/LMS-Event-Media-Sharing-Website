@@ -3,6 +3,7 @@ import { Report, ReportTargetType } from "@/types/Report";
 import { type Notification } from "@/types/Notification";
 import { FlaggedMedia } from "@/types/Media";
 import { Appeal } from "@/types/Appeal";
+import { getSessionAuthHeader } from "@/lib/sessionCookie";
 
 type ApiResponse<T> = {
     success?: boolean;
@@ -26,6 +27,7 @@ async function request<T>(path: string, init: RequestInit = {}) {
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
+            ...getSessionAuthHeader(),
             ...(init.headers as Record<string, string> | undefined),
         },
         ...init,

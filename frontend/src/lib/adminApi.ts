@@ -1,4 +1,5 @@
 import { backend_url } from "@/config/backend";
+import { getSessionAuthHeader } from "@/lib/sessionCookie";
 import type {
     AdminAccount,
     AdminEvent,
@@ -42,6 +43,7 @@ async function request<T>(path: string, options: RequestInit = {}) {
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
+            ...getSessionAuthHeader(),
             ...(options.headers as Record<string, string> | undefined),
         },
         ...options,
@@ -100,7 +102,9 @@ export async function adminSignup(payload: {
 export async function getCurrentUser(token?: string) {
     const response = await fetch(`${backend_url}/users/me`, {
         credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        headers: token
+            ? { Authorization: `Bearer ${token}` }
+            : getSessionAuthHeader(),
     });
 
     if (!response.ok) {
