@@ -15,6 +15,7 @@ import Button from "@/components/buttons/Button";
 import EventDetailsLayout from "@/components/events/EventDetailsLayout";
 import EventHostActionButtons from "../../../../components/events/EventHostActionButtons";
 import { useUser } from "@/context/UserContext";
+import EventAppealPanel from "@/components/events/EventAppealPanel";
 
 export default function EventDetailsPage() {
     const { user } = useUser();
@@ -126,6 +127,10 @@ export default function EventDetailsPage() {
                             eventId={event._id}
                             initialPrivacy={event.privacy || "private"}
                         />
+
+                        {event.status === "Cancelled" && (
+                            <EventAppealPanel event={event} />
+                        )}
                     </>
                 )}
 
