@@ -12,6 +12,7 @@ import { enqueueEventPrivacyJob } from "../queues/eventPrivacyQueue.js";
 import { enqueueEventCleanupJob } from "../queues/eventCleanupQueue.js";
 import { enqueueMediaRetentionJob } from "../queues/mediaRetentionQueue.js";
 import { triggerEventSync } from "../queues/eventSyncQueue.js";
+import { notifyEventEndedParticipants } from "./notificationService.js";
 
 /**
  * @module services/eventService
@@ -254,6 +255,15 @@ export const finishEventByHost = async (eventId, requesterId) => {
     await event.save();
 
     try {
+        await notifyEventEndedParticipants(event);
+    } catch (err) {
+        console.warn(
+            `[notification] failed to notify participants for ended event ${event._id}:`,
+            err.message,
+        );
+    }
+
+    try {
         await triggerEventSync();
     } catch (err) {
         console.warn(
@@ -290,11 +300,25 @@ export const updateEventStatus = async (eventId, status, requesterId) => {
             );
         }
 
+        const shouldNotifyParticipants =
+            status === "Completed" && event.status !== "Completed";
+
         const updatedEvent = await Event.findByIdAndUpdate(
             eventId,
             { status },
             { new: true, runValidators: true },
         ).populate("hostId", "userName email");
+
+        if (shouldNotifyParticipants) {
+            try {
+                await notifyEventEndedParticipants(updatedEvent);
+            } catch (err) {
+                console.warn(
+                    `[notification] failed to notify participants for ended event ${eventId}:`,
+                    err.message,
+                );
+            }
+        }
 
         if (status === "Completed") {
             try {
