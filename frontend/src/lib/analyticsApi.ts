@@ -6,7 +6,7 @@ export type AnalyticsRange =
     | "last90days"
     | "lastYear";
 
-export type AnalyticsGranularity = "day" | "month";
+export type AnalyticsGranularity = "hour" | "day" | "month";
 
 export type AnalyticsPoint = {
     date: string;
