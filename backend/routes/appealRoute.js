@@ -10,6 +10,7 @@ import express from "express";
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 import {
     approveAppealController,
+    createEventAppealController,
     getAppealCountsController,
     listAppealsController,
     rejectAppealController,
@@ -29,6 +30,12 @@ router.get(
     requireAuth,
     requireRole("admin", "superadmin"),
     listAppealsController,
+);
+
+router.post(
+    "/events/:eventId",
+    requireAuth,
+    createEventAppealController,
 );
 
 router.post(

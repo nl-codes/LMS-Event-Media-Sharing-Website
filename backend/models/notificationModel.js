@@ -22,6 +22,10 @@ const { Schema } = mongoose;
  *                              view/join an event.
  *  - "event_suspended"     :   sent to an event host when admin moderation
  *                              cancels/suspends their event.
+ *  - "event_appeal_filed"  :   sent to admins when a host appeals an event
+ *                              suspension.
+ *  - "event_appeal_approved":  sent to a host when their event appeal is approved.
+ *  - "event_appeal_rejected":  sent to a host when their event appeal is rejected.
  *  - "event_ended"         :   sent to registered event participants when
  *                              the event gallery becomes a completed archive.
  *  - "system"              :   generic catch-all (default).
@@ -56,6 +60,9 @@ const notificationSchema = new Schema(
                 "user_suspended",
                 "event_invite",
                 "event_suspended",
+                "event_appeal_filed",
+                "event_appeal_approved",
+                "event_appeal_rejected",
                 "event_ended",
                 "system",
             ],

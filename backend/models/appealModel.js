@@ -11,7 +11,8 @@ const { Schema } = mongoose;
  * by the user's email.
  *
  *  Relationships:
- *  - userId     → User (the suspended account).
+ *  - userId     → User (the suspended account or event host).
+ *  - eventId    → Event (only for event suspension appeals).
  *  - reviewedBy → User (the admin who issued the verdict; null while pending).
  *  - `email` is snapshotted at submission time so admins can see what the
  *    suspended user typed.
@@ -29,6 +30,20 @@ const appealSchema = new Schema(
             ref: "User",
             required: true,
             index: true,
+        },
+        appealType: {
+            type: String,
+            enum: ["user", "event"],
+            default: "user",
+            index: true,
+        },
+        eventId: {
+            type: Schema.Types.ObjectId,
+            ref: "Event",
+            default: null,
+            required() {
+                return this.appealType === "event";
+            },
         },
         // Snapshot of the email at submission
         email: {
@@ -64,6 +79,7 @@ const appealSchema = new Schema(
 
 // Admin queue: newest-first within a status bucket.
 appealSchema.index({ status: 1, createdAt: -1 });
+appealSchema.index({ appealType: 1, status: 1, createdAt: -1 });
 
 const Appeal = mongoose.model("Appeal", appealSchema);
 export default Appeal;

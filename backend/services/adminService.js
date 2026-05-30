@@ -231,7 +231,7 @@ export async function getEventsList(search = "", tier = "") {
         .sort({ createdAt: -1 })
         .limit(500)
         .select(
-            "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount createdAt updatedAt",
+            "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount adminActionReason createdAt updatedAt",
         )
         .populate("hostId", "userName email");
 }
@@ -326,6 +326,7 @@ export async function suspendEvent(eventId, reason) {
     }
 
     event.status = "Cancelled";
+    event.adminActionReason = trimmedReason;
     await event.save();
 
     if (event.hostId?._id) {
@@ -339,7 +340,7 @@ export async function suspendEvent(eventId, reason) {
 
     return Event.findById(eventId)
         .select(
-            "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount createdAt updatedAt",
+            "eventName description hostId startTime endTime location thumbnail status tier isPremium participantCount adminActionReason createdAt updatedAt",
         )
         .populate("hostId", "userName email");
 }

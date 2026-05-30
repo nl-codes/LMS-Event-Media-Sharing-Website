@@ -7,6 +7,7 @@
 
 import {
     approveAppeal,
+    createEventAppeal,
     getAppealCounts,
     listAppeals,
     rejectAppeal,
@@ -48,6 +49,36 @@ export async function listAppealsController(req, res) {
             success: true,
             count: appeals.length,
             data: appeals,
+        });
+    } catch (err) {
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message,
+        });
+    }
+}
+
+/**
+ * POST /appeals/events/:eventId
+ *
+ * Host-facing event suspension appeal submission.
+ */
+export async function createEventAppealController(req, res) {
+    try {
+        const { eventId } = req.params;
+        const { appealMessage } = req.body || {};
+        const hostId = req.user?.id;
+
+        const appeal = await createEventAppeal({
+            eventId,
+            hostId,
+            appealMessage,
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Event appeal submitted",
+            data: appeal,
         });
     } catch (err) {
         return res.status(err.statusCode || 500).json({
