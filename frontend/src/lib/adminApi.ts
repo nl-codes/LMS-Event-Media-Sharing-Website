@@ -20,6 +20,7 @@ type ApiResponse<T> = {
 type AdminLoginResponseData = {
     role?: "admin" | "superadmin";
     redirectTo?: string;
+    token?: string;
 };
 
 function getMessage(payload: ApiResponse<unknown>, fallback: string) {
@@ -80,6 +81,7 @@ export async function adminLogin(payload: {
         message: data.message,
         role: data.data?.role,
         redirectTo: data.data?.redirectTo,
+        token: data.data?.token,
     };
 }
 
