@@ -10,12 +10,14 @@ import {
     QrCode,
     TrendingUp,
     Users,
+    UserPlus,
     Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { Event } from "@/types/Event";
 import { finishEvent } from "@/lib/eventApi";
+import InviteUsersModal from "./InviteUsersModal";
 
 interface EventHostActionButtonsProps {
     event: Event;
@@ -30,6 +32,7 @@ export default function EventHostActionButtons({
 }: EventHostActionButtonsProps) {
     const router = useRouter();
     const [finishing, setFinishing] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState(false);
 
     const canFinish = event.status === "Active";
 
@@ -56,60 +59,80 @@ export default function EventHostActionButtons({
     };
 
     return (
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
-            <BackButton href="/home/events" replace label="Back to My Events" />
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
-                <Button
-                    className="w-full sm:w-auto justify-center"
-                    onClick={() =>
-                        router.push(`/home/events/${event._id}/participants`)
-                    }>
-                    <Users className="w-4 h-4" /> Participants
-                </Button>
-                <Button
-                    className="w-full sm:w-auto justify-center"
-                    onClick={() =>
-                        router.push(`/home/events/${event._id}/insights`)
-                    }>
-                    <TrendingUp className="w-4 h-4" /> Insights
-                </Button>
-                {!event.isPremium && (
+        <>
+            {showInviteModal && (
+                <InviteUsersModal
+                    event={event}
+                    onClose={() => setShowInviteModal(false)}
+                />
+            )}
+
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
+                <BackButton
+                    href="/home/events"
+                    replace
+                    label="Back to My Events"
+                />
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
+                    <Button
+                        className="w-full sm:w-auto justify-center"
+                        onClick={() => setShowInviteModal(true)}>
+                        <UserPlus className="w-4 h-4" /> Invite
+                    </Button>
                     <Button
                         className="w-full sm:w-auto justify-center"
                         onClick={() =>
-                            router.push(`/home/events/${event._id}/upgrade`)
+                            router.push(
+                                `/home/events/${event._id}/participants`,
+                            )
                         }>
-                        <Zap className="w-4 h-4 fill-current" /> Upgrade
+                        <Users className="w-4 h-4" /> Participants
                     </Button>
-                )}
-                <Button
-                    className="w-full sm:w-auto justify-center"
-                    onClick={() => setShowQR(true)}>
-                    <QrCode className="w-4 h-4" /> QR Code
-                </Button>
-                <Button
-                    className="w-full sm:w-auto justify-center"
-                    onClick={() =>
-                        router.push(`/home/events/${event._id}/gallery`)
-                    }>
-                    <Images className="w-4 h-4" /> Gallery
-                </Button>
-                <Button
-                    className="w-full sm:w-auto justify-center"
-                    onClick={() =>
-                        router.push(`/home/events/${event._id}/edit`)
-                    }>
-                    <Edit3 className="w-4 h-4" /> Edit
-                </Button>
-                {canFinish && (
                     <Button
                         className="w-full sm:w-auto justify-center"
-                        onClick={handleFinish}
-                        loading={finishing}>
-                        <CheckCircle2 className="w-4 h-4" /> Finish Event
+                        onClick={() =>
+                            router.push(`/home/events/${event._id}/insights`)
+                        }>
+                        <TrendingUp className="w-4 h-4" /> Insights
                     </Button>
-                )}
+                    {!event.isPremium && (
+                        <Button
+                            className="w-full sm:w-auto justify-center"
+                            onClick={() =>
+                                router.push(`/home/events/${event._id}/upgrade`)
+                            }>
+                            <Zap className="w-4 h-4 fill-current" /> Upgrade
+                        </Button>
+                    )}
+                    <Button
+                        className="w-full sm:w-auto justify-center"
+                        onClick={() => setShowQR(true)}>
+                        <QrCode className="w-4 h-4" /> QR Code
+                    </Button>
+                    <Button
+                        className="w-full sm:w-auto justify-center"
+                        onClick={() =>
+                            router.push(`/home/events/${event._id}/gallery`)
+                        }>
+                        <Images className="w-4 h-4" /> Gallery
+                    </Button>
+                    <Button
+                        className="w-full sm:w-auto justify-center"
+                        onClick={() =>
+                            router.push(`/home/events/${event._id}/edit`)
+                        }>
+                        <Edit3 className="w-4 h-4" /> Edit
+                    </Button>
+                    {canFinish && (
+                        <Button
+                            className="w-full sm:w-auto justify-center"
+                            onClick={handleFinish}
+                            loading={finishing}>
+                            <CheckCircle2 className="w-4 h-4" /> Finish Event
+                        </Button>
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
