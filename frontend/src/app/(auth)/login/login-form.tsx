@@ -6,8 +6,15 @@ import toast from "react-hot-toast";
 import Button from "@/components/buttons/Button";
 import { backend_url } from "@/config/backend";
 import { useUser } from "@/context/UserContext";
+import { syncFrontendSessionCookie } from "@/lib/sessionCookie";
 import { LogIn, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { emailRegex } from "@/utils/validators";
+
+type LoginResponse = {
+    message?: string;
+    error?: string;
+    token?: string;
+};
 
 export default function LoginForm() {
     const router = useRouter();
@@ -47,7 +54,7 @@ export default function LoginForm() {
                 body: JSON.stringify({ email, password }),
             });
 
-            const data = await res.json();
+            const data = (await res.json()) as LoginResponse;
 
             if (!res.ok) {
                 setErrorMsg(data.error || "Invalid email or password.");
@@ -66,6 +73,7 @@ export default function LoginForm() {
             }
 
             const user = await meRes.json();
+            syncFrontendSessionCookie(data.token);
             setUser(user);
             toast.success("Welcome back! 🙂");
             router.push("/home");
