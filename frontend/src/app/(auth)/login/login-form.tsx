@@ -64,6 +64,9 @@ export default function LoginForm() {
 
             const meRes = await fetch(`${backend_url}/users/me`, {
                 credentials: "include",
+                headers: data.token
+                    ? { Authorization: `Bearer ${data.token}` }
+                    : undefined,
             });
 
             if (!meRes.ok) {

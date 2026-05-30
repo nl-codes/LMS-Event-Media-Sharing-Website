@@ -56,7 +56,7 @@ export default function AdminLoginForm() {
             }
 
             syncFrontendSessionCookie(result.token);
-            const currentUser = await getCurrentUser();
+            const currentUser = await getCurrentUser(result.token);
             setUser(currentUser);
 
             if (currentUser.role === "superadmin") {
