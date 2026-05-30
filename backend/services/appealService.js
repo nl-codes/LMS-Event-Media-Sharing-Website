@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
 import Appeal from "../models/appealModel.js";
+import { Event } from "../models/eventModel.js";
 import { User } from "../models/userModel.js";
 import { makeError } from "../utils/helperFunctions.js";
 import { unsuspendUser } from "./adminService.js";
 import { enqueueEmailJob } from "../queues/emailQueue.js";
+import { createNotification } from "./notificationService.js";
 import {
     getAppealApprovedEmailHTML,
     getAppealRejectedEmailHTML,
@@ -21,6 +23,23 @@ const validateObjectId = (id, label) => {
         throw makeError(400, `Invalid ${label}`);
     }
 };
+
+async function notifyAllAdmins(message, link, type = "system") {
+    const admins = await User.find({
+        role: { $in: ["admin", "superadmin"] },
+    }).select("_id");
+
+    await Promise.all(
+        admins.map((admin) =>
+            createNotification({
+                recipientId: admin._id,
+                message,
+                link,
+                type,
+            }),
+        ),
+    );
+}
 
 /**
  * File a new unsuspension appeal.
@@ -64,6 +83,62 @@ export async function createAppeal({ email, appealMessage }) {
 }
 
 /**
+ * Host files an appeal for a suspended/cancelled event.
+ * @param {{ eventId: string, hostId: string, appealMessage: string }} input
+ * @returns {Promise<import("mongoose").Document>}
+ */
+export async function createEventAppeal({ eventId, hostId, appealMessage }) {
+    validateObjectId(eventId, "event id");
+    validateObjectId(hostId, "host id");
+
+    if (!appealMessage?.trim()) {
+        throw makeError(400, "Appeal message is required");
+    }
+
+    const event = await Event.findById(eventId).populate(
+        "hostId",
+        "_id userName email",
+    );
+
+    if (!event) {
+        throw makeError(404, "Event not found");
+    }
+
+    if (String(event.hostId?._id || event.hostId) !== String(hostId)) {
+        throw makeError(403, "Only the event host can appeal this event");
+    }
+
+    if (event.status !== "Cancelled") {
+        throw makeError(400, "Only suspended events can be appealed");
+    }
+
+    const existingPending = await Appeal.findOne({
+        appealType: "event",
+        eventId: event._id,
+        status: "pending",
+    });
+    if (existingPending) {
+        throw makeError(400, "This event already has a pending appeal");
+    }
+
+    const appeal = await Appeal.create({
+        appealType: "event",
+        eventId: event._id,
+        userId: event.hostId._id,
+        email: event.hostId.email,
+        appealMessage: String(appealMessage).trim(),
+    });
+
+    await notifyAllAdmins(
+        `Event appeal filed for "${event.eventName}"`,
+        "/admin/appeals",
+        "event_appeal_filed",
+    );
+
+    return appeal;
+}
+
+/**
  * Counts per status, for the admin-appeals tabs.
  * @returns {Promise<{ pending: number, approved: number, rejected: number }>}
  */
@@ -89,6 +164,7 @@ export async function listAppeals({ status } = {}) {
         .sort({ createdAt: -1 })
         .limit(500)
         .populate("userId", "userName email status adminActionReason")
+        .populate("eventId", "eventName status adminActionReason uniqueSlug")
         .populate("reviewedBy", "userName email");
 }
 
@@ -103,16 +179,39 @@ export async function approveAppeal({ appealId, adminId, adminNote }) {
     validateObjectId(appealId, "appeal id");
     validateObjectId(adminId, "admin id");
 
-    const appeal = await Appeal.findById(appealId).populate(
-        "userId",
-        "userName email status",
-    );
+    const appeal = await Appeal.findById(appealId)
+        .populate("userId", "userName email status")
+        .populate("eventId", "eventName status");
     if (!appeal) throw makeError(404, "Appeal not found");
     if (appeal.status !== "pending") {
         throw makeError(400, "Appeal already reviewed");
     }
 
     const note = String(adminNote || "").trim();
+
+    if (appeal.appealType === "event") {
+        if (!appeal.eventId) {
+            throw makeError(404, "Event not found");
+        }
+
+        appeal.eventId.status = "Active";
+        appeal.eventId.adminActionReason = "";
+        await appeal.eventId.save();
+
+        appeal.status = "approved";
+        appeal.reviewedBy = adminId;
+        appeal.adminNote = note;
+        await appeal.save();
+
+        await createNotification({
+            recipientId: appeal.userId._id,
+            message: `Your appeal for "${appeal.eventId.eventName}" was approved. The event has been restored.`,
+            type: "event_appeal_approved",
+            link: `/home/events/${appeal.eventId._id}`,
+        });
+
+        return appeal;
+    }
 
     // Only unsuspend if still suspended — user may have been manually restored
     if (appeal.userId.status === "suspended") {
@@ -157,10 +256,9 @@ export async function rejectAppeal({ appealId, adminId, adminNote }) {
     validateObjectId(appealId, "appeal id");
     validateObjectId(adminId, "admin id");
 
-    const appeal = await Appeal.findById(appealId).populate(
-        "userId",
-        "userName email status",
-    );
+    const appeal = await Appeal.findById(appealId)
+        .populate("userId", "userName email status")
+        .populate("eventId", "eventName status");
     if (!appeal) throw makeError(404, "Appeal not found");
     if (appeal.status !== "pending") {
         throw makeError(400, "Appeal already reviewed");
@@ -172,6 +270,17 @@ export async function rejectAppeal({ appealId, adminId, adminNote }) {
     appeal.reviewedBy = adminId;
     appeal.adminNote = note;
     await appeal.save();
+
+    if (appeal.appealType === "event") {
+        await createNotification({
+            recipientId: appeal.userId._id,
+            message: `Your appeal for "${appeal.eventId?.eventName || "your event"}" was rejected.${note ? ` Reason: ${note}` : ""}`,
+            type: "event_appeal_rejected",
+            link: `/home/events/${appeal.eventId?._id || ""}`,
+        });
+
+        return appeal;
+    }
 
     try {
         await enqueueEmailJob({
