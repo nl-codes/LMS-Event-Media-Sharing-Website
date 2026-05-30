@@ -144,10 +144,10 @@ export async function getAdminEventDetails(eventId: string) {
     return response.data;
 }
 
-export async function suspendEvent(eventId: string) {
-    const response = await request<AdminEvent>(`/events/${eventId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: "Cancelled" }),
+export async function suspendEvent(eventId: string, reason: string) {
+    const response = await request<AdminEvent>("/admins/events/suspend", {
+        method: "POST",
+        body: JSON.stringify({ eventId, reason }),
     });
     return response.data;
 }
