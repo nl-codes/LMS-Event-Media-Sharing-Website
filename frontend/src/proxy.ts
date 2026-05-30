@@ -55,7 +55,7 @@ async function verifyToken(token: string) {
     }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const token = request.cookies.get("token")?.value;
     const payload = token ? await verifyToken(token) : null;
@@ -78,19 +78,19 @@ export async function middleware(request: NextRequest) {
         );
     }
 
-    // Authenticated user trying to access auth pages → redirect to /home
+    // Authenticated user trying to access auth pages -> redirect to dashboard
     if (payload && isAuthPage(pathname)) {
         return NextResponse.redirect(
             new URL(dashboardForRole(payload.role), request.url),
         );
     }
 
-    // Public routes — allow access
+    // Public routes - allow access
     if (isPublic(pathname)) {
         return NextResponse.next();
     }
 
-    // No valid token → redirect to login
+    // No valid token -> redirect to login
     if (!payload) {
         return NextResponse.redirect(
             new URL(
@@ -104,7 +104,6 @@ export async function middleware(request: NextRequest) {
     }
 
     // Role-based authorization
-    // - user-only home
     const isOthersProfileRoute =
         /^\/home\/profile\/[^/]+\/others(?:\/.*)?$/.test(pathname);
     if (
@@ -118,12 +117,10 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // - admin routes must be accessed by admin only
     if (pathname.startsWith("/admin") && payload.role !== "admin") {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // - superadmin routes must be accessed by superadmin only
     if (pathname.startsWith("/superadmin") && payload.role !== "superadmin") {
         return NextResponse.redirect(new URL("/login", request.url));
     }
