@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     CalendarDays,
     Flag,
@@ -12,6 +13,7 @@ import {
     MessageSquareWarning,
 } from "lucide-react";
 import clsx from "clsx";
+import { getAppealCounts, listReports } from "@/lib/reportApi";
 
 const navItems = [
     { href: "/admin/home", label: "Dashboard", icon: LayoutDashboard },
@@ -26,8 +28,43 @@ const navItems = [
     },
 ];
 
+const formatPendingCount = (count: number) => (count > 99 ? "99+" : count);
+
 export default function AdminSidebar() {
     const pathname = usePathname();
+    const [pendingCounts, setPendingCounts] = useState({
+        reports: 0,
+        appeals: 0,
+    });
+
+    useEffect(() => {
+        let mounted = true;
+
+        async function loadPendingCounts() {
+            try {
+                const [reports, appeals] = await Promise.all([
+                    listReports({ status: "pending" }),
+                    getAppealCounts(),
+                ]);
+
+                if (!mounted) return;
+
+                setPendingCounts({
+                    reports: reports.length,
+                    appeals: appeals.pending,
+                });
+            } catch {
+                if (!mounted) return;
+                setPendingCounts({ reports: 0, appeals: 0 });
+            }
+        }
+
+        void loadPendingCounts();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     return (
         <aside className="w-full lg:w-72 lg:min-h-screen bg-white/60 backdrop-blur-md border-b lg:border-b-0 lg:border-r border-cusblue/10 shadow-xl shadow-cusblue/5">
@@ -52,6 +89,12 @@ export default function AdminSidebar() {
                         const active =
                             pathname === item.href ||
                             pathname.startsWith(`${item.href}/`);
+                        const pendingCount =
+                            item.href === "/admin/reports"
+                                ? pendingCounts.reports
+                                : item.href === "/admin/appeals"
+                                  ? pendingCounts.appeals
+                                  : 0;
 
                         return (
                             <Link
@@ -64,7 +107,21 @@ export default function AdminSidebar() {
                                         : "text-cusviolet/75 hover:bg-cusblue/5 hover:text-cusblue",
                                 )}>
                                 <Icon className="h-5 w-5" />
-                                {item.label}
+                                <span className="flex-1 whitespace-nowrap">
+                                    {item.label}
+                                </span>
+                                {pendingCount > 0 && (
+                                    <span
+                                        className={clsx(
+                                            "ml-auto flex min-w-6 items-center justify-center rounded-full px-2 py-0.5 text-xs font-extrabold tabular-nums",
+                                            active
+                                                ? "bg-cuscream text-cusblue"
+                                                : "bg-cusblue text-white shadow-sm shadow-cusblue/25",
+                                        )}
+                                        aria-label={`${pendingCount} pending ${item.label.toLowerCase()} item${pendingCount === 1 ? "" : "s"}`}>
+                                        {formatPendingCount(pendingCount)}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}
