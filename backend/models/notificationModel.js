@@ -18,6 +18,8 @@ const { Schema } = mongoose;
  *  - "media_hidden"        :   sent to a media owner whose upload was hidden.
  *  - "comment_deleted"     :   sent to a comment author whose comment was removed.
  *  - "user_suspended"      :   sent to the suspended user explaining the action.
+ *  - "event_ended"         :   sent to registered event participants when
+ *                              the event gallery becomes a completed archive.
  *  - "system"              :   generic catch-all (default).
  *
  * `link` is an optional in-app route (e.g. `/home/events/...`) the UI uses
@@ -48,6 +50,7 @@ const notificationSchema = new Schema(
                 "media_hidden",
                 "comment_deleted",
                 "user_suspended",
+                "event_ended",
                 "system",
             ],
             default: "system",
