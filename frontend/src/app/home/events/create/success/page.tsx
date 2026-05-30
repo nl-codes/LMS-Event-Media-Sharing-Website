@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import EventCreationSuccessPage from "./EventCreateSuccessClient";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-    return <EventCreationSuccessPage />;
+    return (
+        <Suspense fallback={null}>
+            <EventCreationSuccessPage />
+        </Suspense>
+    );
 }

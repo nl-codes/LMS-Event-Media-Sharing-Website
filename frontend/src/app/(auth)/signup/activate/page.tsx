@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import ActivateAccountClient from "./ActivateClient";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-    return <ActivateAccountClient />;
+    return (
+        <Suspense fallback={null}>
+            <ActivateAccountClient />
+        </Suspense>
+    );
 }
