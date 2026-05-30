@@ -55,10 +55,30 @@ async function verifyToken(token: string) {
     }
 }
 
+function getTokenCandidates(request: NextRequest) {
+    const rawCookie = request.headers.get("cookie") || "";
+    return rawCookie
+        .split(";")
+        .map((cookie) => cookie.trim())
+        .filter((cookie) => cookie.startsWith("token="))
+        .map((cookie) => decodeURIComponent(cookie.slice("token=".length)))
+        .filter(Boolean);
+}
+
+async function getVerifiedPayload(request: NextRequest) {
+    const candidates = getTokenCandidates(request);
+
+    for (const token of candidates) {
+        const payload = await verifyToken(token);
+        if (payload) return payload;
+    }
+
+    return null;
+}
+
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    const token = request.cookies.get("token")?.value;
-    const payload = token ? await verifyToken(token) : null;
+    const payload = await getVerifiedPayload(request);
 
     if (pathname.startsWith("/super-admin")) {
         return NextResponse.redirect(
