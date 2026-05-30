@@ -193,7 +193,9 @@ export const forgotPassword = async (req, res) => {
         const { email } = req.body;
         if (!email) throw new Error("Email is required");
 
-        const { user, token } = await requestPasswordReset(email);
+        const { user, token } = await requestPasswordReset(
+            email.trim().toLowerCase(),
+        );
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
         await sendEmail(
