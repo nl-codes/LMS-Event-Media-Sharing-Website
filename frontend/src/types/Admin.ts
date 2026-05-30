@@ -84,5 +84,4 @@ export interface AdminLoginResult {
     message?: string;
     role?: AdminRole;
     redirectTo?: string;
-    token?: string;
 }
