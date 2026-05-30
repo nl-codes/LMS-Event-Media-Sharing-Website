@@ -10,7 +10,7 @@ import {
     useEffect,
     useCallback,
 } from "react";
-import { getFrontendSessionToken } from "@/lib/sessionCookie";
+import { getSessionAuthHeader } from "@/lib/sessionCookie";
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -21,12 +21,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const fetchUser = useCallback(async () => {
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), 12000);
-        const token = getFrontendSessionToken();
 
         try {
             const res = await fetch(`${backend_url}/users/me`, {
                 credentials: "include",
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                headers: getSessionAuthHeader(),
                 signal: controller.signal,
             });
             if (res.ok) {
