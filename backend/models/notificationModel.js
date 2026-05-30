@@ -20,6 +20,8 @@ const { Schema } = mongoose;
  *  - "user_suspended"      :   sent to the suspended user explaining the action.
  *  - "event_invite"        :   sent when a host invites a registered user to
  *                              view/join an event.
+ *  - "event_suspended"     :   sent to an event host when admin moderation
+ *                              cancels/suspends their event.
  *  - "event_ended"         :   sent to registered event participants when
  *                              the event gallery becomes a completed archive.
  *  - "system"              :   generic catch-all (default).
@@ -53,6 +55,7 @@ const notificationSchema = new Schema(
                 "comment_deleted",
                 "user_suspended",
                 "event_invite",
+                "event_suspended",
                 "event_ended",
                 "system",
             ],
