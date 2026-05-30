@@ -56,7 +56,7 @@ app.use("/webhooks", webhookRoutes);
 app.use(express.json());
 app.use(cookieParser());
 const allowedOrigins = [
-    process.env.FRONTEND_LAN_URL,
+    process.env.CUSTOM_DOMAIN_URL,
     process.env.FRONTEND_URL,
 ].filter(Boolean);
 
