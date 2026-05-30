@@ -14,6 +14,7 @@ import {
     getUsersListController,
     loginAdminController,
     registerAdminController,
+    suspendEventController,
     suspendUserController,
     unsuspendUserController,
 } from "../controllers/adminController.js";
@@ -62,6 +63,13 @@ router.get(
     requireAuth,
     requireRole("admin"),
     getEventDetailsController,
+);
+
+router.post(
+    "/events/suspend",
+    requireAuth,
+    requireRole("admin"),
+    suspendEventController,
 );
 
 router.get(
