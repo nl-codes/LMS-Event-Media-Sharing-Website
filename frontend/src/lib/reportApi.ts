@@ -152,6 +152,17 @@ export async function submitUnsuspendAppeal(payload: {
     return data;
 }
 
+export async function submitEventAppeal(
+    eventId: string,
+    payload: { appealMessage: string },
+) {
+    const res = await request<Appeal>(`/appeals/events/${eventId}`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+    return res.data;
+}
+
 export async function getAppealCounts() {
     const res = await request<{ pending: number; approved: number; rejected: number }>(
         `/appeals/counts`,
