@@ -149,6 +149,32 @@ export async function finishEvent(id: string) {
     return json.data as Event;
 }
 
+export type EventInviteUser = {
+    _id: string;
+    userName: string;
+    profilePicture?: string;
+};
+
+export async function searchEventInviteUsers(
+    eventId: string,
+    search = "",
+): Promise<EventInviteUser[]> {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set("search", search.trim());
+    const qs = params.toString();
+    const json = await request<EventInviteUser[]>(
+        `/events/${eventId}/invite-users${qs ? `?${qs}` : ""}`,
+    );
+    return json.data ?? [];
+}
+
+export async function sendEventInvite(eventId: string, userId: string) {
+    await request<unknown>(`/events/${eventId}/invite`, {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+    });
+}
+
 export async function deleteEvent(id: string) {
     await request<{ message: string }>(`/events/${id}`, {
         method: "DELETE",
