@@ -29,6 +29,8 @@ import {
     editEventStatus,
     deleteEvent,
     finishEvent,
+    searchEventInviteUsersController,
+    sendEventInviteController,
     requestUploadSignature,
     verifyEventAccess,
     joinAsGuest,
@@ -62,6 +64,8 @@ router.post("/join-as-guest", joinAsGuest);
 router.get("/details/:id", requireAuth, getEventById);
 router.get("/:id/participants", requireAuth, getEventParticipantsController);
 router.get("/:eventId/insights", requireAuth, getEventInsightsController);
+router.get("/:id/invite-users", requireAuth, searchEventInviteUsersController);
+router.post("/:id/invite", requireAuth, sendEventInviteController);
 
 router.patch("/:eventId/privacy", requireAuth, updateEventPrivacyController);
 router.patch("/:id/status", requireAuth, editEventStatus);
