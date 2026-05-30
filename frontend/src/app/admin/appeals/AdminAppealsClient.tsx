@@ -75,16 +75,23 @@ export default function AdminAppealsPage() {
 
     const handleAction = async () => {
         if (!modal) return;
+        const isEventAppeal = modal.appeal.appealType === "event";
         try {
             setSubmitting(true);
             if (modal.type === "approve") {
                 await approveAppeal(modal.appeal._id, adminNote);
                 toast.success(
-                    "Appeal approved — user unsuspended and notified via email",
+                    isEventAppeal
+                        ? "Event appeal approved — host notified"
+                        : "Appeal approved — user unsuspended and notified via email",
                 );
             } else {
                 await rejectAppeal(modal.appeal._id, adminNote);
-                toast.success("Appeal rejected — user notified via email");
+                toast.success(
+                    isEventAppeal
+                        ? "Event appeal rejected — host notified"
+                        : "Appeal rejected — user notified via email",
+                );
             }
             closeModal();
             // Refresh both counts and list after action
@@ -167,7 +174,7 @@ export default function AdminAppealsPage() {
                 <EmptyState
                     icon={<MessageSquareWarning className="h-7 w-7" />}
                     title="No appeals"
-                    description="When suspended users file appeals they will appear here."
+                description="When suspended users or event hosts file appeals they will appear here."
                 />
             ) : (
                 <div className="space-y-4">
@@ -178,6 +185,11 @@ export default function AdminAppealsPage() {
                             <div className="flex flex-wrap items-start justify-between gap-4 p-6">
                                 {/* User info */}
                                 <div className="flex-1 space-y-2">
+                                    {appeal.appealType === "event" && (
+                                        <span className="inline-flex rounded-full bg-cusblue/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-cusblue">
+                                            Event appeal
+                                        </span>
+                                    )}
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cusviolet/10 text-sm font-black text-cusviolet">
                                             {(appeal.userId?.userName || "U")
@@ -186,16 +198,41 @@ export default function AdminAppealsPage() {
                                         </div>
                                         <div>
                                             <p className="font-extrabold text-cusblue">
-                                                {appeal.userId?.userName ||
-                                                    "Unknown"}
+                                                {appeal.appealType === "event"
+                                                    ? appeal.eventId
+                                                          ?.eventName ||
+                                                      "Unknown event"
+                                                    : appeal.userId
+                                                          ?.userName ||
+                                                      "Unknown"}
                                             </p>
                                             <p className="text-xs text-slate-500">
-                                                {appeal.email}
+                                                {appeal.appealType === "event"
+                                                    ? `Host: ${
+                                                          appeal.userId
+                                                              ?.userName ||
+                                                          appeal.email
+                                                      }`
+                                                    : appeal.email}
                                             </p>
                                         </div>
                                     </div>
 
-                                    {appeal.userId?.adminActionReason && (
+                                    {appeal.appealType === "event" &&
+                                        appeal.eventId?.adminActionReason && (
+                                            <div className="ml-[52px] rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                                                <span className="font-bold">
+                                                    Event suspension reason:
+                                                </span>{" "}
+                                                {
+                                                    appeal.eventId
+                                                        .adminActionReason
+                                                }
+                                            </div>
+                                        )}
+
+                                    {appeal.appealType !== "event" &&
+                                        appeal.userId?.adminActionReason && (
                                         <div className="ml-[52px] rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
                                             <span className="font-bold">
                                                 Suspension reason:
@@ -311,8 +348,12 @@ export default function AdminAppealsPage() {
                         <div className="space-y-4 p-5">
                             <p className="text-sm text-slate-600">
                                 {modal.type === "approve"
-                                    ? `This will unsuspend ${modal.appeal.userId?.userName} and send them an approval email.`
-                                    : `This will send ${modal.appeal.userId?.userName} a rejection email. Their account remains suspended.`}
+                                    ? modal.appeal.appealType === "event"
+                                        ? `This will restore ${modal.appeal.eventId?.eventName || "this event"} and notify the host.`
+                                        : `This will unsuspend ${modal.appeal.userId?.userName} and send them an approval email.`
+                                    : modal.appeal.appealType === "event"
+                                      ? `This will keep ${modal.appeal.eventId?.eventName || "this event"} suspended and notify the host.`
+                                      : `This will send ${modal.appeal.userId?.userName} a rejection email. Their account remains suspended.`}
                             </p>
 
                             <div>
