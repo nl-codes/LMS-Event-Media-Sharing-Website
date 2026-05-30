@@ -47,6 +47,7 @@ export interface AdminEvent {
     tier?: EventTier;
     isPremium?: boolean;
     participantCount?: number;
+    adminActionReason?: string;
     createdAt?: string;
     updatedAt?: string;
 }
