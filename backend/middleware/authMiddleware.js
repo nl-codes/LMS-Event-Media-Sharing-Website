@@ -17,7 +17,11 @@ import jwt from "jsonwebtoken";
  * @param {import("express").NextFunction} next
  */
 export const requireAuth = (req, res, next) => {
-    const token = req.cookies?.token;
+    const authHeader = req.headers.authorization || "";
+    const bearerToken = authHeader.startsWith("Bearer ")
+        ? authHeader.slice("Bearer ".length).trim()
+        : "";
+    const token = req.cookies?.token || bearerToken;
 
     if (!token) {
         return res.status(401).json({ error: "Authentication required" });
