@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 import { openConfirmationDialog } from "@/components/confirm/openConfirmationDialog";
 import { backend_url } from "@/config/backend";
 import { useUser } from "@/context/UserContext";
-import { clearFrontendSessionCookie } from "@/lib/sessionCookie";
 
 type LogoutButtonProps = {
     className?: string;
@@ -35,7 +34,6 @@ export default function LogoutButton({
         }
 
         setUser(null);
-        clearFrontendSessionCookie();
         router.push(redirectTo);
         toast.success("Log out successful!");
     };

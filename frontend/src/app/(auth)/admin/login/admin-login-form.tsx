@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import Button from "@/components/buttons/Button";
 import { useUser } from "@/context/UserContext";
 import { adminLogin, getCurrentUser } from "@/lib/adminApi";
-import { syncFrontendSessionCookie } from "@/lib/sessionCookie";
 import { AlertCircle, Eye, EyeOff, KeyRound, LogIn } from "lucide-react";
 import { emailRegex } from "@/utils/validators";
 
@@ -55,8 +54,7 @@ export default function AdminLoginForm() {
                 return;
             }
 
-            syncFrontendSessionCookie(result.token);
-            const currentUser = await getCurrentUser(result.token);
+            const currentUser = await getCurrentUser();
             setUser(currentUser);
 
             if (currentUser.role === "superadmin") {

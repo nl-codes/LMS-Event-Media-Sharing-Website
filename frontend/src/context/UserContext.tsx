@@ -10,7 +10,6 @@ import {
     useEffect,
     useCallback,
 } from "react";
-import { getSessionAuthHeader } from "@/lib/sessionCookie";
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -25,7 +24,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         try {
             const res = await fetch(`${backend_url}/users/me`, {
                 credentials: "include",
-                headers: getSessionAuthHeader(),
                 signal: controller.signal,
             });
             if (res.ok) {

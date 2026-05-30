@@ -6,14 +6,12 @@ import toast from "react-hot-toast";
 import Button from "@/components/buttons/Button";
 import { backend_url } from "@/config/backend";
 import { useUser } from "@/context/UserContext";
-import { syncFrontendSessionCookie } from "@/lib/sessionCookie";
 import { LogIn, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { emailRegex } from "@/utils/validators";
 
 type LoginResponse = {
     message?: string;
     error?: string;
-    token?: string;
 };
 
 export default function LoginForm() {
@@ -64,9 +62,6 @@ export default function LoginForm() {
 
             const meRes = await fetch(`${backend_url}/users/me`, {
                 credentials: "include",
-                headers: data.token
-                    ? { Authorization: `Bearer ${data.token}` }
-                    : undefined,
             });
 
             if (!meRes.ok) {
@@ -76,7 +71,6 @@ export default function LoginForm() {
             }
 
             const user = await meRes.json();
-            syncFrontendSessionCookie(data.token);
             setUser(user);
             toast.success("Welcome back! 🙂");
             router.push("/home");
