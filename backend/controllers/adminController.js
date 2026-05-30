@@ -118,7 +118,6 @@ export async function loginAdminController(req, res) {
                     result.user.role === "superadmin"
                         ? "/super-admin/home"
                         : "/admin/home",
-                token,
             },
         });
     } catch (err) {
