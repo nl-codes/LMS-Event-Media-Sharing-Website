@@ -1,6 +1,18 @@
 const SESSION_COOKIE_NAME = "token";
 const SESSION_MAX_AGE_SECONDS = 24 * 60 * 60;
 
+export function getFrontendSessionToken() {
+    if (typeof document === "undefined") return undefined;
+
+    const tokenCookie = document.cookie
+        .split("; ")
+        .find((cookie) => cookie.startsWith(`${SESSION_COOKIE_NAME}=`));
+
+    if (!tokenCookie) return undefined;
+
+    return decodeURIComponent(tokenCookie.split("=").slice(1).join("="));
+}
+
 export function syncFrontendSessionCookie(token?: string) {
     if (!token || typeof document === "undefined") return;
 
