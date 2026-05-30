@@ -97,9 +97,10 @@ export async function adminSignup(payload: {
     return response.data;
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(token?: string) {
     const response = await fetch(`${backend_url}/users/me`, {
         credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
 
     if (!response.ok) {
