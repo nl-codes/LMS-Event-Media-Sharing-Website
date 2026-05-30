@@ -16,7 +16,7 @@ import {
 } from "../services/adminService.js";
 import { setAuthCookie } from "../utils/auth/cookieAuth.js";
 import { generateJWTtoken } from "../utils/auth/generateJWTtoken.js";
-import sendEmail from "../utils/sendEmail.js";
+import { enqueueEmailJob } from "../queues/emailQueue.js";
 
 /**
  * POST /admins/signup
@@ -84,12 +84,12 @@ export async function loginAdminController(req, res) {
                 );
             } else {
                 SuccessMessage = "OTP sent to email";
-                await sendEmail(
-                    result.user.email,
-                    "Your Admin Login OTP",
-                    `Your OTP is: ${result.otpCode}`,
-                    `<p>Your OTP is <b>${result.otpCode}</b>. It expires in 10 minutes.</p>`,
-                );
+                await enqueueEmailJob({
+                    to: result.user.email,
+                    subject: "Your Admin Login OTP",
+                    text: `Your OTP is: ${result.otpCode}`,
+                    html: `<p>Your OTP is <b>${result.otpCode}</b>. It expires in 10 minutes.</p>`,
+                });
             }
 
             return res.status(200).json({

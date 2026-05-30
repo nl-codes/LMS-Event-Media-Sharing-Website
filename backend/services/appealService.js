@@ -3,7 +3,7 @@ import Appeal from "../models/appealModel.js";
 import { User } from "../models/userModel.js";
 import { makeError } from "../utils/helperFunctions.js";
 import { unsuspendUser } from "./adminService.js";
-import sendEmail from "../utils/sendEmail.js";
+import { enqueueEmailJob } from "../queues/emailQueue.js";
 import {
     getAppealApprovedEmailHTML,
     getAppealRejectedEmailHTML,
@@ -129,16 +129,16 @@ export async function approveAppeal({ appealId, adminId, adminNote }) {
 
     const loginUrl = `${process.env.FRONTEND_URL || ""}/login`;
     try {
-        await sendEmail(
-            appeal.userId.email,
-            "Your appeal has been approved",
-            `Hello ${appeal.userId.userName},\n\nGreat news! Your appeal to lift the suspension on your account has been approved.\n\nYou can now log in at: ${loginUrl}\n\n${note ? `Admin note: ${note}` : ""}`,
-            getAppealApprovedEmailHTML(
+        await enqueueEmailJob({
+            to: appeal.userId.email,
+            subject: "Your appeal has been approved",
+            text: `Hello ${appeal.userId.userName},\n\nGreat news! Your appeal to lift the suspension on your account has been approved.\n\nYou can now log in at: ${loginUrl}\n\n${note ? `Admin note: ${note}` : ""}`,
+            html: getAppealApprovedEmailHTML(
                 appeal.userId.userName,
                 note,
                 loginUrl,
             ),
-        );
+        });
     } catch (err) {
         console.error("Failed to send appeal approval email:", err.message);
     }
@@ -174,12 +174,12 @@ export async function rejectAppeal({ appealId, adminId, adminNote }) {
     await appeal.save();
 
     try {
-        await sendEmail(
-            appeal.userId.email,
-            "Your appeal has been rejected",
-            `Hello ${appeal.userId.userName},\n\nAfter review, your suspension appeal has been rejected.\n\n${note ? `Reason: ${note}` : ""}\n\nIf you have further questions, please contact support.`,
-            getAppealRejectedEmailHTML(appeal.userId.userName, note),
-        );
+        await enqueueEmailJob({
+            to: appeal.userId.email,
+            subject: "Your appeal has been rejected",
+            text: `Hello ${appeal.userId.userName},\n\nAfter review, your suspension appeal has been rejected.\n\n${note ? `Reason: ${note}` : ""}\n\nIf you have further questions, please contact support.`,
+            html: getAppealRejectedEmailHTML(appeal.userId.userName, note),
+        });
     } catch (err) {
         console.error("Failed to send appeal rejection email:", err.message);
     }
