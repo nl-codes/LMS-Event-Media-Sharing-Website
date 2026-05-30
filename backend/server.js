@@ -56,9 +56,8 @@ app.use("/webhooks", webhookRoutes);
 app.use(express.json());
 app.use(cookieParser());
 const allowedOrigins = [
-    process.env.CUSTOM_DOMAIN_URL,
-    process.env.FRONTEND_URL,
-].filter(Boolean);
+    process.env.FRONTEND_URL || "https://www.lms.narayanlohani.com.np",
+];
 
 app.use(
     cors({
