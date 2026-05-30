@@ -1,5 +1,4 @@
 import { backend_url } from "@/config/backend";
-import { getSessionAuthHeader } from "@/lib/sessionCookie";
 import type {
     AdminAccount,
     AdminEvent,
@@ -21,7 +20,6 @@ type ApiResponse<T> = {
 type AdminLoginResponseData = {
     role?: "admin" | "superadmin";
     redirectTo?: string;
-    token?: string;
 };
 
 function getMessage(payload: ApiResponse<unknown>, fallback: string) {
@@ -41,12 +39,11 @@ async function parseResponse<T>(response: Response, fallback: string) {
 async function request<T>(path: string, options: RequestInit = {}) {
     const response = await fetch(`${backend_url}${path}`, {
         credentials: "include",
+        ...options,
         headers: {
             "Content-Type": "application/json",
-            ...getSessionAuthHeader(),
             ...(options.headers as Record<string, string> | undefined),
         },
-        ...options,
     });
 
     return parseResponse<T>(response, "Admin request failed");
@@ -83,7 +80,6 @@ export async function adminLogin(payload: {
         message: data.message,
         role: data.data?.role,
         redirectTo: data.data?.redirectTo,
-        token: data.data?.token,
     };
 }
 
@@ -99,12 +95,9 @@ export async function adminSignup(payload: {
     return response.data;
 }
 
-export async function getCurrentUser(token?: string) {
+export async function getCurrentUser() {
     const response = await fetch(`${backend_url}/users/me`, {
         credentials: "include",
-        headers: token
-            ? { Authorization: `Bearer ${token}` }
-            : getSessionAuthHeader(),
     });
 
     if (!response.ok) {

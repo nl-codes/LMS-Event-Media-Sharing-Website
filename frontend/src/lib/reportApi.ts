@@ -3,7 +3,6 @@ import { Report, ReportTargetType } from "@/types/Report";
 import { type Notification } from "@/types/Notification";
 import { FlaggedMedia } from "@/types/Media";
 import { Appeal } from "@/types/Appeal";
-import { getSessionAuthHeader } from "@/lib/sessionCookie";
 
 type ApiResponse<T> = {
     success?: boolean;
@@ -25,12 +24,11 @@ async function parse<T>(response: Response, fallback: string) {
 async function request<T>(path: string, init: RequestInit = {}) {
     const response = await fetch(`${backend_url}${path}`, {
         credentials: "include",
+        ...init,
         headers: {
             "Content-Type": "application/json",
-            ...getSessionAuthHeader(),
             ...(init.headers as Record<string, string> | undefined),
         },
-        ...init,
     });
     return parse<T>(response, "Request failed");
 }

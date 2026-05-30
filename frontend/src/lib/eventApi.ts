@@ -13,11 +13,11 @@ async function request<T>(path: string, options: RequestInit = {}) {
     const hasFormDataBody = options.body instanceof FormData;
     const res = await fetch(`${API_BASE}${path}`, {
         credentials: "include",
+        ...options,
         headers: {
             ...(hasFormDataBody ? {} : { "Content-Type": "application/json" }),
             ...((options.headers || {}) as Record<string, string>),
         },
-        ...options,
     });
 
     const json = (await res.json()) as ApiResponse<T>;

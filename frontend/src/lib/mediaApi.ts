@@ -20,6 +20,9 @@ async function request<T>(path: string, options: RequestInit = {}) {
     const res = await fetch(`${API_BASE}${path}`, {
         credentials: "include",
         ...options,
+        headers: {
+            ...((options.headers || {}) as Record<string, string>),
+        },
     });
     const json = (await res.json()) as ApiResponse<T>;
     if (!res.ok || !json.success) {

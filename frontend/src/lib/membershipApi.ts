@@ -12,11 +12,11 @@ type ApiResponse<T> = {
 async function request<T>(path: string, options: RequestInit = {}) {
     const res = await fetch(`${API_BASE}${path}`, {
         credentials: "include",
+        ...options,
         headers: {
             "Content-Type": "application/json",
             ...(options.headers || {}),
         },
-        ...options,
     });
 
     const json = (await res.json()) as ApiResponse<T>;

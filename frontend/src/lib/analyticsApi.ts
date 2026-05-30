@@ -1,5 +1,4 @@
 import { backend_url } from "@/config/backend";
-import { getSessionAuthHeader } from "@/lib/sessionCookie";
 
 export type AnalyticsRange =
     | "last7days"
@@ -29,7 +28,6 @@ async function fetchAnalytics(
     const url = `${backend_url}/admins/analytics/${metric}?range=${encodeURIComponent(range)}`;
     const res = await fetch(url, {
         credentials: "include",
-        headers: getSessionAuthHeader(),
     });
     const json = (await res.json().catch(() => ({}))) as AnalyticsResponse;
     if (!res.ok || !json.success) {
@@ -86,7 +84,6 @@ export async function getEventInsights(
     const url = `${backend_url}/events/${eventId}/insights`;
     const res = await fetch(url, {
         credentials: "include",
-        headers: getSessionAuthHeader(),
     });
     const json = (await res.json().catch(() => ({}))) as EventInsightsResponse;
     if (!res.ok || !json.success) {
