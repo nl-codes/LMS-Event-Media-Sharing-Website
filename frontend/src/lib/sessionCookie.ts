@@ -13,6 +13,11 @@ export function getFrontendSessionToken() {
     return decodeURIComponent(tokenCookie.split("=").slice(1).join("="));
 }
 
+export function getSessionAuthHeader(): Record<string, string> {
+    const token = getFrontendSessionToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export function syncFrontendSessionCookie(token?: string) {
     if (!token || typeof document === "undefined") return;
 
