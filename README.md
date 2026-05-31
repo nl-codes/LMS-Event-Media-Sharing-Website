@@ -1,137 +1,331 @@
 # LMS (Live Media Sharing)
 
-LMS is an event-focused live media platform where people can create events, invite participants, chat in real time, and build collaborative media galleries during the event window.
+LMS is a full-stack event media sharing platform for creating events, inviting participants, collecting photos/videos, chatting in real time, and preserving event memories through collaborative galleries.
 
-It is built as a full-stack monorepo with:
-- A Node.js + Express backend for APIs, authentication, media handling, WebSockets, and payments
-- A Next.js App Router frontend for public event pages, authenticated dashboards, gallery UX, and checkout flows
+It is built as a monorepo with:
+
+- **Backend:** Node.js, Express, MongoDB/Mongoose, Socket.IO, BullMQ, Cloudinary, Stripe, Nodemailer
+- **Frontend:** Next.js App Router, React, TypeScript, Tailwind CSS, Socket.IO client, Stripe.js
 
 ## Project Overview
 
-LMS is designed around real event timelines.
+LMS is designed around real event timelines and tier-based access.
 
-- Event Management: Create and manage events with shareable public links.
-- Gallery Experience: Upload and browse event media in a time-gated gallery.
-- Real-time Chat: Event-based group chat using WebSockets.
-- Payments and Upgrades: Stripe checkout for Premium and Pro tier upgrades.
-
-The platform supports both registered users and guest participation (where applicable), while enforcing upload windows and tier policies.
+- Hosts create events and share QR/public links.
+- Registered users and guests can join event galleries.
+- Participants upload event media during the allowed upload window.
+- Viewers see real-time gallery updates, likes, comments, chat messages, and notifications.
+- Admins moderate users, events, media, comments, reports, and appeals.
+- Background workers handle slow or recurring work such as video processing, emails, highlights, privacy sync, lifecycle sync, and media retention.
 
 ## Tech Stack
 
 ### Backend
-- Node.js
-- Express
-- MongoDB + Mongoose
-- Socket.io
-- Cloudinary
-- Nodemailer
-- Stripe Node SDK
+
+- Node.js + Express 5
+- MongoDB Atlas / Mongoose
+- Socket.IO
+- BullMQ + Redis / Upstash-compatible Redis
+- Cloudinary signed uploads
+- Stripe Checkout + webhooks
+- Nodemailer SMTP email queue
+- JWT auth with HTTP-only cookies
+- Sharp, ffmpeg-static, Transformers.js for media/background pipelines
 
 ### Frontend
-- Next.js (App Router, 15+; currently Next 16 in this repo)
+
+- Next.js 16 App Router
+- React 19
 - TypeScript
-- Tailwind CSS
-- Socket.io-client
-- Stripe.js SDK (`@stripe/stripe-js`)
+- Tailwind CSS 4
+- Socket.IO client
+- Stripe.js
+- Chart.js / react-chartjs-2
+- lucide-react icons
+- react-hot-toast
 
 ## Project Structure
 
-This repository is organized as a monorepo with separate backend and frontend applications.
-
 ```text
 lms/
-	backend/
-		config/         # External integrations and app-level config (Cloudinary, mail, socket)
-		controllers/    # Request/response handlers for API routes
-		database/       # MongoDB connection setup
-		middleware/     # Auth, request identity, upload handling
-		models/         # Mongoose schemas (users, events, media, chats, memberships)
-		routes/         # Express route declarations
-		services/       # Core business logic used by controllers
-		utils/          # Helper utilities (JWT/token, email helpers, timeline checks)
-		server.js       # Express + Socket.io bootstrap
+  backend/
+    config/          # Cloudinary, Redis, Nodemailer, Socket.IO holder
+    constants/       # Tier limits and shared backend constants
+    controllers/     # HTTP request/response handlers
+    database/        # MongoDB connection setup
+    middleware/      # Auth, optional identity, multer/upload gates
+    models/          # Mongoose models
+    queues/          # BullMQ queues and worker bootstraps
+    routes/          # Express routers
+    scripts/         # Superadmin setup and migrations
+    services/        # Business logic and processors
+    utils/           # Auth helpers, validators, email templates, media helpers
+    server.js        # Express + Socket.IO + worker bootstrap
 
-	frontend/
-		public/         # Static assets
-		src/app/        # Next.js App Router pages/layouts
-		src/components/ # Reusable UI components
-		src/context/    # React context providers (identity/user state)
-		src/hooks/      # Custom hooks (chat/gallery socket subscriptions)
-		src/lib/        # API client and integration wrappers
-		src/types/      # Shared TypeScript domain types
-		src/styles/     # Global styles and font setup
+  frontend/
+    public/          # Static assets
+    src/app/         # Next.js App Router pages
+    src/components/  # Reusable UI components
+    src/config/      # Backend/socket config
+    src/context/     # User and identity context
+    src/hooks/       # Gallery/chat/socket/shared hooks
+    src/lib/         # API clients and integration helpers
+    src/styles/      # Global CSS and fonts
+    src/types/       # TypeScript domain types
+    src/utils/       # Client utilities
 ```
 
-### Architecture Notes
-- Controllers: Validate request shape and map HTTP concerns to services.
-- Services: Own business rules (event lifecycle checks, Stripe upgrade logic, media operations).
-- Hooks (frontend): Encapsulate real-time client behavior (`useChatSocket`, `useGallerySocket`).
-- App Router: Organizes public pages, auth flow, and authenticated dashboard paths by route groups.
+## Core Subsystems
 
-## Key Features
+### User Management
 
-### 1) Event Management
-- Create, edit, and manage events as the host.
-- Public event pages by slug for easy sharing.
-- Event status and timeline-aware access checks.
+- User signup, activation, reactivation, login, logout
+- Forgot password and reset password
+- JWT cookie authentication
+- Profile creation/editing
+- Profile pictures and shared `UserAvatar` rendering
+- Public profile viewing
+- Status handling: `pending`, `active`, `suspended`
+- Unsuspend appeal flow for suspended users
 
-### 2) Real-time Chat
-- Event-scoped group messaging over Socket.io.
-- Join/leave room semantics based on event context.
-- Persisted chat messages for continuity.
+### Event Management
 
-### 3) Media Gallery
-- Cloudinary-backed uploads for event galleries.
-- Event-window validation before accepting uploads.
-- Host/uploader moderation actions (delete/label/highlights where enabled).
-- Tier-aware media limits and retention behavior.
+- Host event creation and editing
+- Tier-derived event end time
+- Public/private event privacy
+- Public event pages by slug
+- QR code invitation links
+- Registered membership and guest participation
+- Participant list
+- Host event controls: edit, gallery, QR, insights, finish event, invite users
+- Event not-found handling
+- Event suspension by admin with required reason
+- Event appeal flow for suspended events
 
-### 4) Payment Sharing
-- Stripe Checkout for one-time event upgrades.
-- Premium and Pro lookup-key based pricing.
-- Webhook + confirmation flow to apply upgrades and limits.
+### Media Management
 
-### 5) Auth Sharing
-- JWT-based authentication.
-- Protected routes for host and member operations.
-- Account activation and password reset flow via email.
+- Image and video upload to event galleries
+- Cloudinary-backed media storage
+- Image compression and validation
+- Video background processing with BullMQ
+- Gallery views for host/private and public routes
+- Real-time `new_media`, `media_deleted`, and `media_liked` socket updates
+- Media detail page with likes, comments, liked-by list, and comment modal
+- Explore feed for public media with infinite scrolling
+- Explore media cards with like count
+- Host media moderation: delete, label, mark/unmark highlight
+- Download selected/all media as zip
+- Duplicate/similar media and gallery award support where implemented
 
-## Business Logic (Tiers)
+### Interaction System
 
-LMS enforces both retention and active upload windows per tier.
+- Unified `Interaction` model for likes and comments
+- Real-time like count synchronization
+- Guest users can view counts, registered users can like/comment
+- Comment edit/delete support
+- Report actions for media, comments, and users
 
-- Free tier:
-	- Gallery lifecycle: saved for 7 days.
-	- Active upload window: 24 hours.
-- Premium tier:
-	- Gallery lifecycle: saved for 1 month.
-	- Active upload window: up to 7 days.
-- Pro tier:
-	- Gallery lifecycle: saved for 1 year.
-	- Active upload window: up to 3 months.
+### Chat Management
 
-In the backend, upload authorization is also guarded by real event timeline checks (`startTime` to `endTime`) and event status.
+- Event-scoped chat rooms via Socket.IO
+- Registered-user chat participation
+- Persisted chat messages
+- Read tracking through `EventMembership.lastSeenChatAt`
+- Unread chat count support
+
+### Notification Management
+
+- In-app notification bell
+- Unread count and mark-read/mark-all-read
+- Notifications for reports, moderation actions, invites, event endings, event suspension, appeals, and account suspension
+- Clickable notification links
+- Event invite notifications route users to the public event page
+- Event-ended notifications route participants to the event gallery
+
+### Report and Appeal Management
+
+- Report media, comments, and users
+- Admin report queue
+- Verify/dismiss reports
+- Admin actions: hide media, delete comment, suspend user
+- Required reasoning for user/event suspension
+- User suspension email with appeal link
+- Unsuspend appeal review queue
+- Event suspension appeal review queue
+- Admin approve/reject appeal actions
+- Host notification when event appeal is approved/rejected
+
+### Payment Management
+
+- Stripe Checkout for Premium and Pro upgrades
+- Upgrade during event creation, with event creation finalized only after successful checkout
+- Upgrade existing free events
+- Stripe webhook support
+- Static production pricing page with rate-limit table and no checkout behavior
+- Payment success back-navigation handling to avoid returning to Stripe sandbox
+
+### Admin and Superadmin Management
+
+- Admin signup and login
+- Admin MFA/OTP login flow
+- Superadmin approval and management of admin accounts
+- Admin dashboards for:
+  - users
+  - events
+  - reports
+  - appeals
+  - insights
+- Admin sidebar pending badges for reports and appeals
+- Admin user suspension with required reason and queued email
+- Admin event suspension with required reason and host notification
+
+### Background Subsystem
+
+- Email queue for activation, reset, admin OTP, suspension, and appeal emails
+- Video processing queue
+- AI highlight queue for paid event highlights
+- Event privacy queue to sync event privacy to media `isPublic`
+- Event cleanup queue
+- Event lifecycle sync queue
+- Media retention queue
+- Startup sync for completed events, expired upgrades, participant counts, highlight backlog, and media retention backlog
+
+## Event Tiers and Limits
+
+LMS separates **upload window** from **media retention**.
+
+### Upload Window
+
+- **Free:** `startTime + 24 hours`
+- **Premium:** `startTime + 1 week`
+- **Pro:** `startTime + 1 month`
+
+The backend calculates `endTime`; clients do not submit or edit it.
+
+### Upload Limits
+
+| Limit | Free | Premium | Pro |
+|---|---:|---:|---:|
+| File size (image + video) | 5 MB | 50 MB | 500 MB |
+| Upload limit | 100 | 500 | 10000 |
+
+### Media Retention
+
+Retention starts after `event.endTime`.
+
+- **Free:** delete media after 7 days
+- **Premium:** delete media after 1 month
+- **Pro:** delete media after 3 months
+
+The event document is kept after retention. Media, interactions, and Cloudinary assets are removed.
+
+## Key Routes
+
+### Public
+
+- `/`
+- `/events/[slug]`
+- `/events/[slug]/gallery`
+- `/media/[id]`
+- `/pricing`
+- `/pricing/production`
+- `/report/[id]`
+- `/request/unsuspend`
+
+### Auth
+
+- `/login`
+- `/signup`
+- `/signup/activate`
+- `/signup/reactivate`
+- `/forgot-password`
+- `/reset-password`
+
+### User Dashboard
+
+- `/home`
+- `/home/events`
+- `/home/events/create`
+- `/home/events/[id]`
+- `/home/events/[id]/edit`
+- `/home/events/[id]/gallery`
+- `/home/events/[id]/insights`
+- `/home/events/[id]/participants`
+- `/home/events/[id]/upgrade`
+- `/home/explore`
+- `/home/profile`
+- `/home/profile/create`
+- `/home/profile/edit`
+- `/home/profile/[id]/others`
+
+### Admin
+
+- `/admin/login`
+- `/admin/signup`
+- `/admin/home`
+- `/admin/users`
+- `/admin/events`
+- `/admin/events/[id]`
+- `/admin/reports`
+- `/admin/appeals`
+- `/admin/insights`
+
+### Superadmin
+
+- `/superadmin/home`
+- `/superadmin/admin/approve`
+- `/superadmin/admin/manage`
+
+## Backend API Areas
+
+Mounted routers include:
+
+- `/users`
+- `/users/profile`
+- `/events`
+- `/media`
+- `/event-memberships`
+- `/chats`
+- `/payments`
+- `/admins`
+- `/superadmins`
+- `/interactions`
+- `/reports`
+- `/notifications`
+- `/appeals`
+- `/webhooks`
+
+## Real-time Socket Flow
+
+Socket.IO is used for:
+
+- Gallery rooms: `join_gallery`, `leave_gallery`
+- Gallery events: `new_media`, `media_deleted`, `media_liked`
+- Chat rooms: `join_chat_room`, `leave_chat_room`
+- Chat events: `send_message`, `receive_message`
+- Read tracking: `mark_as_read`
+
+Production socket CORS must allow the frontend origin and credentials.
 
 ## Installation and Setup
 
 ### 1) Clone Repository
 
 ```bash
-git clone https://github.com/nl-codes/lms---Event-Media-Sharing-Website.git
-cd lms
+git clone https://github.com/nl-codes/LMS-Event-Media-Sharing-Website.git
+cd LMS-Event-Media-Sharing-Website
 ```
 
 ### 2) Install Dependencies
 
-Install backend dependencies:
+Backend:
 
 ```bash
 cd backend
 npm install
 ```
 
-Install frontend dependencies:
+Frontend:
 
 ```bash
 cd ../frontend
@@ -140,54 +334,66 @@ npm install
 
 ### 3) Configure Environment Variables
 
-Create `.env` files from the existing examples in both apps:
+Create env files from examples:
 
 ```bash
-# from repo root
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-#### Backend `.env` (required)
+### Backend `.env`
 
 ```env
-DB_CONNECTION_STRING=
-PORT=
-JWT_SECRET_KEY=
-
-MAILTRAP_HOST=
-MAILTRAP_PORT=
-EMAIL_FROM=
-MAILTRAP_USER=
-MAILTRAP_PASS=
-
-FRONTEND_URL=
-BACKEND_URL=
-
 NODE_ENV=
+PORT=
+
+DB_CONNECTION_STRING=
+JWT_SECRET_KEY=
+COOKIE_DOMAIN=
+
+REDIS_URL=
 
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 
+MAILTRAP_HOST=
+MAILTRAP_PORT=
+MAILTRAP_USER=
+MAILTRAP_PASS=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+EMAIL_FROM=
+
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+
+DISABLE_HIGHLIGHT_WORKER=
+
+FRONTEND_URL=
+BACKEND_URL=
 ```
 
-#### Frontend `.env` (required)
+### Frontend `.env`
 
 ```env
 NEXT_PUBLIC_BACKEND_URL=
 NEXT_PUBLIC_FRONTEND_URL=
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 JWT_SECRET_KEY=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 ```
 
 Suggested local defaults:
-- Frontend URL: `http://localhost:8080`
-- Backend URL: `http://localhost:5000` (or your configured backend port)
 
-### 4) Run the Applications
+- Frontend: `http://localhost:8080`
+- Backend: `http://localhost:5000` or your configured `PORT`
+- `FRONTEND_URL=http://localhost:8080`
+- `NEXT_PUBLIC_BACKEND_URL=http://localhost:5000`
+
+## Running Locally
 
 Start backend:
 
@@ -196,43 +402,112 @@ cd backend
 npm run dev
 ```
 
-Start frontend (new terminal):
+Start frontend:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Open the app at `http://localhost:8080`.
+Open:
+
+```text
+http://localhost:8080
+```
+
+Run frontend on LAN for phone testing:
+
+```bash
+cd frontend
+npm run lan
+```
 
 ## Available Scripts
 
 ### Backend
-- `npm run dev` - run with nodemon
-- `npm start` - run with Node.js
+
+- `npm run dev` - start backend with Nodemon
+- `npm start` - start backend with Node
+- `npm run setup:superadmin` - create the superadmin account
 
 ### Frontend
-- `npm run dev` - run Next.js dev server (port 8080)
+
+- `npm run dev` - start Next.js dev server on port 8080
+- `npm run lan` - start Next.js on `0.0.0.0:8080`
 - `npm run build` - production build
-- `npm run start` - start production server
+- `npm run start` - start production Next.js server
 - `npm run lint` - run ESLint
 
-## Stripe Notes (Development)
+## Stripe Development Notes
 
-To test webhook-driven upgrades locally, use Stripe CLI forwarding to your backend webhook route (configured under `/webhooks`).
+Stripe webhooks are mounted under `/webhooks`.
 
-Example:
+For local testing:
 
 ```bash
-stripe listen --forward-to localhost:5000/webhooks
+stripe listen --forward-to localhost:5000/webhooks/stripe
 ```
 
-Then set `STRIPE_WEBHOOK_SECRET` from Stripe CLI output.
+Set `STRIPE_WEBHOOK_SECRET` from the Stripe CLI output.
 
-## Roadmap Ideas
+Stripe Price lookup keys expected by the app:
 
-- Event analytics dashboards (engagement, uploads, retention)
-- Moderation workflows with role-based permissions
-- Export and archival tooling for enterprise event hosts
+- `premium`
+- `pro`
+
+## Production Deployment Notes
+
+The project is designed to deploy on free-tier friendly services:
+
+- Frontend: Vercel
+- Backend/API: Render Web Service
+- Redis: Upstash Redis
+- Database: MongoDB Atlas M0
+- Media: Cloudinary
+- Payments: Stripe test/standard mode
+
+For same-domain cookie auth in production:
+
+- Frontend: `https://www.lms.samesite.com.np`
+- Backend: `https://api.lms.samesite.com.np`
+- Backend `COOKIE_DOMAIN=.samesite.com.np`
+- Backend `FRONTEND_URL=https://www.lms.samesite.com.np`
+- Frontend `NEXT_PUBLIC_BACKEND_URL=https://api.lms.samesite.com.np`
+
+Render free services may sleep after inactivity. The first API/socket request after idle time can take longer.
+
+## TypeScript / VS Code Note
+
+Keep committed `frontend/tsconfig.json` production-safe with:
+
+```json
+"ignoreDeprecations": "5.0"
+```
+
+For local editor squiggles, use the workspace TypeScript version:
+
+```json
+{
+  "typescript.tsdk": "frontend/node_modules/typescript/lib"
+}
+```
+
+## Current Validation Commands
+
+Useful checks before committing:
+
+```bash
+cd backend
+node --check server.js
+```
+
+```bash
+cd frontend
+npx tsc --noEmit
+npm run lint
+npm run build
+```
 
 ## License
+
+ISC
