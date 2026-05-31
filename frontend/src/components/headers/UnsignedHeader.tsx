@@ -3,7 +3,7 @@
 import Button from "@/components/buttons/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PlayCircle, Tag, Calendar, LogIn, Menu, X } from "lucide-react";
+import { Tag, LogIn, Menu, X } from "lucide-react";
 import { useState } from "react";
 import LogoRounded from "../logo/Logo_Rounded";
 
@@ -17,26 +17,12 @@ export default function UnsignedHeader() {
         <>
             <Button
                 className="w-full sm:w-auto justify-center"
-                handleClick={close}>
-                <PlayCircle className="w-4 h-4 opacity-70" />
-                How it works
-            </Button>
-
-            <Button
-                className="w-full sm:w-auto justify-center"
                 handleClick={() => {
                     close();
                     router.push("/pricing");
                 }}>
                 <Tag className="w-4 h-4 opacity-70" />
                 Pricing
-            </Button>
-
-            <Button
-                className="w-full sm:w-auto justify-center"
-                handleClick={close}>
-                <Calendar className="w-4 h-4 opacity-70" />
-                Events
             </Button>
 
             <Button
